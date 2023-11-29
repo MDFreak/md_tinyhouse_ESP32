@@ -13,9 +13,6 @@
         #include <Arduino.h>
         #include <md_defines.h>
 
-
-
-
       // ******************************************
       // --- specification first to define device config
         // --- system
@@ -144,6 +141,9 @@
         // --- user output
           // --- display
             #if (USE_OLED_I2C > OFF)
+                #ifndef USE_DISP
+                    #define USE_DISP
+                  #endif
                 // select OLED - device & GEO   GEO_RAWMODE?
                           // MC_UO_OLED_066_AZ   GEO_64_48    OLED_DRV_1306
                           // MC_UO_OLED_091_AZ   GEO_128_32   OLED_DRV_1306
@@ -151,70 +151,68 @@
                           // MC_UO_OLED_130_AZ   GEO_128_64   OLED_DRV_1106
                 #define OLED_I2C_TYP MC_UO_OLED_130_AZ  // OLED1 on DEV_I2C1
                 //#define OLED_STATUS     ON
-                #define OLED_I2C        DEV_I2C1
+                #define OLED_I2C           DEV_I2C1
                 #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
-                    #define OLED_MAXCOLS  OLED_066_MAXCOLS
-                    #define OLED_MAXROWS  OLED_066_MAXROWS
-                    #define OLED_GEO      GEO_64_48
-                    #define OLED_DRV      OLED_DRV_1306
+                    #define OLED_MAXCOLS   OLED_066_MAXCOLS
+                    #define OLED_MAXROWS   OLED_066_MAXROWS
+                    #define OLED_GEO       GEO_64_48
+                    #define OLED_DRV       OLED_DRV_1306
                   #endif
                 #if (OLED_I2C_TYP == MC_UO_OLED_091_AZ)
-                    #define OLED_MAXCOLS  OLED_091_MAXCOLS
-                    #define OLED_MAXROWS  OLED_091_MAXROWS
-                    #define OLED_GEO      GEO_128_32
-                    #define OLED_DRV      OLED_DRV_1306
+                    #define OLED_MAXCOLS   OLED_091_MAXCOLS
+                    #define OLED_MAXROWS   OLED_091_MAXROWS
+                    #define OLED_GEO       GEO_128_32
+                    #define OLED_DRV       OLED_DRV_1306
                   #endif
                 #if (OLED_I2C_TYP == MC_UO_OLED_096_AZ)
-                    #define OLED_MAXCOLS  OLED_096_MAXCOLS
-                    #define OLED_MAXROWS  OLED_096_MAXROWS
-                    #define OLED_GEO      GEO_128_64
-                    #define OLED_DRV      OLED_DRV_1306
+                    #define OLED_MAXCOLS   OLED_096_MAXCOLS
+                    #define OLED_MAXROWS   OLED_096_MAXROWS
+                    #define OLED_GEO       GEO_128_64
+                    #define OLED_DRV       OLED_DRV_1306
                   #endif
                 #if (OLED_I2C_TYP == MC_UO_OLED_130_AZ)
-                    #define OLED_MAXCOLS         OLED_130_MAXCOLS
-                    #define OLED_MAXROWS         OLED_130_MAXROWS
-                    #define OLED_GEO             GEO_128_64
-                    #define OLED_DRV             OLED_DRV_1106
+                    #define OLED_MAXCOLS   OLED_130_MAXCOLS
+                    #define OLED_MAXROWS   OLED_130_MAXROWS
+                    #define OLED_GEO       GEO_128_64
+                    #define OLED_DRV       OLED_DRV_1106
                   #endif // OLED_I2C_TYP
+                #define OLED_FLIP_VERTICAL TRUE
               #endif // USE_OLED_I2C
-                      //#if ( USE_TOUCHSCREEN > 0 )
-                      //    //
-                      //  #endif // USE_TOUCHSCREEN
-                      //#if ( USE_DISP_TFT > 0 )
-                      //    #if !(DISP_TFT ^ MC_UO_TOUCHXPT2046_AZ)
-                      //        #define DISP_ORIENT    3      // 0:USB oben, 1:USB links, 2:USB unten, 3:USB rechts
-                      //        #define DATE_DISP_COL  0
-                      //        #define DATE_DISP_LINE 9      // line on display for date / time
-                      //        // text display area
-                      //        #define DISP_X         0
-                      //        #define DISP_Y         0
-                      //        #define DISP_W         240
-                      //        #define DISP_H         300
-                      //        #define DISP_BCOL      0x000F // TFT_NAVY
-                      //        #define DISP_ANZ_SP    20
-                      //        #define DISP_ANZ_ZE    12
-                      //        #define DISP_Hoe_ZE    25
-                      //        #define DISP_TX_FCOL   0xB7E0 // TFT_GREENYELLOW
-                      //        #define DISP_TX_BCOL   DISP_BCOL
-                      //        // status line for messages
-                      //        #define USE_STAT_TOUCH OFF
-                      //        #define STATUS_XCENT   120 // Centred on this
-                      //        #define STATUS_YCENT   315
-                      //        #define STATUS_XLI     0
-                      //        #define STATUS_XRE     239
-                      //        #define STATUS_YOB     DISP_H // 300
-                      //        #define STATUS_YUN     319
-                      //        #define STATUS_FCOL    0xF81F // TFT_MAGENTA
-                      //        #define STATUS_BCOL    0x0000 // TFT_BLACK
-                      //      #endif
-                      //    //
-                      //    #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
-                      //        #define DATE_DISP_COL   0
-                      //        #define DATE_DISP_LINE  0    // line on display for date / time
-                      //        #define LCD_ROWS        2
-                      //        #define LCD_CULS        2
-                      //      #endif
-                      //  #endif
+            //#if ( USE_DISP_TFT > 0 )
+              //    #if !(DISP_TFT ^ MC_UO_TOUCHXPT2046_AZ)
+              //        #define DISP_ORIENT    3      // 0:USB oben, 1:USB links, 2:USB unten, 3:USB rechts
+              //        #define DATE_DISP_COL  0
+              //        #define DATE_DISP_LINE 9      // line on display for date / time
+              //        // text display area
+              //        #define DISP_X         0
+              //        #define DISP_Y         0
+              //        #define DISP_W         240
+              //        #define DISP_H         300
+              //        #define DISP_BCOL      0x000F // TFT_NAVY
+              //        #define DISP_ANZ_SP    20
+              //        #define DISP_ANZ_ZE    12
+              //        #define DISP_Hoe_ZE    25
+              //        #define DISP_TX_FCOL   0xB7E0 // TFT_GREENYELLOW
+              //        #define DISP_TX_BCOL   DISP_BCOL
+              //        // status line for messages
+              //        #define USE_STAT_TOUCH OFF
+              //        #define STATUS_XCENT   120 // Centred on this
+              //        #define STATUS_YCENT   315
+              //        #define STATUS_XLI     0
+              //        #define STATUS_XRE     239
+              //        #define STATUS_YOB     DISP_H // 300
+              //        #define STATUS_YUN     319
+              //        #define STATUS_FCOL    0xF81F // TFT_MAGENTA
+              //        #define STATUS_BCOL    0x0000 // TFT_BLACK
+              //      #endif
+              //    //
+              //    #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
+              //        #define DATE_DISP_COL   0
+              //        #define DATE_DISP_LINE  0    // line on display for date / time
+              //        #define LCD_ROWS        2
+              //        #define LCD_CULS        2
+              //      #endif
+              //#endif
                       //// --- acoustic output
                       //  #if (USE_AOUT > OFF)
                       //      #if !(BUZZER1 ^ AOUT_PAS_BUZZ_3V5V)
@@ -809,111 +807,106 @@
                       //        #endif
                       //    #endif
                       //  #if (USE_ACS712_ANA > OFF)
-                      //      /*  ACS712 hall effect current sensor +/- 5A/20A/30 A
-                      //          output: VCC/2 (2,5V) + measured value
-                      //          sensitivity: type  5A -> 186mV/A ->  1570 - 3430 mV
-                      //          sensitivity: type 20A -> 100mV/A ->   500 - 4500 mV
-                      //          sensitivity: type 30A ->  66mV/A ->   520 - 4480 mV
-                      //        */
-                      //      #define I712_FILT               0
-                      //      #define I712_DROP               0
-                      //      #define I712_1_IMAX             5000 // mA
-                      //      #define I712_1_ADC              OFF // not recommended, low resolution
-                      //      #if (I712_1_ADC > OFF)
-                      //          #define I712_1_ADC_ATT   ADC_ATTEN_DB_11
-                      //        #endif
-                      //      #define I712_1_1115             ON
-                      //      #if (I712_1_1115 > OFF)
-                      //          #define I712_1_1115_UNIDX    0
-                      //          #define I712_1_1115_CHIDX    1
-                      //          #if   (I712_1_IMAX ==  5000)
-                      //              #define ADS12_GAIN            GAIN_TWOTHIRDS
-                      //              #define ADS12_RATE            RATE_ADS1115_128SPS
-                      //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //              #define I712_1_SCAL_GAIN      185
-                      //              #define I712_1_SCAL_OFFREAL   0
-                      //            #endif
-                      //          #if (I712_1_IMAX == 20000)
-                      //              #define ADS12_GAIN            GAIN_ONE
-                      //              #define ADS12_RATE            RATE_ADS1115_128SPS
-                      //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //              #define I712_1_SCAL_GAIN      1
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //            #endif
-                      //          #if (I712_1_IMAX == 30000)
-                      //              #define ADS12_GAIN            GAIN_ONE
-                      //              #define ADS12_RATE            RATE_ADS1115_128SPS
-                      //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //              #define I712_1_SCAL_GAIN      1
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //            #endif
-                      //          #if (USE_MQTT > OFF)
-                      //              #define MQTT_I712_1         "acs7121"
-                      //            #endif
-                      //        #endif
-                      //      #if (USE_ACS712_ANA > 1)
-                      //          #define I712_2_IMAX             5000 // mA
-                      //          #define I712_2_ADC              OFF // not recommended, low resolution
-                      //          #define I712_2_1115             ON
-                      //          #if (I712_2_ADC > OFF)
-                      //              #define I712_2_ADC_ATT   ADC_ATTEN_DB_11
-                      //            #endif
-                      //          #if (I712_2_1115 > OFF)
-                      //              #define I712_2_1115_UNIDX     0
-                      //              #define I712_2_1115_CHIDX    2
-                      //              #if  (I712_2_IMAX ==  5000)
-                      //                  #define I712_2_1115_ATT       GAIN_ONE
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                  #define I712_2_SCAL_GAIN      1
-                      //                  #define I712_2_SCAL_OFFREAL   0
-                      //                #endif
-                      //              #if (I712_2_IMAX == 20000)
-                      //                  #define I712_2_1115_ATT      GAIN_TWOTHIRDS
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                  #define I712_2_SCAL_GAIN      1
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                #endif
-                      //              #if (I712_2_IMAX == 30000)
-                      //                  #define I712_2_1115_ATT      GAIN_TWOTHIRDS
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                  #define I712_2_SCAL_GAIN      1
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                #endif
-                      //              #if (USE_MQTT > OFF)
-                      //                  #define MQTT_I712_1         "acs7121"
-                      //                  #define MQTT_I712_2         "acs7122"
-                      //                #endif
-                      //            #endif
-                      //        #endif
-                      //    #endif
-                      //  #if (USE_ADC1115_I2C > OFF)
-                      //      #define ADS_I2C          DEV_I2C1
-                      //      #define ADS1_RUNMODE     MD_NORM
-                      //      //#define ADS1_RUNMODE     MD_SIM
-                      //      #define ADS1_ADDR        I2C_ADS1115_48
-                      //      #define ADS1_ANZ_CHANS   4
-                      //      #if (USE_ADC1115_I2C > 1)
-                      //          #define ADS2_ADDR        I2C_ADS1115_48 //I2C_ADS1115_49
-                      //          #define ADS2_ANZ_CHANS    4
-                      //          #if (USE_ADC1115_I2C > 2)
-                      //              #define ADS3_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4A
-                      //              #define ADS3_ANZ_CHANS    4
-                      //              #if (USE_ADC1115_I2C > 3)
-                      //                  #define ADS4_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4B
-                      //                  #define ADS4_ANZ_CHANS    4
-                      //                #endif
-                      //            #endif
-                      //        #endif
-                      //    #endif
-
-
-
-
-
-
+                        //      /*  ACS712 hall effect current sensor +/- 5A/20A/30 A
+                        //          output: VCC/2 (2,5V) + measured value
+                        //          sensitivity: type  5A -> 186mV/A ->  1570 - 3430 mV
+                        //          sensitivity: type 20A -> 100mV/A ->   500 - 4500 mV
+                        //          sensitivity: type 30A ->  66mV/A ->   520 - 4480 mV
+                        //        */
+                        //      #define I712_FILT               0
+                        //      #define I712_DROP               0
+                        //      #define I712_1_IMAX             5000 // mA
+                        //      #define I712_1_ADC              OFF // not recommended, low resolution
+                        //      #if (I712_1_ADC > OFF)
+                        //          #define I712_1_ADC_ATT   ADC_ATTEN_DB_11
+                        //        #endif
+                        //      #define I712_1_1115             ON
+                        //      #if (I712_1_1115 > OFF)
+                          //          #define I712_1_1115_UNIDX    0
+                          //          #define I712_1_1115_CHIDX    1
+                          //          #if   (I712_1_IMAX ==  5000)
+                          //              #define ADS12_GAIN            GAIN_TWOTHIRDS
+                          //              #define ADS12_RATE            RATE_ADS1115_128SPS
+                          //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                          //              #define I712_1_SCAL_OFFRAW    0
+                          //              #define I712_1_SCAL_GAIN      185
+                          //              #define I712_1_SCAL_OFFREAL   0
+                          //            #endif
+                          //          #if (I712_1_IMAX == 20000)
+                          //              #define ADS12_GAIN            GAIN_ONE
+                          //              #define ADS12_RATE            RATE_ADS1115_128SPS
+                          //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                          //              #define I712_1_SCAL_OFFRAW    0
+                          //              #define I712_1_SCAL_GAIN      1
+                          //              #define I712_1_SCAL_OFFRAW    0
+                          //            #endif
+                          //          #if (I712_1_IMAX == 30000)
+                          //              #define ADS12_GAIN            GAIN_ONE
+                          //              #define ADS12_RATE            RATE_ADS1115_128SPS
+                          //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                          //              #define I712_1_SCAL_OFFRAW    0
+                          //              #define I712_1_SCAL_GAIN      1
+                          //              #define I712_1_SCAL_OFFRAW    0
+                          //            #endif
+                          //          #if (USE_MQTT > OFF)
+                          //              #define MQTT_I712_1         "acs7121"
+                          //            #endif
+                          //        #endif
+                          //      #if (USE_ACS712_ANA > 1)
+                          //          #define I712_2_IMAX             5000 // mA
+                          //          #define I712_2_ADC              OFF // not recommended, low resolution
+                          //          #define I712_2_1115             ON
+                          //          #if (I712_2_ADC > OFF)
+                          //              #define I712_2_ADC_ATT   ADC_ATTEN_DB_11
+                          //            #endif
+                          //          #if (I712_2_1115 > OFF)
+                          //              #define I712_2_1115_UNIDX     0
+                          //              #define I712_2_1115_CHIDX    2
+                          //              #if  (I712_2_IMAX ==  5000)
+                          //                  #define I712_2_1115_ATT       GAIN_ONE
+                          //                  #define I712_2_SCAL_OFFRAW    0
+                          //                  #define I712_2_SCAL_GAIN      1
+                          //                  #define I712_2_SCAL_OFFREAL   0
+                          //                #endif
+                          //              #if (I712_2_IMAX == 20000)
+                          //                  #define I712_2_1115_ATT      GAIN_TWOTHIRDS
+                          //                  #define I712_2_SCAL_OFFRAW    0
+                          //                  #define I712_2_SCAL_GAIN      1
+                          //                  #define I712_2_SCAL_OFFRAW    0
+                          //                #endif
+                          //              #if (I712_2_IMAX == 30000)
+                          //                  #define I712_2_1115_ATT      GAIN_TWOTHIRDS
+                          //                  #define I712_2_SCAL_OFFRAW    0
+                          //                  #define I712_2_SCAL_GAIN      1
+                          //                  #define I712_2_SCAL_OFFRAW    0
+                          //                #endif
+                          //              #if (USE_MQTT > OFF)
+                          //                  #define MQTT_I712_1         "acs7121"
+                          //                  #define MQTT_I712_2         "acs7122"
+                          //                #endif
+                          //            #endif
+                          //        #endif
+                          //    #endif
+                        //  #if (USE_ADC1115_I2C > OFF)
+                          //      #define ADS_I2C          DEV_I2C1
+                          //      #define ADS1_RUNMODE     MD_NORM
+                          //      //#define ADS1_RUNMODE     MD_SIM
+                          //      #define ADS1_ADDR        I2C_ADS1115_48
+                          //      #define ADS1_ANZ_CHANS   4
+                          //      #if (USE_ADC1115_I2C > 1)
+                          //          #define ADS2_ADDR        I2C_ADS1115_48 //I2C_ADS1115_49
+                          //          #define ADS2_ANZ_CHANS    4
+                          //          #if (USE_ADC1115_I2C > 2)
+                          //              #define ADS3_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4A
+                          //              #define ADS3_ANZ_CHANS    4
+                          //              #if (USE_ADC1115_I2C > 3)
+                          //                  #define ADS4_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4B
+                          //                  #define ADS4_ANZ_CHANS    4
+                          //                #endif
+                          //            #endif
+                          //        #endif
+                          //    #endif
+          //
           // --- cycle timing
             #define DISP_CYCLE_MS       100ul   // Intervallzeit [us]
             // output status line
