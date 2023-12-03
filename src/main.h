@@ -12,7 +12,7 @@
         #include <Wire.h>
       #endif // USE_I2C
   // standard project includes
-    #include <prj_conf_test_lib_oled.h>
+    #include <prj_conf_test_stdlib.h>
   // standard md_library
     #include <md_defines.h>
     #include <md_util.h>
@@ -28,5 +28,166 @@
               #include <SH1106Wire.h>
             #endif // OLED_DRV
         #endif // USE_OLED_I2C
+    // sensors
+      #if ( USE_BME280_I2C > OFF )
+          #include <Adafruit_Sensor.h>
+          #include <Adafruit_BME280.h>
+        #endif
+
+
+  // ---------------------------------------
+  // --- prototypes
+    // ------ system -------------------------
+      // --- heap ------------------------
+        void heapFree(const char* text);
+    // ------ user interface -----------------
+      // --- user output
+        // --- display
+          #ifdef USE_DISP
+              void clearDisp();
+              void dispStatus(String msg, bool direct = false);
+              void dispStatus(const char* msg, bool direct = false);
+              void dispText(char* msg, uint8_t col, uint8_t row, uint8_t len);
+              void dispText(String msg, uint8_t col, uint8_t row, uint8_t len);
+              void startDisp();
+            #endif
+        // --- LED output
+          #if (USE_RGBLED_PWM > OFF)
+              void initRGBLED();
+            #endif
+        // --- passive buzzer
+          #ifdef PLAY_MUSIC
+              void playSong(int8_t songIdx);
+              void playSong();
+            #endif
+        // --- traffic Light of gas sensor
+          #if (USE_MQ135_GAS_ANA > OFF)
+              int16_t showTrafficLight(int16_t inval, int16_t inthres);
+            #endif
+          #if (USE_MQ3_ALK_ANA > OFF)
+              int16_t showTrafficLight(int16_t inval, int16_t inthres);
+            #endif
+        // WS2812 LED
+          #if (USE_WS2812_LINE_OUT > OFF)
+              void initWS2812Line();
+              void FillLEDsFromPaletteColors(uint8_t lineNo, uint8_t colorIndex);
+              void ChangePalettePeriodically(uint8_t lineNo);
+              #ifdef XXXX
+                  void SetupTotallyRandomPalette();
+                  void SetupBlackAndWhiteStripedPalette();
+                  void SetupPurpleAndGreenPalette();
+                #endif
+            #endif
+          #if (USE_WS2812_MATRIX_OUT > OFF)
+              void initWS2812Matrix();
+            #endif
+      // --- user input
+        // --- keypad
+          #if defined(KEYS)
+              void startKeys();
+              uint8_t getKey();
+            #endif
+        // --- digital input
+          #if (USE_DIG_INP > OFF)
+              void getDIGIn();
+            #endif
+          #if (USE_CTRL_POTI > OFF)
+              void getADCIn();
+            #endif
+        // --- counter input
+          #if (USE_CNT_INP > OFF)
+              static void initPCNT();
+              void getCNTIn();
+            #endif
+      // --- sensors
+        // --- BME280
+          #if (USE_BME280_I2C > OFF)
+              static void initBME280();
+            #endif
+        // --- ADS1115
+          #if (USE_ADC1115_I2C > OFF)
+              static void initADS1115();
+              static void startADS1115();
+            #endif
+        // --- CCS811
+          #if (USE_CCS811_I2C > OFF)
+              void initCCS811();
+            #endif
+          #if (USE_INA3221_I2C > OFF)
+              void initINA3221();
+            #endif
+        // --- DS18B20
+          #if (USE_DS18B20_1W_IO > OFF)
+              String getDS18D20Str();
+            #endif
+        // --- MQ135 gas sensor
+          #if (USE_MQ135_GAS_ANA > OFF)
+              int16_t getGasValue();
+              int16_t getGasThres();
+            #endif
+        // --- T-element type K
+        // --- photo sensor
+          #if (USE_PHOTO_SENS_ANA > OFF)
+              void initPhoto();
+            #endif
+        // poti measure
+          #if (USE_POTI_ANA > OFF)
+              void initPoti();
+            #endif
+        // vcc measure
+          #if (USE_VCC50_ANA > OFF)
+              void initVCC50();
+            #endif
+          #if (USE_VCC50_ANA > OFF)
+              void initVCC33();
+            #endif
+        // ACS712 current measurement
+          #if (USE_ACS712_ANA > OFF)
+              void initACS712();
+            #endif
+    // ----- memory ---------------------------
+          #if (USE_FLASH_MEM > OFF)
+              void testFlash();
+            #endif
+    // ------ network -------------------------
+      // --- WIFI
+        #if (USE_WIFI > OFF)
+            uint8_t startWIFI(bool startup);
+            #if (USE_NTP_SERVER > OFF)
+                void    initNTPTime();
+              #endif
+          #endif
+      // --- webserver
+        #if (USE_WEBSERVER > OFF)
+            //void handlingIncomingData(AsyncWebSocketClient *client, void *arg, uint8_t *data, size_t len);
+            //void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type,
+            //             void * arg, uint8_t *data, size_t len);
+            //void configWebsite();
+            void startWebServer();
+            void readWebMessage();
+            void sendMessage();
+          #endif
+      // --- MQTT
+        #if (USE_MQTT > OFF)
+            void startMQTT();
+            void connectMQTT();
+            void soutMQTTerr(String text, int8_t errMQTT);
+            void readMQTTmsg();
+          #endif
+    // ----- projects
+      #if (PROJECT == PRJ_TEST_LIB_OLED)
+          void drawLines();
+          void drawRect();
+          void fillRect();
+          void drawCircle();
+          void printBuffer();
+          void drawFontFaceDemo();
+          void drawTextFlowDemo();
+          void drawTextAlignmentDemo();
+          void drawRectDemo();
+          void drawCircleDemo();
+          void drawProgressBarDemo();
+          //void drawImageDemo()
+        #endif
 
 #endif // _MAIN_H_

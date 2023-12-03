@@ -63,14 +63,39 @@
           #define CCS811_I2C_ADDR     I2C_CSS811_
           #define CCS811_I2C          I2C1
         #endif // USE_CCS811_I2C
-      #if (USE_BME280_I2C > OFF )
-          #define BME280_I2C         I2C1
-        #endif // USE_BME280_I2C
       #if (USE_BME680_I2C > OFF )
           #define BME680_I2C         I2C1
         #endif // USE_BME680_I2C
-
-
+      #if (USE_BME280_I2C > OFF) // 1
+          static Adafruit_BME280  bme280_1;
+          static Adafruit_BME280 *pbme280_1;
+          #if (BME280_I2C == DEV_I2C1)
+              TwoWire* pbme280i2c  = &i2c1;
+            #else
+              TwoWire* pbme280i2c  = &i2c2;
+            #endif
+          //md_val<float> bme280TVal;
+          //md_val<float> bme280PVal;
+          //md_val<float> bme280HVal;
+          float         bme280T       = 0;
+          float         bme280P       = 0;
+          float         bme280H       = 0;
+          float         bme280Told    = MD_F_MAX;
+          float         bme280Pold    = MD_F_MAX;
+          float         bme280Hold    = MD_F_MAX;
+          static String valBME280T    = "";
+          static String valBME280P    = "";
+          static String valBME280H    = "";
+          //static int8_t pubBME280T    = OFF;
+          //static int8_t pubBME280H    = OFF;
+          //static int8_t pubBME280P    = OFF;
+          static int8_t bme280da      = FALSE;
+          #if (USE_MQTT > OFF)
+              static String topBME280t = MQTT_BME280T;
+              static String topBME280p = MQTT_BME280P;
+              static String topBME280h = MQTT_BME280H;
+            #endif
+        #endif // USE_BME280_I2C
 
 
 
@@ -78,21 +103,9 @@
 
 
 // ----------------------------------------------------------------
-// --- prototypes only for this file -----------------------------------
+// --- prototypes --> main.h
 // ----------------------------------------------------------------
-  // --- system --------------------------
-    void heapFree(const char* text);
-  // --- display
-    #ifdef USE_DISP
-        void dispStatus(String msg, bool direct);
-        void dispStatus(const char* msg, bool direct);
-        void dispText(String msg, uint8_t col, uint8_t row, uint8_t len);
-        void dispText(char* msg, uint8_t col, uint8_t row, uint8_t len);
-        void startDisp();
-        #ifdef TEST_OLED
-            void test_oled();
-          #endif
-      #endif // USE_OLED_I2C
+//
 // ----------------------------------------------------------------
 // --- system setup -----------------------------------
 // ----------------------------------------------------------------
@@ -116,15 +129,34 @@
         #ifdef USE_DISP
             startDisp();
           #endif
-      STXT(" ... setup finished");
+      // BME280 temperature, pessure, humidity
+        #if (USE_BME280_I2C > OFF)
+            initBME280();
+          #endif
+     STXT(" ... setup finished");
     }
-
+// ----------------------------------------------------------------
+// --- system loop  ---------------
+// ----------------------------------------------------------------
   void loop()
     {
-      // put your main code here, to run repeatedly:
+      #if (PROJECT == PRJ_TEST_LIB_OLED)
+          oled.clear(); drawLines(); sleep(1);
+          oled.clear(); drawRect(); sleep(1);
+          oled.clear(); fillRect(); sleep(1);
+          oled.clear(); drawCircle(); sleep(1);
+          oled.clear(); printBuffer(); sleep(1);
+          oled.clear(); drawFontFaceDemo(); sleep(1);
+          oled.clear(); drawTextFlowDemo(); sleep(1);
+          oled.clear(); drawTextAlignmentDemo(); sleep(1);
+          oled.clear(); drawRectDemo(); sleep(1);
+          oled.clear(); drawCircleDemo(); sleep(1);
+          oled.clear(); drawProgressBarDemo(); sleep(1);
+        #endif
+      #if (USE_BME280_I2C > OFF)
+
+        #endif
     }
-
-
 // ----------------------------------------------------------------
 // --- subroutine and drivers ----------------
 // ----------------------------------------------------------------
@@ -207,11 +239,11 @@
                                        //  {
                                        //    #if ( USE_BME280_I2C > OFF )
                                        //        outStr[0] = 0;
-                                       //        outStr.concat(bmeT.getVal());
+                                       //        outStr.concat(bme280T.getVal());
                                        //        outStr.concat("° ");
-                                       //        outStr.concat(bmeH.getVal());
+                                       //        outStr.concat(bme280H.getVal());
                                        //        outStr.concat("% ");
-                                       //        outStr.concat(bmeP.getVal());
+                                       //        outStr.concat(bme280P.getVal());
                                        //        outStr.concat("mb  ");
                                        //      #endif
                                        //  }
@@ -307,7 +339,7 @@
                     #endif
                 #endif
             }
-          #ifdef TEST_OLED
+          #if (PROJECT == PRJ_TEST_LIB_OLED)
               void drawLines()
                 {
                   for (int16_t i = 0; i < oled.getWidth(); i += 4)
@@ -530,10 +562,10 @@
                       oled.setColor(BLACK);
                       oled.fillRect(0, lin0, 26, 12);
                       oled.setColor(WHITE);
-                      oled.drawProgressBar(28, lin0+3, widthbar, 4, progress); //oled.display();
+                      oled.drawProgressBar(28, lin0+3, widthbar, 4 , progress); //oled.display();
                       oled.drawString(0, lin0, String(progress) + "%"); oled.display();
                       SVAL(" progress ", progress);
-                      progress+=5;
+                      progress+=10;
                       usleep(500000);
                     }
                   // draw the percentage as String
@@ -546,44 +578,35 @@
                 //  // on how to create xbm files
                 //  oled.drawXbm(34, 14, WiFi_Logo_width, WiFi_Logo_height, WiFi_Logo_bits);
                 //}
-              void test_oled()
-                {
-                    drawLines();
-                    sleep(1);
-                    oled.clear();
-                    drawRect();
-                    sleep(1);
-                    oled.clear();
-                    fillRect();
-                    sleep(1);
-                    oled.clear();
-                    drawCircle();
-                    sleep(1);
-                    oled.clear();
-                    printBuffer();
-                    sleep(1);
-                    oled.clear();
-                    drawFontFaceDemo();
-                    sleep(1);
-                    oled.clear();
-                    drawTextFlowDemo();
-                    sleep(1);
-                    oled.clear();
-                    drawTextAlignmentDemo();
-                    sleep(1);
-                    oled.clear();
-                    drawRectDemo();
-                    sleep(1);
-                    oled.clear();
-                    drawCircleDemo();
-                    sleep(1);
-                    oled.clear();
-                    drawProgressBarDemo();
-                    sleep(1);
-                    oled.clear();
-                }
             #endif // TEST_OLED
         #endif // USE_DISP
-
+  // --- sensors -------------------------
+    // --- BME280
+      #if (USE_BME280_I2C > OFF)
+          static void initBME280()
+            {
+              dispStatus("init BME280");
+              STXT(" init BME280 ...");
+              bme280da = bme280_1.begin(I2C_BME280_76, pbme280i2c);
+              if (bme280da)
+                {
+                  bme280_1.setSampling(bme280_1.MODE_FORCED);
+                  STXT(" BME280(1) gefunden");
+                  #if (BME280T_FILT > OFF)
+                      bme280TVal.begin(BME280T_FILT, BME280T_Drop);
+                    #endif
+                  #if (BME280P_FILT > OFF)
+                      bme280PVal.begin(BME280P_FILT, BME280P_Drop);
+                    #endif
+                  #if (BME280H_FILT > OFF)
+                      bme280HVal.begin(BME280H_FILT, BME280H_Drop);
+                    #endif
+                }
+                else
+                {
+                  STXT(" BME280(1) nicht gefunden");
+                }
+            }
+        #endif
 #endif // ESP32_TEST_MD_LIB
 

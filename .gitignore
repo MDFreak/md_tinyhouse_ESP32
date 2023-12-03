@@ -4,3 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 .git*
+./MD_ESP32-Test*
+./md_ESP32-Test2*
