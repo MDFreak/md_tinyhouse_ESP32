@@ -30,8 +30,7 @@
         #endif // USE_OLED_I2C
     // sensors
       #if ( USE_BME280_I2C > OFF )
-          #include <Adafruit_Sensor.h>
-          #include <Adafruit_BME280.h>
+          #include <md_BME280.h>
         #endif
 
 

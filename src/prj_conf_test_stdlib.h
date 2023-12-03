@@ -26,9 +26,16 @@
         #if (USE_OLED_I2C > OFF)
             #define OLED_I2C_ADDR  I2C_OLED_3C
             #define OLED_I2C       DEV_I2C1
-            #ifndef I2C1
-                #define I2C1
-              #endif //I2C1
+            #if (OLED_I2C == DEV_I2C1)
+                #ifndef I2C1
+                    #define I2C1
+                  #endif //I2C1
+              #endif
+            #if (OLED_I2C == DEV_I2C2)
+                #ifndef I2C2
+                    #define I2C2
+                  #endif //I2C2
+              #endif
           #endif // USE_OLED_I2C
             //#if (USE_FRAM_I2C > OFF)
             //    #define FRAM1_I2C_ADDR      I2C_FRAM_50
@@ -530,6 +537,16 @@
                   //  #endif
         #if (USE_BME280_I2C > OFF)
             #define BME280_I2C               DEV_I2C1
+            #if (BME280_I2C == DEV_I2C1)
+                #ifndef I2C1
+                    #define I2C1
+                  #endif //I2C1
+              #endif
+            #if (BME280_I2C == DEV_I2C2)
+                #ifndef I2C2
+                    #define I2C2
+                  #endif //I2C2
+              #endif
             #define BME280_ADDR              I2C_BME280_76
             #define BME280_RUNMODE           MD_NORM
             //#define BME280_RUNMODE           MD_SIM

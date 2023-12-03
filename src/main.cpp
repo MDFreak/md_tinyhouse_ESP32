@@ -21,16 +21,16 @@
     int8_t          tmp_i8  = 0;
     int16_t         tmp_i16 = 0;
     int32_t         tmp_i32 = 0;
+    String          outStr;
   // --- system devices
     // i2C devices
     #if defined(USE_I2C)
-      // OLED
-        #ifdef I2C1
-            TwoWire i2c1 = TwoWire(0);
-          #endif
-        #ifdef I2C2
-            TwoWire i2c2 = TwoWire(1);
-          #endif
+               //#ifdef I2C1
+               //    TwoWire i2c1 = TwoWire(0);
+               //  #endif
+               //#ifdef I2C2
+               //    TwoWire i2c2 = TwoWire(1);
+               //  #endif
       #endif // USE_I2C
     // SPI devices
     #if ( DEV_VSPI > OFF )
@@ -52,6 +52,23 @@
               int oledCnt = 1;
             #endif
         #endif // USE_OLED_I2C
+  // ------ user input ---------------
+  // ------ user output ---------------
+  // --- system cycles ---------------
+    #ifdef USE_INPUT_CYCLE
+        static msTimer inputT           = msTimer(INPUT_CYCLE_MS);
+        static uint8_t inpIdx   = 0;
+      #endif
+    #ifdef USE_OUTPUT_CYCLE
+        static msTimer outpT            = msTimer(OUTPUT_CYCLE_MS);
+        static uint8_t outpIdx  = 0;
+      #endif
+    #ifdef USE_DISP
+        static msTimer dispT            = msTimer(DISP_CYCLE_MS);
+        static uint8_t dispIdx  = 0;
+        uint32_t      ze     = 1;      // aktuelle Schreibzeile
+        char          outBuf[OLED_MAXCOLS + 1] = "";
+      #endif
     // memory
       #if (USE_FRAM_I2C > OFF)
           #define FRAM1_I2C_ADDR      I2C_FRAM_50
@@ -67,16 +84,16 @@
           #define BME680_I2C         I2C1
         #endif // USE_BME680_I2C
       #if (USE_BME280_I2C > OFF) // 1
-          static Adafruit_BME280  bme280_1;
-          static Adafruit_BME280 *pbme280_1;
+          static md_BME280  bme280_1;
+          //static md_BME280* pbme280_1 = &bme280_1;
           #if (BME280_I2C == DEV_I2C1)
-              TwoWire* pbme280i2c  = &i2c1;
+              static TwoWire* pbme280i2c  = &Wire;
             #else
-              TwoWire* pbme280i2c  = &i2c2;
+              static TwoWire* pbme280i2c  = &Wire1;
             #endif
-          //md_val<float> bme280TVal;
-          //md_val<float> bme280PVal;
-          //md_val<float> bme280HVal;
+            //md_val<float> bme280TVal;
+            //md_val<float> bme280PVal;
+            //md_val<float> bme280HVal;
           float         bme280T       = 0;
           float         bme280P       = 0;
           float         bme280H       = 0;
@@ -97,15 +114,6 @@
             #endif
         #endif // USE_BME280_I2C
 
-
-
-
-
-
-// ----------------------------------------------------------------
-// --- prototypes --> main.h
-// ----------------------------------------------------------------
-//
 // ----------------------------------------------------------------
 // --- system setup -----------------------------------
 // ----------------------------------------------------------------
@@ -122,8 +130,11 @@
         //disableCore1WDT();
         disableLoopWDT();
       // start I2C
-        #ifdef SCAN_I2C
-            scanI2C(&i2c1, PIN_I2C1_SDA, PIN_I2C1_SCL);
+        #if defined(USE_I2C)
+                Wire.setPins(PIN_I2C1_SDA, PIN_I2C1_SCL);
+            #ifdef SCAN_I2C
+                scanI2C(&Wire, PIN_I2C1_SDA, PIN_I2C1_SCL);
+              #endif
           #endif
       // start display
         #ifdef USE_DISP
@@ -140,22 +151,68 @@
 // ----------------------------------------------------------------
   void loop()
     {
-      #if (PROJECT == PRJ_TEST_LIB_OLED)
-          oled.clear(); drawLines(); sleep(1);
-          oled.clear(); drawRect(); sleep(1);
-          oled.clear(); fillRect(); sleep(1);
-          oled.clear(); drawCircle(); sleep(1);
-          oled.clear(); printBuffer(); sleep(1);
-          oled.clear(); drawFontFaceDemo(); sleep(1);
-          oled.clear(); drawTextFlowDemo(); sleep(1);
-          oled.clear(); drawTextAlignmentDemo(); sleep(1);
-          oled.clear(); drawRectDemo(); sleep(1);
-          oled.clear(); drawCircleDemo(); sleep(1);
-          oled.clear(); drawProgressBarDemo(); sleep(1);
-        #endif
-      #if (USE_BME280_I2C > OFF)
+      // system loop intro
+        anzUsCycles++;
+        tmp_i32 = ESP.getFreeHeap();
+        //heapFree("+loop");
+        if (tmp_i32 < freeHeap)
+          {
+            freeHeap = tmp_i32;
+            heapFree(" loop ");
+          }
+        tmp_i32 = ESP.getFreeHeap();
+        //heapFree("+loop");
+        if (tmp_i32 < freeHeap)
+          {
+            freeHeap = tmp_i32;
+            heapFree(" loop ");
+          }
+        if (firstrun == true)
+          {
+            SVAL("loop task running on core ", xPortGetCoreID());
+            usLast = micros();
+            //firstrun = false;
+          }
+        #ifdef USE_DISP
+            outStr   = "";
+          #endif
+      // library tests
+        #if (PROJECT == PRJ_TEST_LIB_OLED)
+            oled.clear(); drawLines();
+            oled.clear(); drawRect();
+            oled.clear(); fillRect();
+            oled.clear(); drawCircle();
+            oled.clear(); printBuffer();
+            oled.clear(); drawFontFaceDemo();
+            oled.clear(); drawTextFlowDemo();
+            oled.clear(); drawTextAlignmentDemo();
+            oled.clear(); drawRectDemo();
+            oled.clear(); drawCircleDemo();
+            oled.clear(); drawProgressBarDemo();
+          #endif
+        #if (PROJECT == PRJ_TEST_LIB_BME280)
+            bme280T = round( bme280_1.readTemperature() * 10 ) / 10;
+            bme280H = round( bme280_1.readHumidity() * 10 ) / 10;
+            bme280P = round( bme280_1.readPressure() / 100 );
+            Serial.printf(" BME280  T = %.1f°C  P = %.0fmbar  H = %.0f%% \n", bme280T, bme280P, bme280H);
+            bme280_1.setSampling(bme280_1.MODE_FORCED);
+          #endif
+      // sensoren
+        #if (USE_BME280_I2C > OFF)
 
-        #endif
+          #endif
+      // system loop end
+        if (firstrun == true)
+          {
+            String taskMessage = "loop task running on core ";
+            taskMessage = taskMessage + xPortGetCoreID();
+            STXT(taskMessage);
+            usLast = micros();
+            firstrun = false;
+          }
+        anzUsCycles++;
+        sleep(1);
+          //usleep(20);
     }
 // ----------------------------------------------------------------
 // --- subroutine and drivers ----------------
@@ -187,9 +244,9 @@
 
                   if (statLen)
                     {
-                      if ( statLen > OLED1_MAXCOLS)
+                      if ( statLen > OLED_MAXCOLS)
                         {
-                          msg.remove(OLED1_MAXCOLS);
+                          msg.remove(OLED_MAXCOLS);
                         }
                       statOn = true;
                       statT.startT();
@@ -325,7 +382,7 @@
                     #endif
                 #endif // USE_OLED_I2C
               #ifdef USE_STATUS
-                statOut[OLED1_MAXCOLS] = 0;  // limit strlen
+                statOut[OLED_MAXCOLS] = 0;  // limit strlen
                 #endif
               #if (USE_DISP_TFT > 0)
                   #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
