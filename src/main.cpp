@@ -195,7 +195,7 @@
             bme280H = round( bme280_1.readHumidity() * 10 ) / 10;
             bme280P = round( bme280_1.readPressure() / 100 );
             Serial.printf(" BME280  T = %.1f°C  P = %.0fmbar  H = %.0f%% \n", bme280T, bme280P, bme280H);
-            bme280_1.setSampling(bme280_1.MODE_FORCED);
+            bme280_1.takeForcedMeasurement();
           #endif
       // sensoren
         #if (USE_BME280_I2C > OFF)
