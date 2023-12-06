@@ -192,14 +192,19 @@
             oled.clear(); drawRect();
             oled.clear(); fillRect();
             oled.clear(); drawCircle();
-            oled.clear(); printBuffer();
+                //oled.clear(); printBuffer();
             oled.clear(); drawFontFaceDemo();
-            oled.clear(); drawTextFlowDemo();
-            oled.clear(); drawTextAlignmentDemo();
-            oled.clear(); drawRectDemo();
-            oled.clear(); drawCircleDemo();
+                //oled.clear(); drawTextFlowDemo();
+                //oled.clear(); drawTextAlignmentDemo();
+                //oled.clear(); drawRectDemo();
+                //oled.clear(); drawCircleDemo();
             oled.clear(); drawProgressBarDemo();
             oled.clear(); dispStatus("I am Status");
+            oled.wrText("Hier ist Zeile 1", 1, 1);
+            oled.wrText("Hier ist Zeile 2", 2, 2);
+            oled.wrText("Hier ist Zeile 3", 3, 3);
+            oled.wrText("Hier ist Zeile 4", 4, 4);
+            oled.wrText("Hier ist Zeile 5", 5, 5);
           #endif
         #if (PROJECT == PRJ_TEST_LIB_BME280)
             bme280T = round( bme280_1.readTemperature() * 10 ) / 10;
@@ -331,7 +336,7 @@
           void dispText(String msg, uint8_t col, uint8_t row, uint8_t len)
             {
               #if (USE_OLED_I2C > OFF)
-                  //oled.wrText(msg, col, row, len);
+                  oled.wrText(msg, col, row, len);
                 #endif
               #if (USE_DISP_TFT > 0)
                   #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
@@ -420,7 +425,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(250000); //sleep(2);
+                  usleep(150000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = 0; i < oled.getWidth(); i += 4)
@@ -435,7 +440,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(250000); //sleep(2);
+                  usleep(150000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = oled.getWidth() - 1; i >= 0; i -= 4)
@@ -450,7 +455,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(250000); //sleep(2);
+                  usleep(150000); //sleep(2);
                   oled.clearUser();
                   for (int16_t i = 0; i < oled.getHeight()-10; i += 4)
                     {
@@ -464,7 +469,7 @@
                       oled.display();
                       delay(10);
                     }
-                  usleep(250000); //sleep(2);
+                  usleep(150000); //sleep(2);
                 }
               // Adapted from Adafruit_SSD1306
               void drawRect(void)
@@ -475,7 +480,7 @@
                     {
                       oled.drawRect(i, i, oled.getWidth() - 2 * i, (oled.getHeight() -10) - 2 * i);
                       oled.display();
-                      usleep(200000);
+                      usleep(150000);
                     }
                   //usleep(250000); //sleep(2);
                 }
@@ -501,14 +506,15 @@
                 {
                   oled.clear();
                   dispStatus("drawCircle"); // 21 letters
-                  for (int16_t i = 0; i < (oled.getHeight() - 10); i += 2)
+                  for (int16_t i = 0; i < (oled.getHeight() - 10); i += 3)
                     {
                       oled.drawCircle(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, i);
                       oled.display();
-                      usleep(500000);
+                      usleep(70000);
                    }
-                  sleep(1);
+                  usleep(250000);
                   oled.clear();
+                  dispStatus("drawCircleQads"); // 21 letters
                   //  This will draw the part of the circel in quadrant 1
                    // Quadrants are numberd like this:
                    //   0010 | 0001
@@ -517,16 +523,16 @@
                    //
                   oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 4, 0b00000001);
                   oled.display();
-                  usleep(200000);
-                  oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 4, 0b00000011);
+                  usleep(250000);
+                  oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 3.3, 0b00000011);
                   oled.display();
-                  usleep(200000);
-                  oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 4, 0b00000111);
+                  usleep(250000);
+                  oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 2.6, 0b00000110);
                   oled.display();
-                  usleep(200000);
-                  oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 4, 0b00001111);
+                  usleep(250000);
+                  oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 2, 0b00001100);
                   oled.display();
-                  usleep(200000);
+                  usleep(250000);
                 }
               void printBuffer(void)
                 {
@@ -567,23 +573,23 @@
                   // Font Demo1
                   // create more fonts at http://oleddisplay.squix.ch/
                   oled.clear();
-                  dispStatus("drawFontFaceDemo"); // 21 letters
+                  dispStatus("drawFontFace"); // 21 letters
                   //STXT(" drawFontFaceDemo ");
                   oled.setTextAlignment(TEXT_ALIGN_LEFT);
                   oled.setFont(ArialMT_Plain_10);
                   oled.drawString(0, 0, "Hello world");  oled.display();
-                  usleep(400000);
+                  usleep(500000);
                   oled.setFont(ArialMT_Plain_16);
                   oled.drawString(0, 10, "Hello world"); oled.display();
-                  usleep(400000);
+                  usleep(500000);
                   oled.setFont(ArialMT_Plain_24);
                   oled.drawString(0, 26, "Hello world"); oled.display();
-                  usleep(400000);
+                  usleep(1500000);
                 }
               void drawTextFlowDemo()
                 {
                   oled.clear();
-                  dispStatus("drawTextFlowDemo"); // 21 letters
+                  dispStatus("drawTextFlow"); // 21 letters
                   oled.setFont(ArialMT_Plain_10);
                   oled.setTextAlignment(TEXT_ALIGN_LEFT);
                   oled.drawStringMaxWidth(0, 0, oled.getHeight() - 10,
@@ -594,33 +600,42 @@
               void drawTextAlignmentDemo()
                 {
                   oled.clear();
-                  dispStatus("drawTextAlignmentDemo"); // 21 letters
+                  dispStatus("drawTextAlignment"); // 21 letters
                   // Text alignment demo
                   oled.setFont(ArialMT_Plain_10);
                   // The coordinates define the left starting point of the text
                   oled.setTextAlignment(TEXT_ALIGN_LEFT);
-                  oled.drawString(0, 10, "Left aligned (0,10)");      oled.display();
-                  usleep(500000);
+                  oled.drawString(0, 0, "Left aligned (0,00)");      oled.display();
+                  usleep(20000); sleep(1);
                   // The coordinates define the center of the text
                   oled.setTextAlignment(TEXT_ALIGN_CENTER);
-                  oled.drawString(64, 22, "Center aligned (64,22)");  oled.display();
-                  usleep(500000);
+                  oled.drawString(64, 11, "Center aligned (64,11)");  oled.display();
+                  usleep(20000); sleep(1);
                  // The coordinates define the right end of the text
                   oled.setTextAlignment(TEXT_ALIGN_RIGHT);
-                  oled.drawString(128, 33, "Right aligned (128,33)"); oled.display();
-                  usleep(500000);
+                  oled.drawString(128, 22, "Right aligned (128,22)"); oled.display();
+                  usleep(20000); sleep(1);
+                  // The coordinates define the center of the text
+                  oled.setTextAlignment(TEXT_ALIGN_LEFT);
+                  oled.drawString(0, 33, "1  Center (64,33)  21");  oled.display();
+                  usleep(20000); sleep(1);
+                  oled.setTextAlignment(TEXT_ALIGN_LEFT);
+                  oled.drawString(0, 44, "L (0,0)");
+                  oled.setTextAlignment(TEXT_ALIGN_RIGHT);
+                  oled.drawString(128, 44, "R (128,22)"); oled.display();
+                  usleep(50000); sleep(1);
                 }
               void drawRectDemo()
                 {
                   oled.clear();
-                  dispStatus("drawRectDemo"); // 21 letters
+                  dispStatus("drawRect"); // 21 letters
                   // Draw a pixel at given position
                   for (int i = 0; i < 10; i++)
                     {
                       oled.setPixel(i, i);
                       oled.setPixel(10 - i, i);  oled.display();
-                      usleep(200000);
                     }
+                  usleep(200000);
                   oled.drawRect(12, 12, 20, 20);  oled.display();
                   usleep(200000);
                   // Fill the rectangle
@@ -636,7 +651,7 @@
               void drawCircleDemo()
                 {
                   oled.clear();
-                  dispStatus("drawCircleDemo"); // 21 letters
+                  dispStatus("drawCircle"); // 21 letters
                   for (int i = 1; i < 8; i++)
                     {
                       oled.setColor(WHITE);
@@ -651,21 +666,30 @@
               void drawProgressBarDemo()
                 {
                   oled.clear();
-                  dispStatus("drawProgressBarDemo"); // 21 letters
+                  dispStatus("drawProgressBar"); // 21 letters
                   uint8_t progress = 0;
                   uint8_t lin0     = oled.getHeight() - 20;
-                  uint8_t widthbar = oled.getWidth()  - 30;
+                  uint8_t widthbar = oled.getWidth()  - 32;
                   //(oledCnt * 50) % 100;
                   // draw the progress bar
                   //oled.setFont(ssd1306xled_font6x8_AB);
                   oled.setTextAlignment(TEXT_ALIGN_LEFT);
+                      //usleep(500000);
                   while (progress <= 100)
                     {
-                      oled.setColor(BLACK);
-                      oled.fillRect(0, lin0, 26, 12);
-                      oled.setColor(WHITE);
-                      oled.drawProgressBar(28, lin0+3, widthbar, 6 , progress); //oled.display();
-                      oled.drawString(0, lin0, String(progress) + "%"); oled.display();
+                      //oled.setColor(BLACK);
+                      //oled.fillRect(0, lin0, 26, 12);
+                      //oled.setColor(WHITE);
+                      oled.clearLine(1, 5, 3);
+                      //usleep(500000);
+                      //dispStatus("drawProgressBar"); // 21 letters
+                      //usleep(1500000);
+                      oled.drawProgressBar(30, oled.getRowY(5) + 3, widthbar, 6 , progress); //oled.display();
+                      //usleep(1500000);
+                      outStr = String(progress) + "%";
+                      //usleep(1500000);
+                      oled.wrText(outStr, 1, 5, 3); oled.display();
+                      outStr = "";
                       //SVAL(" progress ", progress);
                       progress+=20;
                       usleep(500000);
