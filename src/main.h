@@ -46,8 +46,8 @@
               void clearDisp();
               void dispStatus(String msg, bool direct = false);
               void dispStatus(const char* msg, bool direct = false);
-              void dispText(char* msg, uint8_t col, uint8_t row, uint8_t len);
-              void dispText(String msg, uint8_t col, uint8_t row, uint8_t len);
+              void dispText(char* msg, uint8_t col, uint8_t row, uint8_t len = 0);
+              void dispText(String msg, uint8_t col, uint8_t row, uint8_t len = 0);
               void startDisp();
             #endif
         // --- LED output
@@ -186,6 +186,7 @@
           void drawRectDemo();
           void drawCircleDemo();
           void drawProgressBarDemo();
+          void writeTextDemo();
           //void drawImageDemo()
         #endif
 

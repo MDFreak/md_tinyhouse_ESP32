@@ -18,10 +18,11 @@
     static uint32_t freeHeap    = 10000000;
     static uint8_t  firstrun    = true;
   // --- system local usable values
-    int8_t          tmp_i8  = 0;
-    int16_t         tmp_i16 = 0;
-    int32_t         tmp_i32 = 0;
-    String          outStr;
+    static int8_t          tmp_i8      = 0;
+    static int16_t         tmp_i16     = 0;
+    static int32_t         tmp_i32     = 0;
+    static String          outStr      = "";
+    static char            tmp_c32[33] = "";
   // --- system devices
     // i2C devices
     #if defined(USE_I2C)
@@ -199,17 +200,24 @@
                 //oled.clear(); drawRectDemo();
                 //oled.clear(); drawCircleDemo();
             oled.clear(); drawProgressBarDemo();
-            oled.clear(); dispStatus("I am Status");
-            oled.wrText("Hier ist Zeile 1", 1, 1);
-            oled.wrText("Hier ist Zeile 2", 2, 2);
-            oled.wrText("Hier ist Zeile 3", 3, 3);
-            oled.wrText("Hier ist Zeile 4", 4, 4);
-            oled.wrText("Hier ist Zeile 5", 5, 5);
+            oled.clear(); writeTextDemo();
           #endif
         #if (PROJECT == PRJ_TEST_LIB_BME280)
+            if (firstrun == true)
+              {
+                STXT(" run TEST_LIB_BME280 ");
+                oled.clearUser();
+              }
+            dispStatus("PRJ_TEST_LIB_BME280 läuft", TRUE);
             bme280T = round( bme280_1.readTemperature() * 10 ) / 10;
+            sprintf(tmp_c32, "BME280 T %.1f %%", bme280T);
+            dispText(tmp_c32, 0, 1);
             bme280H = round( bme280_1.readHumidity() * 10 ) / 10;
+            sprintf(tmp_c32, "BME280 H %.0f %%", bme280H);
+            dispText(tmp_c32, 0, 2);
             bme280P = round( bme280_1.readPressure() / 100 );
+            sprintf(tmp_c32, "BME280 P %.0f %%", bme280P);
+            dispText(tmp_c32, 0, 3);
             Serial.printf(" BME280  T = %.1f°C  P = %.0fmbar  H = %.0f%% \n", bme280T, bme280P, bme280H);
             bme280_1.takeForcedMeasurement();
           #endif
@@ -670,33 +678,31 @@
                   uint8_t progress = 0;
                   uint8_t lin0     = oled.getHeight() - 20;
                   uint8_t widthbar = oled.getWidth()  - 32;
-                  //(oledCnt * 50) % 100;
-                  // draw the progress bar
-                  //oled.setFont(ssd1306xled_font6x8_AB);
                   oled.setTextAlignment(TEXT_ALIGN_LEFT);
-                      //usleep(500000);
+                    //usleep(500000);
                   while (progress <= 100)
                     {
-                      //oled.setColor(BLACK);
-                      //oled.fillRect(0, lin0, 26, 12);
-                      //oled.setColor(WHITE);
-                      oled.clearLine(1, 5, 3);
-                      //usleep(500000);
-                      //dispStatus("drawProgressBar"); // 21 letters
-                      //usleep(1500000);
-                      oled.drawProgressBar(30, oled.getRowY(5) + 3, widthbar, 6 , progress); //oled.display();
-                      //usleep(1500000);
+                      oled.clearLine(1, oled.getRows()-1, 3);
+                        //usleep(500000);
+                      oled.drawProgressBar(30, oled.getRowY(oled.getRows()-1) + 3, widthbar, 6 , progress); //oled.display();
                       outStr = String(progress) + "%";
-                      //usleep(1500000);
-                      oled.wrText(outStr, 1, 5, 3); oled.display();
+                      oled.wrText(outStr, 1, oled.getRows()-1, 3); oled.display();
                       outStr = "";
-                      //SVAL(" progress ", progress);
                       progress+=20;
                       usleep(500000);
                     }
                   // draw the percentage as String
                   //oled.setTextAlignment(TEXT_ALIGN_LEFT);
                   //oled.drawString(0, 15, String(progress) + "%"); oled.display();
+                }
+              void writeTextDemo()
+                {
+                  dispStatus("writeText");
+                  for (uint8_t i = 1; i < oled.getRows(); i++)
+                    {
+                      sprintf(tmp_c32, "Zeile%i",i);
+                      oled.wrText(tmp_c32, i, i);
+                    }
                 }
               //void drawImageDemo()
                 //{
