@@ -235,7 +235,7 @@
             firstrun = false;
           }
         anzUsCycles++;
-        sleep(2);
+        sleep(1);
           //usleep(20);
     }
 // ----------------------------------------------------------------
@@ -433,7 +433,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(150000); //sleep(2);
+                  usleep(50000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = 0; i < oled.getWidth(); i += 4)
@@ -448,7 +448,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(150000); //sleep(2);
+                  usleep(50000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = oled.getWidth() - 1; i >= 0; i -= 4)
@@ -463,7 +463,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(150000); //sleep(2);
+                  usleep(50000); //sleep(2);
                   oled.clearUser();
                   for (int16_t i = 0; i < oled.getHeight()-10; i += 4)
                     {
@@ -488,9 +488,9 @@
                     {
                       oled.drawRect(i, i, oled.getWidth() - 2 * i, (oled.getHeight() -10) - 2 * i);
                       oled.display();
-                      usleep(150000);
+                      usleep(50000);
                     }
-                  //usleep(250000); //sleep(2);
+                  usleep(100000); //sleep(2);
                 }
               // Adapted from Adafruit_SSD1306
               void fillRect(void)
@@ -503,11 +503,12 @@
                       oled.setColor((color % 2 == 0) ? BLACK : WHITE); // alternate colors
                       oled.fillRect(i, i, oled.getWidth() - i * 2, (oled.getHeight() - 10) - i * 2);
                       oled.display();
-                      usleep(200000);
+                      usleep(100000);
                       color++;
                     }
                   // Reset back to WHITE
                   oled.setColor(WHITE);
+                  usleep(100000);
                 }
               // Adapted from Adafruit_SSD1306
               void drawCircle(void)
@@ -520,7 +521,7 @@
                       oled.display();
                       usleep(70000);
                    }
-                  usleep(250000);
+                  usleep(50000);
                   oled.clear();
                   dispStatus("drawCircleQads"); // 21 letters
                   //  This will draw the part of the circel in quadrant 1
@@ -531,16 +532,16 @@
                    //
                   oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 4, 0b00000001);
                   oled.display();
-                  usleep(250000);
+                  usleep(50000);
                   oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 3.3, 0b00000011);
                   oled.display();
-                  usleep(250000);
+                  usleep(50000);
                   oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 2.6, 0b00000110);
                   oled.display();
-                  usleep(250000);
+                  usleep(50000);
                   oled.drawCircleQuads(oled.getWidth() / 2, (oled.getHeight() - 10) / 2, (oled.getHeight() - 10) / 2, 0b00001100);
                   oled.display();
-                  usleep(250000);
+                  usleep(50000);
                 }
               void printBuffer(void)
                 {
@@ -586,13 +587,13 @@
                   oled.setTextAlignment(TEXT_ALIGN_LEFT);
                   oled.setFont(ArialMT_Plain_10);
                   oled.drawString(0, 0, "Hello world");  oled.display();
-                  usleep(500000);
+                  usleep(50000);
                   oled.setFont(ArialMT_Plain_16);
                   oled.drawString(0, 10, "Hello world"); oled.display();
-                  usleep(500000);
+                  usleep(50000);
                   oled.setFont(ArialMT_Plain_24);
                   oled.drawString(0, 26, "Hello world"); oled.display();
-                  usleep(1500000);
+                  usleep(250000);
                 }
               void drawTextFlowDemo()
                 {
@@ -689,11 +690,9 @@
                       oled.wrText(outStr, 1, oled.getRows()-1, 3); oled.display();
                       outStr = "";
                       progress+=20;
-                      usleep(500000);
+                      usleep(50000);
                     }
-                  // draw the percentage as String
-                  //oled.setTextAlignment(TEXT_ALIGN_LEFT);
-                  //oled.drawString(0, 15, String(progress) + "%"); oled.display();
+                  usleep(50000);
                 }
               void writeTextDemo()
                 {
@@ -703,6 +702,7 @@
                       sprintf(tmp_c32, "Zeile%i",i);
                       oled.wrText(tmp_c32, i, i);
                     }
+                  usleep(50000);
                 }
               //void drawImageDemo()
                 //{
