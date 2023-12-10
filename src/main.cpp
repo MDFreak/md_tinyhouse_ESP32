@@ -52,7 +52,16 @@
   // --- project devices
     // oled
       #if defined (USE_OLED_I2C)
+          #if (OLED_I2C == DEV_I2C1)                //#define OLED_I2C_SCL       PIN_I2C1_SCL
+              #define OLED_I2C_SCL       PIN_I2C1_SCL
+              #define OLED_I2C_SDA       PIN_I2C1_SDA
+            #endif
+          #if (OLED_I2C == DEV_I2C2)                //#define OLED_I2C_SCL       PIN_I2C1_SCL
+              #define OLED_I2C_SCL       PIN_I2C2_SCL
+              #define OLED_I2C_SDA       PIN_I2C2_SDA
+            #endif
           #if (OLED_DRV == OLED_DRV_1306)
+              //#define OLED_I2C_SDA       PIN_I2C1_SDA
               SSD1306Wire oled(OLED_I2C_ADDR, OLED_I2C_SDA, OLED_I2C_SCL, (OLEDDISPLAY_GEOMETRY) OLED_GEO);
             #else
               //SH1106Wire oled(OLED_I2C_ADDR, OLED_I2C_SDA, OLED_I2C_SCL, (OLEDDISPLAY_GEOMETRY) OLED_GEO);
@@ -242,7 +251,7 @@
             firstrun = false;
           }
         anzUsCycles++;
-        sleep(2);
+        sleep(1);
           //usleep(20);
     }
 // ----------------------------------------------------------------
@@ -440,7 +449,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(850000); //sleep(2);
+                  usleep(150000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = 0; i < oled.getWidth(); i += 4)
@@ -455,7 +464,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(850000); //sleep(2);
+                  usleep(150000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = oled.getWidth() - 1; i >= 0; i -= 4)
@@ -470,7 +479,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(850000); //sleep(2);
+                  usleep(150000); //sleep(2);
                   oled.clearUser();
                   for (int16_t i = 0; i < oled.getHeight()-10; i += 4)
                     {
@@ -484,7 +493,7 @@
                       oled.display();
                       delay(10);
                     }
-                  usleep(850000); //sleep(2);
+                  usleep(150000); //sleep(2);
                 }
               // Adapted from Adafruit_SSD1306
               void drawRect(void)

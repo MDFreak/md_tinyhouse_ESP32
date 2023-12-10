@@ -34,6 +34,7 @@
               //#define OLED_STATUS     ON
               #define OLED_I2C           DEV_I2C1
               #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
+              //#if (USE_OLED_I2C == MC_UO_OLED_066_AZ)
                   #define OLED_MAXCOLS   OLED_066_MAXCOLS
                   #define OLED_MAXROWS   OLED_066_MAXROWS
                   #define OLED_GEO       GEO_64_48
@@ -283,6 +284,7 @@
                     #endif // USE_MQTT > 1
                 #endif // USE_MQTT > OFF
             #endif      //  #endif
+          // define board pins at the end
           #if (PRJ_BOARD == MC_ESP32_NODE)
               #if defined(I2C1)
                   #define PIN_I2C1_SDA          21
@@ -292,8 +294,6 @@
                   #define PIN_I2C2_SDA          !21
                   #define PIN_I2C2_SCL          !22
                 #endif // I2C1
-              #define OLED_I2C_SCL       PIN_I2C1_SCL
-              #define OLED_I2C_SDA       PIN_I2C1_SDA
             #endif //PRJ_BOARD
           #else
               #if defined(I2C1)
@@ -306,47 +306,48 @@
                 #endif // I2C1
         #endif // USE_I2C
     // --- SPI interface
-      #if defined(USE_SPI)
+      #ifdef USE_SPI
           #if (PRJ_BOARD == MC_ESP32_NODE)
+              #ifndef PIN23
               #define PIN_SPI_MOSI              23
               #define PIN_SPI_MISO              19
               #define PIN_SPI_SCL               18
             #endif //PRJ_BOARD
           #ifdef  USE_DISP_TFT
               #if (DISP_TFT == MC_UO_TOUCHXPT2046_AZ)
-                  //        #define DISP_ORIENT    3      // 0:USB oben, 1:USB links, 2:USB unten, 3:USB rechts
+                  #define DISP_ORIENT    3      // 0:USB oben, 1:USB links, 2:USB unten, 3:USB rechts
                   //        #define DATE_DISP_COL  0
-                  //        #define DATE_DISP_LINE 9      // line on display for date / time
-                  //        // text display area
-                  //        #define DISP_X         0
-                  //        #define DISP_Y         0
-                  //        #define DISP_W         240
-                  //        #define DISP_H         300
-                  //        #define DISP_BCOL      0x000F // TFT_NAVY
-                  //        #define DISP_ANZ_SP    20
-                  //        #define DISP_ANZ_ZE    12
-                  //        #define DISP_Hoe_ZE    25
-                  //        #define DISP_TX_FCOL   0xB7E0 // TFT_GREENYELLOW
-                  //        #define DISP_TX_BCOL   DISP_BCOL
-                  //        // status line for messages
-                  //        #define USE_STAT_TOUCH OFF
-                  //        #define STATUS_XCENT   120 // Centred on this
-                  //        #define STATUS_YCENT   315
-                  //        #define STATUS_XLI     0
-                  //        #define STATUS_XRE     239
-                  //        #define STATUS_YOB     DISP_H // 300
-                  //        #define STATUS_YUN     319
-                  //        #define STATUS_FCOL    0xF81F // TFT_MAGENTA
-                  //        #define STATUS_BCOL    0x0000 // TFT_BLACK
+                      //        #define DATE_DISP_LINE 9      // line on display for date / time
+                      //        // text display area
+                      //        #define DISP_X         0
+                      //        #define DISP_Y         0
+                      //        #define DISP_W         240
+                      //        #define DISP_H         300
+                      //        #define DISP_BCOL      0x000F // TFT_NAVY
+                      //        #define DISP_ANZ_SP    20
+                      //        #define DISP_ANZ_ZE    12
+                      //        #define DISP_Hoe_ZE    25
+                      //        #define DISP_TX_FCOL   0xB7E0 // TFT_GREENYELLOW
+                      //        #define DISP_TX_BCOL   DISP_BCOL
+                      //        // status line for messages
+                      //        #define USE_STAT_TOUCH OFF
+                      //        #define STATUS_XCENT   120 // Centred on this
+                      //        #define STATUS_YCENT   315
+                      //        #define STATUS_XLI     0
+                      //        #define STATUS_XRE     239
+                      //        #define STATUS_YOB     DISP_H // 300
+                      //        #define STATUS_YUN     319
+                      //        #define STATUS_FCOL    0xF81F // TFT_MAGENTA
+                      //        #define STATUS_BCOL    0x0000 // TFT_BLACK
                 #endif
               #if (DISP_TFT == MC_UO_TFT1602_GPIO_RO)
-                  //        #define DATE_DISP_COL   0
+                  #define DATE_DISP_COL   0
                   //        #define DATE_DISP_LINE  0    // line on display for date / time
                   //        #define LCD_ROWS        2
                   //        #define LCD_CULS        2
                 #endif
               #if (DISP_TFT == MC_UO_TFT_GC9A01A_SPI)
-                  //        #define DATE_DISP_COL   0
+                  #define DATE_DISP_COL   0
                   //        #define DATE_DISP_LINE  0    // line on display for date / time
                   //        #define LCD_ROWS        2
                   //        #define LCD_CULS        2
@@ -376,7 +377,7 @@
                   #define USE_INPUT_CYCLE
                 #endif
             #endif
-        #endif // USE_VSPI
+        #endif // USE_SPI
     // --- serial interface
     // --- analog connection
           #if (USE_MQ135_GAS_ANA > OFF)

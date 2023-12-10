@@ -10,13 +10,12 @@
   // standard md_library
     #include <md_defines.h>
     #include <md_util.h>
-    #include <md_filter.hpp>
+    #include <md_filter.h>
     #include <md_projects.h>
   // check entries from platformio.ini
     #if (PROJECT > 0)
-
+         #define HALLO 1
       #endif
-
   // project system includes
     #if (USE_I2C > OFF)
         #include <Wire.h>
@@ -25,7 +24,9 @@
     #include <prj_conf_test_stdlib.h>
     //#include <md_time.hpp>
   // project devices md_library
+    // timer
     // OLED
+    // I2C
       #ifdef USE_I2C
           #if (OLED_DRV == OLED_DRV_1306)
               #include <SSD1306Wire.h>
