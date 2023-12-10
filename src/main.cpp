@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <main.h>
 
-#if (ESP32_TEST_MD_LIB > 0) // compiling only enabled inside own workspace
+#if (WORKSPACE == ESP32_TEST_MD_STDLIB)
   // ----------------------------------------------------------------
   // --- tests for temporary usage
   // ----------------------------------------------------------------
@@ -221,6 +221,13 @@
             Serial.printf(" BME280  T = %.1f°C  P = %.0fmbar  H = %.0f%% \n", bme280T, bme280P, bme280H);
             bme280_1.takeForcedMeasurement();
           #endif
+        #if (PROJECT == PRJ_TEST_LIB_TFT)
+            if (firstrun == true)
+              {
+                STXT(" run TEST_LIB_TFT ");
+                //oled.clearUser();
+              }
+          #endif
       // sensoren
         #if (USE_BME280_I2C > OFF)
 
@@ -235,7 +242,7 @@
             firstrun = false;
           }
         anzUsCycles++;
-        sleep(1);
+        sleep(2);
           //usleep(20);
     }
 // ----------------------------------------------------------------
@@ -433,7 +440,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(50000); //sleep(2);
+                  usleep(850000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = 0; i < oled.getWidth(); i += 4)
@@ -448,7 +455,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(50000); //sleep(2);
+                  usleep(850000); //sleep(2);
                   oled.clearUser();
                   //oled.fillRect(0, 0, oled.getWidth(), oled.getHeight()-10);
                   for (int16_t i = oled.getWidth() - 1; i >= 0; i -= 4)
@@ -463,7 +470,7 @@
                       oled.display();
                       usleep(10000);
                     }
-                  usleep(50000); //sleep(2);
+                  usleep(850000); //sleep(2);
                   oled.clearUser();
                   for (int16_t i = 0; i < oled.getHeight()-10; i += 4)
                     {
@@ -477,7 +484,7 @@
                       oled.display();
                       delay(10);
                     }
-                  usleep(150000); //sleep(2);
+                  usleep(850000); //sleep(2);
                 }
               // Adapted from Adafruit_SSD1306
               void drawRect(void)

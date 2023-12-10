@@ -7,16 +7,22 @@
     #include <string.h>
     #include <stdio.h>                                                        // Biblioteca STDIO
     #include <iostream>
+  // standard md_library
+    #include <md_defines.h>
+    #include <md_util.h>
+    #include <md_filter.hpp>
+    #include <md_projects.h>
+  // check entries from platformio.ini
+    #if (PROJECT > 0)
+
+      #endif
+
   // project system includes
     #if (USE_I2C > OFF)
         #include <Wire.h>
       #endif // USE_I2C
   // standard project includes
     #include <prj_conf_test_stdlib.h>
-  // standard md_library
-    #include <md_defines.h>
-    #include <md_util.h>
-    #include <md_filter.hpp>
     //#include <md_time.hpp>
   // project devices md_library
     // OLED

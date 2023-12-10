@@ -1,59 +1,644 @@
 #ifndef _PRJ_CONF_TEST_STDLIB_H_
   #define _PRJ_CONF_TEST_STDLIB_H_
 
-  // --- define own project an workspace to prevent compiling unused files
-    #ifndef PRJ_TEST_LIB_OLED
-        #define ESP32_TEST_MD_LIB 1
-      #endif
-    #ifndef PRJ_TEST_LIB_OLED
-        #define PRJ_TEST_LIB_OLED 1
-      #endif
-
     #include <Arduino.h>
     #include <md_defines.h>
 
   // ******************************************
-  // --- specification first to define device config
+  // --- define board, used devices and pins
     // --- system
-      //#define SCAN_I2C          OFF // 128
+      #define SER_BAUDRATE ESP_SER_BAUD
       #if (USE_LED_BLINK_OUT > 0)
           #define BLINKTIME_MS  1200ul
           #define BLINKPWM_FREQ 400
           #define BLINKPWM_RES  8
+          #if (PRJ_BOARD == MC_ESP32_NODE)
+              #define PIN_BOARD_LED    2 // NC
+            #endif
         #endif // USE_LED_BLINK_OUT
     // --- I2C interface
-    #ifdef USE_I2C
-        #if (USE_OLED_I2C > OFF)
-            #define OLED_I2C_ADDR  I2C_OLED_3C
-            #define OLED_I2C       DEV_I2C1
-            #if (OLED_I2C == DEV_I2C1)
+      //#define SCAN_I2C          OFF // 128
+      #ifdef USE_I2C
+          #ifndef USE_DISP
+              #define USE_DISP
+            #endif
+          #if (USE_OLED_I2C > OFF)
+              #define OLED_I2C_ADDR  I2C_OLED_3C
+              #define OLED_I2C       DEV_I2C1
+              // select OLED - device & GEO   GEO_RAWMODE?
+                        // MC_UO_OLED_066_AZ   GEO_64_48    OLED_DRV_1306
+                        // MC_UO_OLED_091_AZ   GEO_128_32   OLED_DRV_1306
+                        // MC_UO_OLED_096_AZ   GEO_128_64   OLED_DRV_1306
+                        // MC_UO_OLED_130_AZ   GEO_128_64   OLED_DRV_1106
+              #define OLED_I2C_TYP MC_UO_OLED_130_AZ  // OLED1 on DEV_I2C1
+              //#define OLED_STATUS     ON
+              #define OLED_I2C           DEV_I2C1
+              #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
+                  #define OLED_MAXCOLS   OLED_066_MAXCOLS
+                  #define OLED_MAXROWS   OLED_066_MAXROWS
+                  #define OLED_GEO       GEO_64_48
+                  #define OLED_DRV       OLED_DRV_1306
+                #endif
+              #if (OLED_I2C_TYP == MC_UO_OLED_091_AZ)
+                  #define OLED_MAXCOLS   OLED_091_MAXCOLS
+                  #define OLED_MAXROWS   OLED_091_MAXROWS
+                  #define OLED_GEO       GEO_128_32
+                  #define OLED_DRV       OLED_DRV_1306
+                #endif
+              #if (OLED_I2C_TYP == MC_UO_OLED_096_AZ)
+                  #define OLED_MAXCOLS   OLED_096_MAXCOLS
+                  #define OLED_MAXROWS   OLED_096_MAXROWS
+                  #define OLED_GEO       GEO_128_64
+                  #define OLED_DRV       OLED_DRV_1306
+                #endif
+              #if (OLED_I2C_TYP == MC_UO_OLED_130_AZ)
+                  #define OLED_MAXCOLS   OLED_130_MAXCOLS
+                  #define OLED_MAXROWS   OLED_130_MAXROWS
+                  #define OLED_GEO       GEO_128_64
+                  #define OLED_DRV       OLED_DRV_1106
+                #endif // OLED_I2C_TYP
+              #define OLED_FLIP_VERTICAL TRUE
+              #if (OLED_I2C == DEV_I2C1)
+                  #ifndef I2C1
+                      #define I2C1
+                    #endif //I2C1
+                #endif // OLED_I2C
+              #if (OLED_I2C == DEV_I2C2)
+                  #ifndef I2C2
+                      #define I2C2
+                    #endif //I2C2
+                #endif // OLED_I2C
+            #endif // USE_OLED_I2C
+          // --- I2C board connection
+          #if (USE_FRAM_I2C > OFF)
+              #define FRAM1_I2C_ADDR      I2C_FRAM_50
+              #define FRAM1_SIZE          0x8000
+              #define FRAM1_I2C           DEV_I2C1
+              #if (FRAM1_I2C == DEV_I2C1)
+                  #ifndef I2C1
+                      #define I2C1
+                    #endif //I2C1
+                #endif // FRAM1_I2C
+              #if (USE_FRAM_I2C > 1 )
+                  #define FRAM2_I2C_ADDR  I2C_FRAM_50
+                  #define FRAM1_SIZE      0x8000
+                  #define FRAM2_I2C       DEV_I2C2
+                  #if (FRAM2_I2C == DEV_I2C2)
+                      #ifndef I2C2
+                          #define I2C2
+                        #endif //I2C2
+                    #endif // FRAM2_I2C
+                #endif // USE_FRAM_I2C
+            #endif
+          #if (USE_CCS811_I2C > OFF )
+              //    #define CCS811_I2C_ADDR     I2C_CSS811_
+              //    #define CCS811_I2C          DEV_I2C1
+            #endif
+          #if (USE_BME680_I2C > OFF )
+              #define BME680_I2C               DEV_I2C1
+              #define BME680_ADDR              I2C_BME680_77
+              #define BME680_RUNMODE           MD_NORM
+              //#define BME680_RUNMODE           MD_SIM
+              #define BME680T_FILT             0
+              #define BME680T_Drop             0
+              #define BME680P_FILT             0
+              #define BME680P_Drop             0
+              #define BME680H_FILT             0
+              #define BME680H_Drop             0
+              #define BME680G_FILT             0
+              #define BME680G_Drop             0
+              #if (USE_MQTT > OFF)
+                  #define MQTT_BME680T         "bme680t1"
+                  #define MQTT_BME680P         "bme680p1"
+                  #define MQTT_BME680H         "bme680h1"
+                  #define MQTT_BME680G         "bme680g1"
+                #endif
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+              #ifndef USE_OUTPUT_CYCLE
+                  #define USE_OUTPUT_CYCLE
+                #endif
+                  /* analog channels
+                    ADC channels
+                      ***_ADC_RES 12                    --> resolution 12 bit (def)
+                      ***_ADC_ATT  ADC_ATTEN_DB_0   -->  range 0 -  800 mV
+                      ***_ADC_ATT  ADC_ATTEN_DB_2_5 -->  range 0 - 1100 mV
+                      ***_ADC_ATT  ADC_ATTEN_DB_6   -->  range 0 - 1350 mV
+                      ***_ADC_ATT  ADC_ATTEN_DB_11  -->  range 0 - 2600 mV (def)
+                    ADS1115 channels
+                      ***_1115_ATT GAIN_TWOTHIRDS --> range +/-6144mV - 187.5    uV/bit
+                      ***_1115_ATT GAIN_ONE       --> range +/-4096mV - 125      uV/bit
+                      ***_1115_ATT GAIN_TWO (def) --> range +/-2048mV -  62.5    uV/bit
+                      ***_1115_ATT GAIN_FOUR      --> range +/-1024mV -  31.25   uV/bit
+                      ***_1115_ATT GAIN_EIGHT     --> range +/- 512mV -  15.625  uV/bit
+                      ***_1115_ATT GAIN_SIXTEEN   --> range +/- 256mV -   7.8125 uV/bit
+                    ADS1115 datarates
+                      RATE_ADS1115_8SPS         8 samples per second
+                      RATE_ADS1115_16SPS       16 samples per second
+                      RATE_ADS1115_32SPS       32 samples per second
+                      RATE_ADS1115_64SPS       64 samples per second
+                      RATE_ADS1115_128SPS      128 samples per second (default)
+                      RATE_ADS1115_250SPS      250 samples per second
+                      RATE_ADS1115_475SPS      475 samples per second
+                      RATE_ADS1115_860SPS      860 samples per second
+                    scaling parameters and calculation
+                    *pValue = (  (*pValue + (double) *_SCAL_OFFRAW)
+                               * (double)*_SCAL_GAIN
+                               + (double) *_SCAL_OFFRREAL
+                          )
+                  */
+            #define BME680_I2C         DEV_I2C1
+            #if (BME680_I2C == DEV_I2C1)
                 #ifndef I2C1
                     #define I2C1
                   #endif //I2C1
               #endif
-            #if (OLED_I2C == DEV_I2C2)
+            #if (BME680_I2C == DEV_I2C2)
                 #ifndef I2C2
                     #define I2C2
                   #endif //I2C2
               #endif
-          #endif // USE_OLED_I2C
-            //#if (USE_FRAM_I2C > OFF)
-            //    #define FRAM1_I2C_ADDR      I2C_FRAM_50
-            //    #define FRAM1_SIZE          0x8000
-            //    #define FRAM1_I2C           DEV_I2C1
-            //    #if (USE_FRAM_I2C > 1 )
-            //        #define FRAM2_I2C_ADDR  I2C_FRAM_50
-            //        #define FRAM1_SIZE      0x8000
-            //        #define FRAM2_I2C       DEV_I2C2
-            //      #endif
-            //#if (USE_CCS811_I2C > OFF )
-            //    #define CCS811_I2C_ADDR     I2C_CSS811_
-            //    #define CCS811_I2C          DEV_I2C1
-            //  #endif
-            //#if (USE_BME680_I2C > OFF )
-            //    #define BME680_I2C         DEV_I2C1
-            //  #endif
-      #endif // USE_I2C
+            #endif
+          #if (USE_BME280_I2C > OFF)
+              #define BME280_I2C               DEV_I2C1
+              #if (BME280_I2C == DEV_I2C1)
+                  #ifndef I2C1
+                      #define I2C1
+                    #endif //I2C1
+                #endif
+              #if (BME280_I2C == DEV_I2C2)
+                  #ifndef I2C2
+                      #define I2C2
+                    #endif //I2C2
+                #endif
+              #define BME280_ADDR              I2C_BME280_76
+              #define BME280_RUNMODE           MD_NORM
+              //#define BME280_RUNMODE           MD_SIM
+              #define BME280T_FILT             0
+              #define BME280T_Drop             0
+              #define BME280P_FILT             0
+              #define BME280P_Drop             0
+              #define BME280H_FILT             0
+              #define BME280H_Drop             0
+              #if (USE_MQTT > OFF)
+                  #define MQTT_BME280T         "bme280t1"
+                  #define MQTT_BME280P         "bme280p1"
+                  #define MQTT_BME280H         "bme280h1"
+                #endif
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+              #ifndef USE_OUTPUT_CYCLE
+                  #define USE_OUTPUT_CYCLE
+                #endif
+            #endif
+          #if (USE_ADC1115_I2C > OFF)
+              #define ADS_I2C          DEV_I2C1
+              #define ADS1_RUNMODE     MD_NORM
+              //#define ADS1_RUNMODE     MD_SIM
+              #define ADS1_ADDR        I2C_ADS1115_48
+              #define ADS1_ANZ_CHANS   4
+              #if (USE_ADC1115_I2C > 1)
+                  #define ADS2_ADDR        I2C_ADS1115_48 //I2C_ADS1115_49
+                  #define ADS2_ANZ_CHANS    4
+                  #if (USE_ADC1115_I2C > 2)
+                      #define ADS3_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4A
+                      #define ADS3_ANZ_CHANS    4
+                      #if (USE_ADC1115_I2C > 3)
+                          #define ADS4_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4B
+                          #define ADS4_ANZ_CHANS    4
+                        #endif
+                    #endif
+                #endif
+            #endif
+          #if (USE_CCS811_I2C > OFF)
+              #define CCS811_I2C                DEV_I2C1
+              #define CCS811C_FILT              0  // eCO2 value in air
+              #define CCS811C_Drop              0  // [0 - 32768 ppm]
+              #define CCS811T_FILT              0  // TVOC value carbon value in air
+              #define CCS811T_Drop              0  // [400 - 29206 ppm]
+              #if (USE_MQTT > OFF)
+                  #define MQTT_CCS811T         "ccs811t"
+                  #define MQTT_CCS811C         "ccs811c"
+                #endif
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+            #endif
+          #if (USE_INA3221_I2C > OFF)
+              #define INA32211_I2C              DEV_I2C1
+              #define INA32211_ADDR             I2C_INA3221_41
+              #define INA3221U1_FILT            0  // voltage in1+
+              #define INA3221U1_DROP            0  // [0 - 26000 mV]
+              #define INA3221I1_FILT            0  // current in1
+              #define INA3221I1_DROP            0  // [-5000 - +5000 mA]
+              #define INA3221U2_FILT            0  // voltage in2+
+              #define INA3221U2_DROP            0  // [0 - 26000 mV]
+              #define INA3221I2_FILT            0  // current in2
+              #define INA3221I2_DROP            0  // [-5000 - +5000 mA]
+              #define INA3221I3_FILT            0  // current in3
+              #define INA3221I3_DROP            0  // [-5000 - +5000 mA]
+              #define INA3221U3_FILT            0  // voltage in3+
+              #define INA3221U3_DROP            0  // [0 - 26000 mV]
+              #if (USE_INA3221_I2C > OFF) // 1)
+                  #define INA32212_I2C              DEV_I2C1
+                  #define INA32212_ADDR             I2C_INA3221_42
+                #endif
+                #if (USE_INA3221_I2C > OFF) // 2)
+                    #define INA32213_I2C              DEV_I2C1
+                    #define INA32213_ADDR             I2C_INA3221_43
+                  #endif
+              #if (USE_MQTT > OFF)
+                  #define MQTT_INA32211U1         "ina32211u1"
+                  #define MQTT_INA32211I1         "ina32211i1"
+                  #define MQTT_INA32211P1         "ina32211p1"
+                  #define MQTT_INA32211U2         "ina32211u2"
+                  #define MQTT_INA32211I2         "ina32211i2"
+                  #define MQTT_INA32211P2         "ina32211p2"
+                  #define MQTT_INA32211U3         "ina32211u3"
+                  #define MQTT_INA32211I3         "ina32211i3"
+                  #define MQTT_INA32211P3         "ina32211p3"
+                  #if (USE_MQTT > 1)
+                      #define MQTT_INA32212U1         "ina32212u1"
+                      #define MQTT_INA32212I1         "ina32212i1"
+                      #define MQTT_INA32212P1         "ina32212p1"
+                      #define MQTT_INA32212U2         "ina32212u2"
+                      #define MQTT_INA32212I2         "ina32212i2"
+                      #define MQTT_INA32212P2         "ina32212p2"
+                      #define MQTT_INA32212U3         "ina32212u3"
+                      #define MQTT_INA32212I3         "ina32212i3"
+                      #define MQTT_INA32212P3         "ina32212p3"
+                      #if (USE_MQTT > 2)
+                          #define MQTT_INA32213U1         "ina32213u1"
+                          #define MQTT_INA32213I1         "ina32213i1"
+                          #define MQTT_INA32213P1         "ina32213p1"
+                          #define MQTT_INA32213U2         "ina32213u2"
+                          #define MQTT_INA32213I2         "ina32213i2"
+                          #define MQTT_INA32213P2         "ina32213p2"
+                          #define MQTT_INA32213U3         "ina32213u3"
+                          #define MQTT_INA32213I3         "ina32213i3"
+                          #define MQTT_INA32213P3         "ina32213p3"
+                        #endif // USE_MQTT > 2
+                    #endif // USE_MQTT > 1
+                #endif // USE_MQTT > OFF
+            #endif      //  #endif
+          #if (PRJ_BOARD == MC_ESP32_NODE)
+              #if defined(I2C1)
+                  #define PIN_I2C1_SDA          21
+                  #define PIN_I2C1_SCL          22
+                #endif // I2C1
+              #if defined(I2C2)
+                  #define PIN_I2C2_SDA          !21
+                  #define PIN_I2C2_SCL          !22
+                #endif // I2C1
+              #define OLED_I2C_SCL       PIN_I2C1_SCL
+              #define OLED_I2C_SDA       PIN_I2C1_SDA
+            #endif //PRJ_BOARD
+          #else
+              #if defined(I2C1)
+                  #define PIN_I2C1_SDA          21
+                  #define PIN_I2C1_SCL          22
+                #endif // I2C1
+              #if defined(I2C2)
+                  #define PIN_I2C2_SDA          !21
+                  #define PIN_I2C2_SCL          !22
+                #endif // I2C1
+        #endif // USE_I2C
+    // --- SPI interface
+      #if defined(USE_SPI)
+          #if (PRJ_BOARD == MC_ESP32_NODE)
+              #define PIN_SPI_MOSI              23
+              #define PIN_SPI_MISO              19
+              #define PIN_SPI_SCL               18
+            #endif //PRJ_BOARD
+          #ifdef  USE_DISP_TFT
+              #if (DISP_TFT == MC_UO_TOUCHXPT2046_AZ)
+                  //        #define DISP_ORIENT    3      // 0:USB oben, 1:USB links, 2:USB unten, 3:USB rechts
+                  //        #define DATE_DISP_COL  0
+                  //        #define DATE_DISP_LINE 9      // line on display for date / time
+                  //        // text display area
+                  //        #define DISP_X         0
+                  //        #define DISP_Y         0
+                  //        #define DISP_W         240
+                  //        #define DISP_H         300
+                  //        #define DISP_BCOL      0x000F // TFT_NAVY
+                  //        #define DISP_ANZ_SP    20
+                  //        #define DISP_ANZ_ZE    12
+                  //        #define DISP_Hoe_ZE    25
+                  //        #define DISP_TX_FCOL   0xB7E0 // TFT_GREENYELLOW
+                  //        #define DISP_TX_BCOL   DISP_BCOL
+                  //        // status line for messages
+                  //        #define USE_STAT_TOUCH OFF
+                  //        #define STATUS_XCENT   120 // Centred on this
+                  //        #define STATUS_YCENT   315
+                  //        #define STATUS_XLI     0
+                  //        #define STATUS_XRE     239
+                  //        #define STATUS_YOB     DISP_H // 300
+                  //        #define STATUS_YUN     319
+                  //        #define STATUS_FCOL    0xF81F // TFT_MAGENTA
+                  //        #define STATUS_BCOL    0x0000 // TFT_BLACK
+                #endif
+              #if (DISP_TFT == MC_UO_TFT1602_GPIO_RO)
+                  //        #define DATE_DISP_COL   0
+                  //        #define DATE_DISP_LINE  0    // line on display for date / time
+                  //        #define LCD_ROWS        2
+                  //        #define LCD_CULS        2
+                #endif
+              #if (DISP_TFT == MC_UO_TFT_GC9A01A_SPI)
+                  //        #define DATE_DISP_COL   0
+                  //        #define DATE_DISP_LINE  0    // line on display for date / time
+                  //        #define LCD_ROWS        2
+                  //        #define LCD_CULS        2
+                #endif
+            #endif
+            // --- SPI board connection
+          #if (USE_TYPE_K_SPI > OFF)
+              //#if (USE_TYPE_K_SPI > OFF)
+              //    #define TYPEK_DATA_PIN      PIN_SPI_MISO
+              //    #define TYPEK_CLK_PIN       PIN_SPI_CLK
+              //    #define TYPEK1_CS_PIN       16
+              //    #define TYPEK2_CS_PIN       17
+              //  #endif
+              #define TYPEK_FILT      11        // floating  measure filtering
+              #define TYPEK_DROP_PEEK 2         // drop biggest / lowest
+              #define TYPEK1_OFFSET   0.        // offset unit °C
+              #define TYPEK1_GAIN     1.        // result = (measure * gain) + offset
+              #if (USE_TYPE_K_SPI > OFF)
+                  #define TYPEK2_OFFSET   0.        // offset unit °C
+                  #define TYPEK2_GAIN     1.        // result = (measure * gain) + offset
+                #endif
+              #if (USE_MQTT > OFF)
+                  #define TYPEK1_MQTT           "ttypek-1"
+                  #define TYPEK2_MQTT           "ttypek-2"
+                #endif
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+            #endif
+        #endif // USE_VSPI
+    // --- serial interface
+    // --- analog connection
+          #if (USE_MQ135_GAS_ANA > OFF)
+              #define MQ135_GAS_ADC             ON
+              #define MQ135_GAS_1115            OFF
+              #define MQ135_FILT                15       // floating  measure filtering
+              #define MQ135_EM_WIN              100      // window for traffic light
+              #define MQ135_SCAL_MIN            0
+              #define MQ135_SCAL_MAX            100
+                //#define MQ135_ThresFilt       25       // threshold measure filtering
+                //#define MQ135_EM_MID          2350    // green < (MID-(WIN/2) < yellow < (MID+(WIN/2) < red
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+            #endif
+          #if (USE_MQ3_ALK_ANA > OFF)
+              #define MQ3_FILT                  5       // floating  measure filtering
+              #define MQ3_DROP                  1
+              #define MQ3_EM_WIN                100      // window for traffic light
+              #define MQ3_SCAL                  OFF
+              #define MQ3_ALK_ADC               OFF
+              #define MQ3_ALK_1115              ON
+              #if (MQ3_ALK_1115 > OFF)
+                  #define MQ3_1115_UNIDX          0
+                  #define MQ3_1115_CHIDX         3
+                  #define MQ3_1115_ATT          GAIN_TWOTHIRDS
+                  #define MQ3_OFFRAW            0
+                  #define MQ3_GAIN              0
+                  #define MQ3_OFFREAL           0
+                #endif
+              #if (USE_MQTT > OFF)
+                  #define MQTT_MQ3              "alc"
+                #endif
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+            #endif
+          #if (USE_PHOTO_SENS_ANA > OFF)
+              #define PHOTO1_FILT               0
+              #define PHOTO1_DROP               1
+              #define PHOTO1_ADC                ON
+              #if (PHOTO1_ADC > OFF)
+                  #define PHOTO1_ADC_ATT        ADC_ATTEN_DB_11
+                  #define PHOTO1_SCAL_OFFRAW    0
+                  #define PHOTO1_SCAL_GAIN      0.02442
+                  #define PHOTO1_SCAL_OFFREAL   0
+                #endif
+              #define PHOTO1_1115               OFF
+                #if (PHOTO1_1115 > OFF)
+                    #define PHOTO1_1115_UNIDX     0
+                    #define PHOTO1_1115_CHIDX    0
+                    #define PHOTO1_1115_ATT     GAIN_ONE
+                    #define PHOTO1_SCAL_OFFRAW  0
+                    #define PHOTO1_SCAL_GAIN    1
+                    #define PHOTO1_SCAL_OFFREAL 0
+                  #endif
+              #if (USE_MQTT > OFF)
+                  #define MQTT_PHOTO1           "photo1"
+                #endif
+              #if (USE_PHOTO_SENS_ANA > 1)
+                  #define PHOTO2_FILT           7
+                  #define PHOTO2_DROP           0
+                  #define PHOTO2_SCAL           OFF
+                  #define PHOTO2_SCAL_MIN       0
+                  #define PHOTO2_SCAL_MAX       100
+                  #define PHOTO2_ADC            ON
+                  #if (PHOTO2_ADC > OFF)
+                      #define PHOTO2_ADC_ATT  ADC_ATTEN_DB_11
+                    #endif
+                  #define PHOTO2_1115           OFF
+                  #if (PHOTO2_1115 > OFF)
+                      #define PHOTO2_1115_ATT  GAIN_ONE
+                      #define PHOTO2_1115_UNIDX  0
+                      #define PHOTO2_1115_CHIDX 0
+                    #endif
+                  #if (USE_MQTT > OFF)
+                      #define MQTT_PHOTO2           "licht2"
+                    #endif
+                #endif
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+            #endif
+          #if (USE_VCC_ANA > OFF)
+              //      #define VCC_FILT                0
+              //      #define VCC_DROP                1
+              //      #if (USE_VCC50_ANA > OFF)
+              //          #define VCC50_ADC           OFF
+              //          #define VCC50_1115          ON
+              //          #if (VCC50_ADC > OFF)
+              //              #define VCC50_ADC_ATT       ADC_ATTEN_DB_11
+              //              #define VCC50_SCAL          OFF
+              //              #define VCC50_SCAL_OFFRAW   0
+              //              #define VCC50_SCAL_GAIN     1
+              //              #define VCC50_SCAL_OFFREAL  0
+              //            #endif
+              //          #if (VCC50_1115 > OFF)
+              //              #define VCC_1115_UNIDX     0
+              //              #define VCC50_1115_CHIDX   2    //
+              //              #define ADS13_GAIN        GAIN_TWOTHIRDS
+              //              #define ADS13_RATE        RATE_ADS1115_128SPS
+              //              #define ADS13_MUX         ADS1X15_MUX_SINGLE
+              //              #define VCC50_SCAL        ON
+              //              #define VCC50_OFFRAW      0
+              //              #define VCC50_GAIN        2
+              //              #define VCC50_OFFREAL     0
+              //            #endif
+              //          #if (USE_MQTT > OFF)
+              //              #define MQTT_VCC50        "vcc50"
+              //            #endif
+              //        #endif
+              //      #if (USE_VCC33_ANA > OFF)
+              //          #define VCC33_ADC         OFF
+              //          #define VCC33_1115        ON
+              //          #if (VCC33_1115 > OFF)
+              //              #define VCC33_1115_UNIDX   0
+              //              #define VCC33_1115_CHIDX   3    //
+              //              #define ADS11_GAIN        GAIN_TWOTHIRDS
+              //              #define ADS11_RATE        RATE_ADS1115_128SPS
+              //              #define ADS11_MUX         ADS1X15_MUX_SINGLE
+              //              #define VCC33_SCAL        OFF
+              //              #define VCC33_OFFRAW      0
+              //              #define VCC33_GAIN        1
+              //              #define VCC33_OFFREAL     0
+              //            #endif
+              //          #if (USE_MQTT > OFF)
+              //              #define MQTT_VCC33          "vcc33"
+              //            #endif
+              //        #endif
+              //      #ifndef USE_INPUT_CYCLE
+              //          #define USE_INPUT_CYCLE
+              //        #endif
+            #endif
+          #if (USE_POTI_ANA > OFF)
+              //      #define POTI1_FILT              9
+              //      #define POTI1_DROP              1
+              //      #define POTI1_ADC               OFF
+              //      #if (POTI1_ADC > OFF)
+              //          #define POTI1_ADC_ATT     ADC_ATTEN_DB_11
+              //          #define VCC_SCAL_OFFRAW   0
+              //          #define VCC_SCAL_GAIN     1
+              //          #define VCC_SCAL_OFFREAL  0
+              //        #endif
+              //      #define POTI1_1115              ON
+              //      #if (POTI1_1115 > OFF)
+              //          #define POTI1_1115_UNIDX    0
+              //          #define POTI1_1115_CHIDX    0
+              //          #define ADS14_GAIN          GAIN_TWOTHIRDS
+              //          #define ADS14_RATE          RATE_ADS1115_128SPS
+              //          #define ADS14_MUX           ADS1X15_MUX_SINGLE
+              //          #define POTI1_OFFRAW        0
+              //          #define POTI1_GAIN          1
+              //          #define POTI1_OFFREAL       0
+              //        #endif
+              //      #if (USE_MQTT > OFF)
+              //          #define MQTT_POTI1          "poti1"
+              //        #endif
+              //      #if (USE_POTI_ANA > 1)
+              //          #define POTI2_FILT          7
+              //          #define POTI2_DROP          0
+              //          #define POTI2_SCAL          OFF
+              //          #define POTI2_SCAL_MIN      0
+              //          #define POTI2_SCAL_MAX      100
+              //          #define POTI2_ADC           ON
+              //          #if (POTI2_ADC > OFF)
+              //              #define POTI2_ADC_ATT   ADC_ATTEN_DB_11
+              //            #endif
+              //          #define POTI2_1115            OFF
+              //          #if (POTI2_1115 > OFF)
+              //              #define POTI2_1115_UNIDX  0
+              //              #define POTI2_1115_CHIDX 0
+              //              #define POTI2_1115_ATT  GAIN_TWOTHIRDS
+              //            #endif
+              //          #if (USE_MQTT > OFF)
+              //              #define MQTT_POTI2          "poti2"
+              //            #endif
+              //        #endif
+              //      #ifndef USE_INPUT_CYCLE
+              //          #define USE_INPUT_CYCLE
+              //        #endif
+            #endif
+          #if (USE_ACS712_ANA > OFF)
+              /*  ACS712 hall effect current sensor +/- 5A/20A/30 A
+                  output: VCC/2 (2,5V) + measured value
+                  sensitivity: type  5A -> 186mV/A ->  1570 - 3430 mV
+                  sensitivity: type 20A -> 100mV/A ->   500 - 4500 mV
+                  sensitivity: type 30A ->  66mV/A ->   520 - 4480 mV
+                */
+              #define I712_FILT               0
+              #define I712_DROP               0
+              #define I712_1_IMAX             5000 // mA
+              #define I712_1_ADC              OFF // not recommended, low resolution
+              #if (I712_1_ADC > OFF)
+                  #define I712_1_ADC_ATT   ADC_ATTEN_DB_11
+                #endif
+              #define I712_1_1115             ON
+              #if (I712_1_1115 > OFF)
+                  #define I712_1_1115_UNIDX    0
+                  #define I712_1_1115_CHIDX    1
+                  #if   (I712_1_IMAX ==  5000)
+                      #define ADS12_GAIN            GAIN_TWOTHIRDS
+                      #define ADS12_RATE            RATE_ADS1115_128SPS
+                      #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                      #define I712_1_SCAL_OFFRAW    0
+                      #define I712_1_SCAL_GAIN      185
+                      #define I712_1_SCAL_OFFREAL   0
+                    #endif
+                  #if (I712_1_IMAX == 20000)
+                      #define ADS12_GAIN            GAIN_ONE
+                      #define ADS12_RATE            RATE_ADS1115_128SPS
+                      #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                      #define I712_1_SCAL_OFFRAW    0
+                      #define I712_1_SCAL_GAIN      1
+                      #define I712_1_SCAL_OFFRAW    0
+                    #endif
+                  #if (I712_1_IMAX == 30000)
+                      #define ADS12_GAIN            GAIN_ONE
+                      #define ADS12_RATE            RATE_ADS1115_128SPS
+                      #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                      #define I712_1_SCAL_OFFRAW    0
+                      #define I712_1_SCAL_GAIN      1
+                      #define I712_1_SCAL_OFFRAW    0
+                    #endif
+                  #if (USE_MQTT > OFF)
+                      #define MQTT_I712_1         "acs7121"
+                    #endif
+                #endif
+              #if (USE_ACS712_ANA > 1)
+                  #define I712_2_IMAX             5000 // mA
+                  #define I712_2_ADC              OFF // not recommended, low resolution
+                  #define I712_2_1115             ON
+                  #if (I712_2_ADC > OFF)
+                      #define I712_2_ADC_ATT   ADC_ATTEN_DB_11
+                    #endif
+                  #if (I712_2_1115 > OFF)
+                      #define I712_2_1115_UNIDX     0
+                      #define I712_2_1115_CHIDX    2
+                      #if  (I712_2_IMAX ==  5000)
+                          #define I712_2_1115_ATT       GAIN_ONE
+                          #define I712_2_SCAL_OFFRAW    0
+                          #define I712_2_SCAL_GAIN      1
+                          #define I712_2_SCAL_OFFREAL   0
+                        #endif
+                      #if (I712_2_IMAX == 20000)
+                          #define I712_2_1115_ATT      GAIN_TWOTHIRDS
+                          #define I712_2_SCAL_OFFRAW    0
+                          #define I712_2_SCAL_GAIN      1
+                          #define I712_2_SCAL_OFFRAW    0
+                        #endif
+                      #if (I712_2_IMAX == 30000)
+                          #define I712_2_1115_ATT      GAIN_TWOTHIRDS
+                          #define I712_2_SCAL_OFFRAW    0
+                          #define I712_2_SCAL_GAIN      1
+                          #define I712_2_SCAL_OFFRAW    0
+                        #endif
+                      #if (USE_MQTT > OFF)
+                          #define MQTT_I712_1         "acs7121"
+                          #define MQTT_I712_2         "acs7122"
+                        #endif
+                    #endif
+                #endif
+            #endif
     // --- network
       // --- WIFI
           //#define UTC_SEASONTIME UTC_SUMMERTIME
@@ -142,316 +727,242 @@
             //      #endif
             //  #endif
     // --- user output
-      // --- display
-        #if (USE_OLED_I2C > OFF)
-            #ifndef USE_DISP
-                #define USE_DISP
-              #endif
-            // select OLED - device & GEO   GEO_RAWMODE?
-                      // MC_UO_OLED_066_AZ   GEO_64_48    OLED_DRV_1306
-                      // MC_UO_OLED_091_AZ   GEO_128_32   OLED_DRV_1306
-                      // MC_UO_OLED_096_AZ   GEO_128_64   OLED_DRV_1306
-                      // MC_UO_OLED_130_AZ   GEO_128_64   OLED_DRV_1106
-            #define OLED_I2C_TYP MC_UO_OLED_130_AZ  // OLED1 on DEV_I2C1
-            //#define OLED_STATUS     ON
-            #define OLED_I2C           DEV_I2C1
-            #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
-                #define OLED_MAXCOLS   OLED_066_MAXCOLS
-                #define OLED_MAXROWS   OLED_066_MAXROWS
-                #define OLED_GEO       GEO_64_48
-                #define OLED_DRV       OLED_DRV_1306
-              #endif
-            #if (OLED_I2C_TYP == MC_UO_OLED_091_AZ)
-                #define OLED_MAXCOLS   OLED_091_MAXCOLS
-                #define OLED_MAXROWS   OLED_091_MAXROWS
-                #define OLED_GEO       GEO_128_32
-                #define OLED_DRV       OLED_DRV_1306
-              #endif
-            #if (OLED_I2C_TYP == MC_UO_OLED_096_AZ)
-                #define OLED_MAXCOLS   OLED_096_MAXCOLS
-                #define OLED_MAXROWS   OLED_096_MAXROWS
-                #define OLED_GEO       GEO_128_64
-                #define OLED_DRV       OLED_DRV_1306
-              #endif
-            #if (OLED_I2C_TYP == MC_UO_OLED_130_AZ)
-                #define OLED_MAXCOLS   OLED_130_MAXCOLS
-                #define OLED_MAXROWS   OLED_130_MAXROWS
-                #define OLED_GEO       GEO_128_64
-                #define OLED_DRV       OLED_DRV_1106
-              #endif // OLED_I2C_TYP
-            #define OLED_FLIP_VERTICAL TRUE
-          #endif // USE_OLED_I2C
-        //#if ( USE_DISP_TFT > 0 )
-          //    #if !(DISP_TFT ^ MC_UO_TOUCHXPT2046_AZ)
-          //        #define DISP_ORIENT    3      // 0:USB oben, 1:USB links, 2:USB unten, 3:USB rechts
-          //        #define DATE_DISP_COL  0
-          //        #define DATE_DISP_LINE 9      // line on display for date / time
-          //        // text display area
-          //        #define DISP_X         0
-          //        #define DISP_Y         0
-          //        #define DISP_W         240
-          //        #define DISP_H         300
-          //        #define DISP_BCOL      0x000F // TFT_NAVY
-          //        #define DISP_ANZ_SP    20
-          //        #define DISP_ANZ_ZE    12
-          //        #define DISP_Hoe_ZE    25
-          //        #define DISP_TX_FCOL   0xB7E0 // TFT_GREENYELLOW
-          //        #define DISP_TX_BCOL   DISP_BCOL
-          //        // status line for messages
-          //        #define USE_STAT_TOUCH OFF
-          //        #define STATUS_XCENT   120 // Centred on this
-          //        #define STATUS_YCENT   315
-          //        #define STATUS_XLI     0
-          //        #define STATUS_XRE     239
-          //        #define STATUS_YOB     DISP_H // 300
-          //        #define STATUS_YUN     319
-          //        #define STATUS_FCOL    0xF81F // TFT_MAGENTA
-          //        #define STATUS_BCOL    0x0000 // TFT_BLACK
-          //      #endif
-          //    //
-          //    #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
-          //        #define DATE_DISP_COL   0
-          //        #define DATE_DISP_LINE  0    // line on display for date / time
-          //        #define LCD_ROWS        2
-          //        #define LCD_CULS        2
-          //      #endif
-          //#endif
-                  //// --- acoustic output
+                // --- acoustic output
                   //  #if (USE_AOUT > OFF)
-                  //      #if !(BUZZER1 ^ AOUT_PAS_BUZZ_3V5V)
-                  //          #define PLAY_MUSIC
-                  //          #define MUSIC_BASE_OCTA 5        // base oktave for musik
-                  //          //#define PLAY_START_MUSIC
-                  //          #define PLAY_START_DINGDONG
-                  //        #endif
-                  //    #endif // USE_BUZZER_PWM
-                  //// WS2812 LEDs
+                    //      #if !(BUZZER1 ^ AOUT_PAS_BUZZ_3V5V)
+                    //          #define PLAY_MUSIC
+                    //          #define MUSIC_BASE_OCTA 5        // base oktave for musik
+                    //          //#define PLAY_START_MUSIC
+                    //          #define PLAY_START_DINGDONG
+                    //        #endif
+                    //    #endif // USE_BUZZER_PWM
+                // WS2812 LEDs
                   //  #if (USE_WS2812_MATRIX_OUT > OFF)
-                  //      #define COLCHAR_2812            6
-                  //      #define COLBMP_2812             8
-                  //      #define ROWBMP_2812             8
-                  //      #define UPD_2812_M1_MS          70
-                  //      #define COL24_2812_M1           0xFF0080u   // color r-g-b (5-6-5) = 255,0,128
-                  //      #define COL24_2812_BM1          0xF0B63Cu   // color r-g-b (5-6-5) = 240, 182, 56
-                  //      #define BRI_2812_M1             255
-                  //      #define BRI_2812_BM1            255
-                  //      #define ROW1_2812_M1            NEO_MATRIX_TOP
-                  //      #define COL1_2812_M1            NEO_MATRIX_LEFT
-                  //      #define DIR_2812_M1             NEO_MATRIX_COLUMNS
-                  //      #define ORI_2812_M1             NEO_MATRIX_ZIGZAG
-                  //      #define TYPE_2812_M1            WS2812B
-                  //      #define COLORD_2812_M1          NEO_GRB
-                  //      #define ROWPIX_2812_M1          8
-                  //      #define LEDS_2812_M1            COLPIX_2812_M1 * ROWPIX_2812_M1
-                  //      #define ROW1_2812_T1            NEO_MATRIX_TOP
-                  //      #define COL1_2812_T1            NEO_MATRIX_LEFT
-                  //      #define DIR_2812_T1             NEO_MATRIX_COLUMNS
-                  //      #define ORI_2812_T1             NEO_MATRIX_ZIGZAG
-                  //      #define COLPIX_2812_T1          8
-                  //      #define ROWPIX_2812_T1          8
-                  //      #define COLTIL_2812_M1          16  // needs correct value
-                  //      #define ROWTIL_2812_M1          1   // 0 = OFF
-                  //      #define ANZ_TILES_M1            COLTIL_2812_M1 * ROWPIX_2812_T1
-                  //      #define COLPIX_2812_M1          COLTIL_2812_M1 * COLPIX_2812_T1
-                  //      #define OFFBEG_2812_M1          1 //+ COLPIX_2812_T1
-                  //      #define OFFEND_2812_M1          0 //+ COLPIX_2812_T1
-                  //      #if (USE_WS2812_MATRIX_OUT > 1)
-                  //          #define UPD_2812_M2_MS      8
-                  //          #define LEDS_2812_M2        512
-                  //          #define BRIGHT_2812_M2      5
-                  //          #define TYPE_2812_M2        WS2812B
-                  //          #define COLORD_2812_M2      NEO_GRB
-                  //          #define COLPIX_2812_M2      128
-                  //          #define ROWPIX_2812_M2      8
-                  //          #define COLPIX_2812_T2      8
-                  //          #define ROWPIX_2812_T2      8
-                  //          #define COLTIL_2812_M2      4
-                  //          #define ROWTIL_2812_M2      1
-                  //        #endif
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_MAX_BRIGHT   "max-bright"
-                  //          #define MQTT_MAX_COLPICK  "max-colpick"
-                  //        #endif
-                  //      #ifndef USE_OUTPUT_CYCLE
-                  //          #define USE_OUTPUT_CYCLE
-                  //        #endif
-                  //    #endif
+                    //      #define COLCHAR_2812            6
+                    //      #define COLBMP_2812             8
+                    //      #define ROWBMP_2812             8
+                    //      #define UPD_2812_M1_MS          70
+                    //      #define COL24_2812_M1           0xFF0080u   // color r-g-b (5-6-5) = 255,0,128
+                    //      #define COL24_2812_BM1          0xF0B63Cu   // color r-g-b (5-6-5) = 240, 182, 56
+                    //      #define BRI_2812_M1             255
+                    //      #define BRI_2812_BM1            255
+                    //      #define ROW1_2812_M1            NEO_MATRIX_TOP
+                    //      #define COL1_2812_M1            NEO_MATRIX_LEFT
+                    //      #define DIR_2812_M1             NEO_MATRIX_COLUMNS
+                    //      #define ORI_2812_M1             NEO_MATRIX_ZIGZAG
+                    //      #define TYPE_2812_M1            WS2812B
+                    //      #define COLORD_2812_M1          NEO_GRB
+                    //      #define ROWPIX_2812_M1          8
+                    //      #define LEDS_2812_M1            COLPIX_2812_M1 * ROWPIX_2812_M1
+                    //      #define ROW1_2812_T1            NEO_MATRIX_TOP
+                    //      #define COL1_2812_T1            NEO_MATRIX_LEFT
+                    //      #define DIR_2812_T1             NEO_MATRIX_COLUMNS
+                    //      #define ORI_2812_T1             NEO_MATRIX_ZIGZAG
+                    //      #define COLPIX_2812_T1          8
+                    //      #define ROWPIX_2812_T1          8
+                    //      #define COLTIL_2812_M1          16  // needs correct value
+                    //      #define ROWTIL_2812_M1          1   // 0 = OFF
+                    //      #define ANZ_TILES_M1            COLTIL_2812_M1 * ROWPIX_2812_T1
+                    //      #define COLPIX_2812_M1          COLTIL_2812_M1 * COLPIX_2812_T1
+                    //      #define OFFBEG_2812_M1          1 //+ COLPIX_2812_T1
+                    //      #define OFFEND_2812_M1          0 //+ COLPIX_2812_T1
+                    //      #if (USE_WS2812_MATRIX_OUT > 1)
+                      //          #define UPD_2812_M2_MS      8
+                      //          #define LEDS_2812_M2        512
+                      //          #define BRIGHT_2812_M2      5
+                      //          #define TYPE_2812_M2        WS2812B
+                      //          #define COLORD_2812_M2      NEO_GRB
+                      //          #define COLPIX_2812_M2      128
+                      //          #define ROWPIX_2812_M2      8
+                      //          #define COLPIX_2812_T2      8
+                      //          #define ROWPIX_2812_T2      8
+                      //          #define COLTIL_2812_M2      4
+                      //          #define ROWTIL_2812_M2      1
+                      //        #endif
+                    //      #if (USE_MQTT > OFF)
+                      //          #define MQTT_MAX_BRIGHT   "max-bright"
+                      //          #define MQTT_MAX_COLPICK  "max-colpick"
+                      //        #endif
+                    //      #ifndef USE_OUTPUT_CYCLE
+                      //          #define USE_OUTPUT_CYCLE
+                      //        #endif
+                    //    #endif
                   //  #if (USE_WS2812_LINE_OUT > OFF)
-                  //      #ifndef USE_OUTPUT_CYCLE
-                  //          #define USE_OUTPUT_CYCLE
-                  //        #endif
-                  //      #define UPD_2812_L1_MS          10
-                  //      #define COL24_2812_L1           0x6300F1u   // color r-g-b (5-6-5)
-                  //      #define BRI_2812_L1             5u
-                  //      #define TYPE_2812_L1            WS2812B
-                  //      #define COLORD_2812_L1          NEO_GRB
-                  //      #define COLPIX_2812_L1          30
-                  //      #define ROWPIX_2812_L1          1
-                  //      #define COLTIL_2812_L1          4
-                  //      #define ROWTIL_2812_L1          1
-                  //        //#define COLPIX_2812_T1 8
-                  //        //#define ROWPIX_2812_T1 8
-                  //            //#define UPD_2812_L1_MS 1
-                  //            //#define LEDS_2812_L1   300
-                  //            //#define BRIGHT_2812_L1 5
-                  //            //#define TYPE_2812_L1   WS2812B
-                  //            //#define COLORD_2812_L1 NEO_GRB
-                  //      #if (USE_WS2812_LINE_OUT > 1)
-                  //          #define UPD_2812_L2_MS      10
-                  //          #define LEDS_2812_L2        30
-                  //          #define BRIGHT_2812_L2      12
-                  //          #define TYPE_2812_L2        WS2812B
-                  //          #define COLORD_2812_L2      GRB
-                  //          #if (USE_WS2812_LINE_OUT > 2)
-                  //              #define LEDS_2812_L3    30
-                  //              #define BRIGHT_2812_L3  12
-                  //              #define TYPE_2812_L3    WS2812
-                  //              #define COLORD_2812_L3  GRB
-                  //              #if (USE_WS2812_LINE_OUT > 3)
-                  //                  #define LEDS_2812_L4   30
-                  //                  #define BRIGHT_2812_L4 12
-                  //                  #define TYPE_2812_L4   WS2812
-                  //                  #define COLORD_2812_L4 GRB
-                  //                #endif
-                  //            #endif
-                  //        #endif
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_LIN_BRIGHT     "lin-bright"
-                  //          #define MQTT_LIN_COLPICK    "lin-colpick"
-                  //        #endif
-                  //    #endif
-                  //// --- digital out
+                    //      #ifndef USE_OUTPUT_CYCLE
+                    //          #define USE_OUTPUT_CYCLE
+                    //        #endif
+                    //      #define UPD_2812_L1_MS          10
+                    //      #define COL24_2812_L1           0x6300F1u   // color r-g-b (5-6-5)
+                    //      #define BRI_2812_L1             5u
+                    //      #define TYPE_2812_L1            WS2812B
+                    //      #define COLORD_2812_L1          NEO_GRB
+                    //      #define COLPIX_2812_L1          30
+                    //      #define ROWPIX_2812_L1          1
+                    //      #define COLTIL_2812_L1          4
+                    //      #define ROWTIL_2812_L1          1
+                      //        //#define COLPIX_2812_T1 8
+                      //        //#define ROWPIX_2812_T1 8
+                      //            //#define UPD_2812_L1_MS 1
+                      //            //#define LEDS_2812_L1   300
+                      //            //#define BRIGHT_2812_L1 5
+                      //            //#define TYPE_2812_L1   WS2812B
+                      //            //#define COLORD_2812_L1 NEO_GRB
+                    //      #if (USE_WS2812_LINE_OUT > 1)
+                      //          #define UPD_2812_L2_MS      10
+                      //          #define LEDS_2812_L2        30
+                      //          #define BRIGHT_2812_L2      12
+                      //          #define TYPE_2812_L2        WS2812B
+                      //          #define COLORD_2812_L2      GRB
+                      //          #if (USE_WS2812_LINE_OUT > 2)
+                      //              #define LEDS_2812_L3    30
+                      //              #define BRIGHT_2812_L3  12
+                      //              #define TYPE_2812_L3    WS2812
+                      //              #define COLORD_2812_L3  GRB
+                      //              #if (USE_WS2812_LINE_OUT > 3)
+                      //                  #define LEDS_2812_L4   30
+                      //                  #define BRIGHT_2812_L4 12
+                      //                  #define TYPE_2812_L4   WS2812
+                      //                  #define COLORD_2812_L4 GRB
+                      //                #endif
+                      //            #endif
+                      //        #endif
+                    //      #if (USE_MQTT > OFF)
+                      //          #define MQTT_LIN_BRIGHT     "lin-bright"
+                      //          #define MQTT_LIN_COLPICK    "lin-colpick"
+                      //        #endif
+                    //    #endif
+                    //// --- digital out
                   //  #if (USE_GEN_DIG_OUT > OFF)
-                  //      #define DIG_OUT1_INV            ON   // Online controlled output
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_TEST_LED       "test-led"
-                  //        #endif
-                  //    #endif
-                  //// --- PWM
+                    //      #define DIG_OUT1_INV            ON   // Online controlled output
+                    //      #if (USE_MQTT > OFF)
+                    //          #define MQTT_TEST_LED       "test-led"
+                    //        #endif
+                    //    #endif
+                    //// --- PWM
                   //  #if (USE_RGBLED_PWM > OFF)
-                  //      #ifndef USE_OUTPUT_CYCLE
-                  //          #define USE_OUTPUT_CYCLE
-                  //        #endif
-                  //      #define PWM_LEDS_CYCLE_MS       600u
-                  //      #define PWM_LEDS_FREQ           4000u
-                  //      #define PWM_LEDS_RES            8
-                  //      #define BRI_RGBLED_1            15
-                  //      #define COL24_RGBLED_1          0xBE2727u   // bright 10 + red 10 + green 10 + blue 10
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_RGB_BRIGHT     "rgb-bright"
-                  //          #define MQTT_RGB_COLPICK    "rgb-colpick"
-                  //        #endif
-                  //      #endif
+                    //      #ifndef USE_OUTPUT_CYCLE
+                    //          #define USE_OUTPUT_CYCLE
+                    //        #endif
+                    //      #define PWM_LEDS_CYCLE_MS       600u
+                    //      #define PWM_LEDS_FREQ           4000u
+                    //      #define PWM_LEDS_RES            8
+                    //      #define BRI_RGBLED_1            15
+                    //      #define COL24_RGBLED_1          0xBE2727u   // bright 10 + red 10 + green 10 + blue 10
+                    //      #if (USE_MQTT > OFF)
+                    //          #define MQTT_RGB_BRIGHT     "rgb-bright"
+                    //          #define MQTT_RGB_COLPICK    "rgb-colpick"
+                    //        #endif
+                    //      #endif
                   //  #if (USE_FAN_PWM > OFF)
-                  //      #ifndef USE_OUTPUT_CYCLE
-                  //          #define USE_OUTPUT_CYCLE
-                  //        #endif
-                  //      #define PWM_FAN_CYCLE_MS        390u
-                  //      #define PWM_FAN_FREQ            4500u
-                  //      #define PWM_FAN_RES             8
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_FAN1           "fan1"
-                  //          #define MQTT_FAN2           "fan2"
-                  //        #endif
-                  //    #endif
-                //// --- user input
-                  //// --- keypads
+                    //      #ifndef USE_OUTPUT_CYCLE
+                    //          #define USE_OUTPUT_CYCLE
+                    //        #endif
+                    //      #define PWM_FAN_CYCLE_MS        390u
+                    //      #define PWM_FAN_FREQ            4500u
+                    //      #define PWM_FAN_RES             8
+                    //      #if (USE_MQTT > OFF)
+                    //          #define MQTT_FAN1           "fan1"
+                    //          #define MQTT_FAN2           "fan2"
+                    //        #endif
+                    //    #endif
+                    //// --- user input
+                      //// --- keypads
                   //  #if defined(KEYS)
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //      #if !(KEYS ^ MC_UI_Keypad_ANA0_RO)
-                  //          #define USE_KEYPADSHIELD
-                  //          #define KEYS_ADC            34   // ADC Pin GPIO02
-                  //          #define ADC_STD_RES         12   // default resolution 12 Bit
-                  //          #define ADC_RES             12   // active resolution
-                  //          #define KP_NUM_KEYS         5
-                  //          #define KP_KEY_VAL_1        200  // max ADC value of button 0
-                  //          #define KP_KEY_VAL_2        750
-                  //          #define KP_KEY_VAL_3        1470
-                  //          #define KP_KEY_VAL_4        2330
-                  //          #define KP_KEY_VAL_5        3200
-                  //        #endif // keypad
-                  //      #if !(KEYS ^ MC_UI_TOUCHXPT2046_AZ)
-                  //          // Keypad start position, key sizes and spacing
-                  //          #define KEY_X               40 // Centre of key
-                  //          #define KEY_Y               287
-                  //          #define KEY_W               62 // Width and height
-                  //          #define KEY_H               26
-                  //          #define KEY_SPACING_X       18 // X and Y gap
-                  //          #define KEY_SPACING_Y       20
-                  //          #define KEY_TEXTSIZE        1   // Font size multiplier
-                  //          #define KEY_NUM_LEN         3 // Anzahl der Tasten
-                  //        #endif // touchpad
-                  //    #endif
-                  //// --- counter
+                    //      #ifndef USE_INPUT_CYCLE
+                    //          #define USE_INPUT_CYCLE
+                    //        #endif
+                    //      #if !(KEYS ^ MC_UI_Keypad_ANA0_RO)
+                    //          #define USE_KEYPADSHIELD
+                    //          #define KEYS_ADC            34   // ADC Pin GPIO02
+                    //          #define ADC_STD_RES         12   // default resolution 12 Bit
+                    //          #define ADC_RES             12   // active resolution
+                    //          #define KP_NUM_KEYS         5
+                    //          #define KP_KEY_VAL_1        200  // max ADC value of button 0
+                    //          #define KP_KEY_VAL_2        750
+                    //          #define KP_KEY_VAL_3        1470
+                    //          #define KP_KEY_VAL_4        2330
+                    //          #define KP_KEY_VAL_5        3200
+                    //        #endif // keypad
+                    //      #if !(KEYS ^ MC_UI_TOUCHXPT2046_AZ)
+                    //          // Keypad start position, key sizes and spacing
+                    //          #define KEY_X               40 // Centre of key
+                    //          #define KEY_Y               287
+                    //          #define KEY_W               62 // Width and height
+                    //          #define KEY_H               26
+                    //          #define KEY_SPACING_X       18 // X and Y gap
+                    //          #define KEY_SPACING_Y       20
+                    //          #define KEY_TEXTSIZE        1   // Font size multiplier
+                    //          #define KEY_NUM_LEN         3 // Anzahl der Tasten
+                    //        #endif // touchpad
+                    //    #endif
+                    //// --- counter
                   //  #if (USE_CNT_INP > OFF)
-                  //      #define PCNT_H_LIM_VAL      0   // not used
-                  //      #define PCNT_L_LIM_VAL      0   // not used
-                  //      #define PNCT_AUTO_SWDN      5000000ul  // > 5 sec period
-                  //      #define PNCT_AUTO_SWUP      50000ul    // < 50 msec period
-                  //      // counter 1
-                  //      #define PCNT1_INP_FILT      10  // glitch filter (clock 80 MHz)
-                  //      #define PCNT1_UFLOW         3000000ul  // timedelay due to 0 Hz [us]
-                  //      //#define PCNT1_INP_SIG_IO    PIN_CNT_FAN_1       // Pulse Input GPIO
-                  //      //#define PCNT1_INP_CTRL_IO   PIN_CNT_FAN_1       // Control GPIO HIGH=count up, LOW=count down
-                  //      //#define PCNT1_THRESH1_VAL   5
-                  //      #define PCNT1_THRESH0_VAL   3
-                  //      #define PCNT1_EVT_0         PCNT_EVT_THRES_0
-                  //      //#define PCNT1_EVT_1         PCNT_EVT_THRES_1
-                  //      #define PCNT1_UNIDX          0
-                  //      #define PCNT1_CHIDX          0
-                  //      #define PCNT1_ID            0
+                    //      #define PCNT_H_LIM_VAL      0   // not used
+                    //      #define PCNT_L_LIM_VAL      0   // not used
+                    //      #define PNCT_AUTO_SWDN      5000000ul  // > 5 sec period
+                    //      #define PNCT_AUTO_SWUP      50000ul    // < 50 msec period
+                    //      // counter 1
+                    //      #define PCNT1_INP_FILT      10  // glitch filter (clock 80 MHz)
+                    //      #define PCNT1_UFLOW         3000000ul  // timedelay due to 0 Hz [us]
+                    //      //#define PCNT1_INP_SIG_IO    PIN_CNT_FAN_1       // Pulse Input GPIO
+                    //      //#define PCNT1_INP_CTRL_IO   PIN_CNT_FAN_1       // Control GPIO HIGH=count up, LOW=count down
+                    //      //#define PCNT1_THRESH1_VAL   5
+                    //      #define PCNT1_THRESH0_VAL   3
+                    //      #define PCNT1_EVT_0         PCNT_EVT_THRES_0
+                    //      //#define PCNT1_EVT_1         PCNT_EVT_THRES_1
+                    //      #define PCNT1_UNIDX          0
+                    //      #define PCNT1_CHIDX          0
+                    //      #define PCNT1_ID            0
                   //      #if (USE_CNT_INP > 1)
-                  //          // counter 2
-                  //          #define PCNT2_INP_FILT      10  // glitch filter (clock 80 MHz)
-                  //          #define PCNT2_UFLOW         3000000ul  // timedelay due to 0 Hz [us]
-                  //          //#define PCNT2_INP_SIG_IO    PIN_CNT_FAN_2   // Pulse Input GPIO
-                  //          //#define PCNT2_INP_CTRL_IO   PIN_CNT_FAN_2       // Control GPIO HIGH=count up, LOW=count down
-                  //          //#define PCNT2_THRESH1_VAL   2
-                  //          #define PCNT2_THRESH0_VAL   400
-                  //          #define PCNT2_EVT_0         PCNT_EVT_THRES_0
-                  //          #define PCNT2_UNIDX          1
-                  //          #define PCNT2_CHIDX          0
-                  //          #define PCNT2_ID            1
-                  //        #endif
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //// --- dutycycle (pwm) input
-                  //  #if (USE_PWM_INP > OFF)
-                  //    #endif
-                  //// --- internal adc input
-                  //  #if (USE_ADC1 > OFF)
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //// --- internal digital input
-                  //  #if (USE_DIG_INP > OFF)
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //      #if (USE_CTRL_SW_INP > OFF)
-                  //          #define INP_SW_CTRL         0
-                  //          #define POL_SW_CTRL         HIGH // LOW, HIGH
-                  //          #define MOD_SW_CTRL         INPUT_PULLUP // INPUT, INPUT_PULLDOWN
-                  //        #endif
-                  //      #if (USE_GEN_SW_INP > OFF)
-                  //          #define INP_REED_1          0
-                  //          #define POL_REED_1          LOW // LOW, HIGH
-                  //          #define MOD_REED_1          INPUT_PULLUP // INPUT, INPUT_PULLDOWN
-                  //        #endif
-                  //    #endif
-                //// --- memories
+                    //          // counter 2
+                    //          #define PCNT2_INP_FILT      10  // glitch filter (clock 80 MHz)
+                    //          #define PCNT2_UFLOW         3000000ul  // timedelay due to 0 Hz [us]
+                    //          //#define PCNT2_INP_SIG_IO    PIN_CNT_FAN_2   // Pulse Input GPIO
+                    //          //#define PCNT2_INP_CTRL_IO   PIN_CNT_FAN_2       // Control GPIO HIGH=count up, LOW=count down
+                    //          //#define PCNT2_THRESH1_VAL   2
+                    //          #define PCNT2_THRESH0_VAL   400
+                    //          #define PCNT2_EVT_0         PCNT_EVT_THRES_0
+                    //          #define PCNT2_UNIDX          1
+                    //          #define PCNT2_CHIDX          0
+                    //          #define PCNT2_ID            1
+                    //        #endif
+                    //      #ifndef USE_INPUT_CYCLE
+                    //          #define USE_INPUT_CYCLE
+                    //        #endif
+                    //    #endif
+                    //// --- dutycycle (pwm) input
+                    //  #if (USE_PWM_INP > OFF)
+                    //    #endif
+                    //// --- internal adc input
+                    //  #if (USE_ADC1 > OFF)
+                    //      #ifndef USE_INPUT_CYCLE
+                    //          #define USE_INPUT_CYCLE
+                    //        #endif
+                    //    #endif
+                    //// --- internal digital input
+                    //  #if (USE_DIG_INP > OFF)
+                    //      #ifndef USE_INPUT_CYCLE
+                    //          #define USE_INPUT_CYCLE
+                    //        #endif
+                    //      #if (USE_CTRL_SW_INP > OFF)
+                    //          #define INP_SW_CTRL         0
+                    //          #define POL_SW_CTRL         HIGH // LOW, HIGH
+                    //          #define MOD_SW_CTRL         INPUT_PULLUP // INPUT, INPUT_PULLDOWN
+                    //        #endif
+                    //      #if (USE_GEN_SW_INP > OFF)
+                    //          #define INP_REED_1          0
+                    //          #define POL_REED_1          LOW // LOW, HIGH
+                    //          #define MOD_REED_1          INPUT_PULLUP // INPUT, INPUT_PULLDOWN
+                    //        #endif
+                    //    #endif
+                // --- memories
                   //// ---
                   //  #define FORMAT_SPIFFS_IF_FAILED true
-                  //// --- FRAM
+                // --- FRAM
                   //  #if (USE_FRAM_I2C > OFF)
                   //      #define SIZE_FRAM               0x8000
                   //    #endif
-                //// --- sensors
+                // --- sensors
                   //#if (USE_DS18B20_1W_IO > OFF)
                   //    #define DS_T_PRECISION            9
                   //    #define DS18B20_FILT              0
@@ -464,461 +975,6 @@
                   //        #define USE_INPUT_CYCLE
                   //      #endif
                   //  #endif
-                  //#if (USE_CCS811_I2C > OFF)
-                  //    #define CCS811_I2C                DEV_I2C1
-                  //    #define CCS811C_FILT              0  // eCO2 value in air
-                  //    #define CCS811C_Drop              0  // [0 - 32768 ppm]
-                  //    #define CCS811T_FILT              0  // TVOC value carbon value in air
-                  //    #define CCS811T_Drop              0  // [400 - 29206 ppm]
-                  //    #if (USE_MQTT > OFF)
-                  //        #define MQTT_CCS811T         "ccs811t"
-                  //        #define MQTT_CCS811C         "ccs811c"
-                  //      #endif
-                  //    #ifndef USE_INPUT_CYCLE
-                  //        #define USE_INPUT_CYCLE
-                  //      #endif
-                  //  #endif
-                  //#if (USE_INA3221_I2C > OFF)
-                  //    #define INA32211_I2C              DEV_I2C1
-                  //    #define INA32211_ADDR             I2C_INA3221_41
-                  //    #define INA3221U1_FILT            0  // voltage in1+
-                  //    #define INA3221U1_DROP            0  // [0 - 26000 mV]
-                  //    #define INA3221I1_FILT            0  // current in1
-                  //    #define INA3221I1_DROP            0  // [-5000 - +5000 mA]
-                  //    #define INA3221U2_FILT            0  // voltage in2+
-                  //    #define INA3221U2_DROP            0  // [0 - 26000 mV]
-                  //    #define INA3221I2_FILT            0  // current in2
-                  //    #define INA3221I2_DROP            0  // [-5000 - +5000 mA]
-                  //    #define INA3221I3_FILT            0  // current in3
-                  //    #define INA3221I3_DROP            0  // [-5000 - +5000 mA]
-                  //    #define INA3221U3_FILT            0  // voltage in3+
-                  //    #define INA3221U3_DROP            0  // [0 - 26000 mV]
-                  //    #if (USE_INA3221_I2C > OFF) // 1)
-                  //        #define INA32212_I2C              DEV_I2C1
-                  //        #define INA32212_ADDR             I2C_INA3221_42
-                  //      #endif
-                  //      #if (USE_INA3221_I2C > OFF) // 2)
-                  //          #define INA32213_I2C              DEV_I2C1
-                  //          #define INA32213_ADDR             I2C_INA3221_43
-                  //        #endif
-                  //    #if (USE_MQTT > OFF)
-                  //        #define MQTT_INA32211U1         "ina32211u1"
-                  //        #define MQTT_INA32211I1         "ina32211i1"
-                  //        #define MQTT_INA32211P1         "ina32211p1"
-                  //        #define MQTT_INA32211U2         "ina32211u2"
-                  //        #define MQTT_INA32211I2         "ina32211i2"
-                  //        #define MQTT_INA32211P2         "ina32211p2"
-                  //        #define MQTT_INA32211U3         "ina32211u3"
-                  //        #define MQTT_INA32211I3         "ina32211i3"
-                  //        #define MQTT_INA32211P3         "ina32211p3"
-                  //        #if (USE_MQTT > 1)
-                  //            #define MQTT_INA32212U1         "ina32212u1"
-                  //            #define MQTT_INA32212I1         "ina32212i1"
-                  //            #define MQTT_INA32212P1         "ina32212p1"
-                  //            #define MQTT_INA32212U2         "ina32212u2"
-                  //            #define MQTT_INA32212I2         "ina32212i2"
-                  //            #define MQTT_INA32212P2         "ina32212p2"
-                  //            #define MQTT_INA32212U3         "ina32212u3"
-                  //            #define MQTT_INA32212I3         "ina32212i3"
-                  //            #define MQTT_INA32212P3         "ina32212p3"
-                  //            #if (USE_MQTT > 1)
-                  //                #define MQTT_INA32213U1         "ina32213u1"
-                  //                #define MQTT_INA32213I1         "ina32213i1"
-                  //                #define MQTT_INA32213P1         "ina32213p1"
-                  //                #define MQTT_INA32213U2         "ina32213u2"
-                  //                #define MQTT_INA32213I2         "ina32213i2"
-                  //                #define MQTT_INA32213P2         "ina32213p2"
-                  //                #define MQTT_INA32213U3         "ina32213u3"
-                  //                #define MQTT_INA32213I3         "ina32213i3"
-                  //                #define MQTT_INA32213P3         "ina32213p3"
-                  //              #endif
-                  //          #endif
-                  //      #endif
-                  //  #endif
-        #if (USE_BME280_I2C > OFF)
-            #define BME280_I2C               DEV_I2C1
-            #if (BME280_I2C == DEV_I2C1)
-                #ifndef I2C1
-                    #define I2C1
-                  #endif //I2C1
-              #endif
-            #if (BME280_I2C == DEV_I2C2)
-                #ifndef I2C2
-                    #define I2C2
-                  #endif //I2C2
-              #endif
-            #define BME280_ADDR              I2C_BME280_76
-            #define BME280_RUNMODE           MD_NORM
-            //#define BME280_RUNMODE           MD_SIM
-            #define BME280T_FILT             0
-            #define BME280T_Drop             0
-            #define BME280P_FILT             0
-            #define BME280P_Drop             0
-            #define BME280H_FILT             0
-            #define BME280H_Drop             0
-            #if (USE_MQTT > OFF)
-                #define MQTT_BME280T         "bme280t1"
-                #define MQTT_BME280P         "bme280p1"
-                #define MQTT_BME280H         "bme280h1"
-              #endif
-            #ifndef USE_INPUT_CYCLE
-                #define USE_INPUT_CYCLE
-              #endif
-            #ifndef USE_OUTPUT_CYCLE
-                #define USE_OUTPUT_CYCLE
-              #endif
-          #endif
-                  //#if (USE_BME680_I2C > OFF)
-                  //    #define BME680_I2C               DEV_I2C1
-                  //    #define BME680_ADDR              I2C_BME680_77
-                  //    #define BME680_RUNMODE           MD_NORM
-                  //    //#define BME680_RUNMODE           MD_SIM
-                  //    #define BME680T_FILT             0
-                  //    #define BME680T_Drop             0
-                  //    #define BME680P_FILT             0
-                  //    #define BME680P_Drop             0
-                  //    #define BME680H_FILT             0
-                  //    #define BME680H_Drop             0
-                  //    #define BME680G_FILT             0
-                  //    #define BME680G_Drop             0
-                  //    #if (USE_MQTT > OFF)
-                  //        #define MQTT_BME680T         "bme680t1"
-                  //        #define MQTT_BME680P         "bme680p1"
-                  //        #define MQTT_BME680H         "bme680h1"
-                  //        #define MQTT_BME680G         "bme680g1"
-                  //      #endif
-                  //    #ifndef USE_INPUT_CYCLE
-                  //        #define USE_INPUT_CYCLE
-                  //      #endif
-                  //    #ifndef USE_OUTPUT_CYCLE
-                  //        #define USE_OUTPUT_CYCLE
-                  //      #endif
-                  //  #endif
-                  //  /* analog channels
-                  //    ADC channels
-                  //      ***_ADC_RES 12                    --> resolution 12 bit (def)
-                  //      ***_ADC_ATT  ADC_ATTEN_DB_0   -->  range 0 -  800 mV
-                  //      ***_ADC_ATT  ADC_ATTEN_DB_2_5 -->  range 0 - 1100 mV
-                  //      ***_ADC_ATT  ADC_ATTEN_DB_6   -->  range 0 - 1350 mV
-                  //      ***_ADC_ATT  ADC_ATTEN_DB_11  -->  range 0 - 2600 mV (def)
-                  //    ADS1115 channels
-                  //      ***_1115_ATT GAIN_TWOTHIRDS --> range +/-6144mV - 187.5    uV/bit
-                  //      ***_1115_ATT GAIN_ONE       --> range +/-4096mV - 125      uV/bit
-                  //      ***_1115_ATT GAIN_TWO (def) --> range +/-2048mV -  62.5    uV/bit
-                  //      ***_1115_ATT GAIN_FOUR      --> range +/-1024mV -  31.25   uV/bit
-                  //      ***_1115_ATT GAIN_EIGHT     --> range +/- 512mV -  15.625  uV/bit
-                  //      ***_1115_ATT GAIN_SIXTEEN   --> range +/- 256mV -   7.8125 uV/bit
-                  //    ADS1115 datarates
-                  //      RATE_ADS1115_8SPS         8 samples per second
-                  //      RATE_ADS1115_16SPS       16 samples per second
-                  //      RATE_ADS1115_32SPS       32 samples per second
-                  //      RATE_ADS1115_64SPS       64 samples per second
-                  //      RATE_ADS1115_128SPS      128 samples per second (default)
-                  //      RATE_ADS1115_250SPS      250 samples per second
-                  //      RATE_ADS1115_475SPS      475 samples per second
-                  //      RATE_ADS1115_860SPS      860 samples per second
-                  //    scaling parameters and calculation
-                  //    *pValue = (  (*pValue + (double) *_SCAL_OFFRAW)
-                  //               * (double)*_SCAL_GAIN
-                  //               + (double) *_SCAL_OFFRREAL
-                  //              )
-                  //    */
-                  //  #if (USE_MQ135_GAS_ANA > OFF)
-                  //      #define MQ135_GAS_ADC             ON
-                  //      #define MQ135_GAS_1115            OFF
-                  //      #define MQ135_FILT                15       // floating  measure filtering
-                  //      #define MQ135_EM_WIN              100      // window for traffic light
-                  //      #define MQ135_SCAL_MIN            0
-                  //      #define MQ135_SCAL_MAX            100
-                  //        //#define MQ135_ThresFilt       25       // threshold measure filtering
-                  //        //#define MQ135_EM_MID          2350    // green < (MID-(WIN/2) < yellow < (MID+(WIN/2) < red
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //  #if (USE_MQ3_ALK_ANA > OFF)
-                  //      #define MQ3_FILT                  5       // floating  measure filtering
-                  //      #define MQ3_DROP                  1
-                  //      #define MQ3_EM_WIN                100      // window for traffic light
-                  //      #define MQ3_SCAL                  OFF
-                  //      #define MQ3_ALK_ADC               OFF
-                  //      #define MQ3_ALK_1115              ON
-                  //      #if (MQ3_ALK_1115 > OFF)
-                  //          #define MQ3_1115_UNIDX          0
-                  //          #define MQ3_1115_CHIDX         3
-                  //          #define MQ3_1115_ATT          GAIN_TWOTHIRDS
-                  //          #define MQ3_OFFRAW            0
-                  //          #define MQ3_GAIN              0
-                  //          #define MQ3_OFFREAL           0
-                  //        #endif
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_MQ3              "alc"
-                  //        #endif
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //  #if (USE_TYPE_K_SPI > OFF)
-                  //      #define TYPEK_FILT      11        // floating  measure filtering
-                  //      #define TYPEK_DROP_PEEK 2         // drop biggest / lowest
-                  //      #define TYPEK1_OFFSET   0.        // offset unit °C
-                  //      #define TYPEK1_GAIN     1.        // result = (measure * gain) + offset
-                  //      #if (USE_TYPE_K_SPI > OFF)
-                  //          #define TYPEK2_OFFSET   0.        // offset unit °C
-                  //          #define TYPEK2_GAIN     1.        // result = (measure * gain) + offset
-                  //        #endif
-                  //      #if (USE_MQTT > OFF)
-                  //          #define TYPEK1_MQTT           "ttypek-1"
-                  //          #define TYPEK2_MQTT           "ttypek-2"
-                  //        #endif
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //  #if (USE_PHOTO_SENS_ANA > OFF)
-                  //      #define PHOTO1_FILT               0
-                  //      #define PHOTO1_DROP               1
-                  //      #define PHOTO1_ADC                ON
-                  //      #if (PHOTO1_ADC > OFF)
-                  //          #define PHOTO1_ADC_ATT        ADC_ATTEN_DB_11
-                  //          #define PHOTO1_SCAL_OFFRAW    0
-                  //          #define PHOTO1_SCAL_GAIN      0.02442
-                  //          #define PHOTO1_SCAL_OFFREAL   0
-                  //        #endif
-                  //      #define PHOTO1_1115               OFF
-                  //        #if (PHOTO1_1115 > OFF)
-                  //            #define PHOTO1_1115_UNIDX     0
-                  //            #define PHOTO1_1115_CHIDX    0
-                  //            #define PHOTO1_1115_ATT     GAIN_ONE
-                  //            #define PHOTO1_SCAL_OFFRAW  0
-                  //            #define PHOTO1_SCAL_GAIN    1
-                  //            #define PHOTO1_SCAL_OFFREAL 0
-                  //          #endif
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_PHOTO1           "photo1"
-                  //        #endif
-                  //      #if (USE_PHOTO_SENS_ANA > 1)
-                  //          #define PHOTO2_FILT           7
-                  //          #define PHOTO2_DROP           0
-                  //          #define PHOTO2_SCAL           OFF
-                  //          #define PHOTO2_SCAL_MIN       0
-                  //          #define PHOTO2_SCAL_MAX       100
-                  //          #define PHOTO2_ADC            ON
-                  //          #if (PHOTO2_ADC > OFF)
-                  //              #define PHOTO2_ADC_ATT  ADC_ATTEN_DB_11
-                  //            #endif
-                  //          #define PHOTO2_1115           OFF
-                  //          #if (PHOTO2_1115 > OFF)
-                  //              #define PHOTO2_1115_ATT  GAIN_ONE
-                  //              #define PHOTO2_1115_UNIDX  0
-                  //              #define PHOTO2_1115_CHIDX 0
-                  //            #endif
-                  //          #if (USE_MQTT > OFF)
-                  //              #define MQTT_PHOTO2           "licht2"
-                  //            #endif
-                  //        #endif
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //  #if (USE_VCC_ANA > OFF)
-                  //      #define VCC_FILT                0
-                  //      #define VCC_DROP                1
-                  //      #if (USE_VCC50_ANA > OFF)
-                  //          #define VCC50_ADC           OFF
-                  //          #define VCC50_1115          ON
-                  //          #if (VCC50_ADC > OFF)
-                  //              #define VCC50_ADC_ATT       ADC_ATTEN_DB_11
-                  //              #define VCC50_SCAL          OFF
-                  //              #define VCC50_SCAL_OFFRAW   0
-                  //              #define VCC50_SCAL_GAIN     1
-                  //              #define VCC50_SCAL_OFFREAL  0
-                  //            #endif
-                  //          #if (VCC50_1115 > OFF)
-                  //              #define VCC_1115_UNIDX     0
-                  //              #define VCC50_1115_CHIDX   2    //
-                  //              #define ADS13_GAIN        GAIN_TWOTHIRDS
-                  //              #define ADS13_RATE        RATE_ADS1115_128SPS
-                  //              #define ADS13_MUX         ADS1X15_MUX_SINGLE
-                  //              #define VCC50_SCAL        ON
-                  //              #define VCC50_OFFRAW      0
-                  //              #define VCC50_GAIN        2
-                  //              #define VCC50_OFFREAL     0
-                  //            #endif
-                  //          #if (USE_MQTT > OFF)
-                  //              #define MQTT_VCC50        "vcc50"
-                  //            #endif
-                  //        #endif
-                  //      #if (USE_VCC33_ANA > OFF)
-                  //          #define VCC33_ADC         OFF
-                  //          #define VCC33_1115        ON
-                  //          #if (VCC33_1115 > OFF)
-                  //              #define VCC33_1115_UNIDX   0
-                  //              #define VCC33_1115_CHIDX   3    //
-                  //              #define ADS11_GAIN        GAIN_TWOTHIRDS
-                  //              #define ADS11_RATE        RATE_ADS1115_128SPS
-                  //              #define ADS11_MUX         ADS1X15_MUX_SINGLE
-                  //              #define VCC33_SCAL        OFF
-                  //              #define VCC33_OFFRAW      0
-                  //              #define VCC33_GAIN        1
-                  //              #define VCC33_OFFREAL     0
-                  //            #endif
-                  //          #if (USE_MQTT > OFF)
-                  //              #define MQTT_VCC33          "vcc33"
-                  //            #endif
-                  //        #endif
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //  #if (USE_POTI_ANA > OFF)
-                  //      #define POTI1_FILT              9
-                  //      #define POTI1_DROP              1
-                  //      #define POTI1_ADC               OFF
-                  //      #if (POTI1_ADC > OFF)
-                  //          #define POTI1_ADC_ATT     ADC_ATTEN_DB_11
-                  //          #define VCC_SCAL_OFFRAW   0
-                  //          #define VCC_SCAL_GAIN     1
-                  //          #define VCC_SCAL_OFFREAL  0
-                  //        #endif
-                  //      #define POTI1_1115              ON
-                  //      #if (POTI1_1115 > OFF)
-                  //          #define POTI1_1115_UNIDX    0
-                  //          #define POTI1_1115_CHIDX    0
-                  //          #define ADS14_GAIN          GAIN_TWOTHIRDS
-                  //          #define ADS14_RATE          RATE_ADS1115_128SPS
-                  //          #define ADS14_MUX           ADS1X15_MUX_SINGLE
-                  //          #define POTI1_OFFRAW        0
-                  //          #define POTI1_GAIN          1
-                  //          #define POTI1_OFFREAL       0
-                  //        #endif
-                  //      #if (USE_MQTT > OFF)
-                  //          #define MQTT_POTI1          "poti1"
-                  //        #endif
-                  //      #if (USE_POTI_ANA > 1)
-                  //          #define POTI2_FILT          7
-                  //          #define POTI2_DROP          0
-                  //          #define POTI2_SCAL          OFF
-                  //          #define POTI2_SCAL_MIN      0
-                  //          #define POTI2_SCAL_MAX      100
-                  //          #define POTI2_ADC           ON
-                  //          #if (POTI2_ADC > OFF)
-                  //              #define POTI2_ADC_ATT   ADC_ATTEN_DB_11
-                  //            #endif
-                  //          #define POTI2_1115            OFF
-                  //          #if (POTI2_1115 > OFF)
-                  //              #define POTI2_1115_UNIDX  0
-                  //              #define POTI2_1115_CHIDX 0
-                  //              #define POTI2_1115_ATT  GAIN_TWOTHIRDS
-                  //            #endif
-                  //          #if (USE_MQTT > OFF)
-                  //              #define MQTT_POTI2          "poti2"
-                  //            #endif
-                  //        #endif
-                  //      #ifndef USE_INPUT_CYCLE
-                  //          #define USE_INPUT_CYCLE
-                  //        #endif
-                  //    #endif
-                  //  #if (USE_ACS712_ANA > OFF)
-                    //      /*  ACS712 hall effect current sensor +/- 5A/20A/30 A
-                    //          output: VCC/2 (2,5V) + measured value
-                    //          sensitivity: type  5A -> 186mV/A ->  1570 - 3430 mV
-                    //          sensitivity: type 20A -> 100mV/A ->   500 - 4500 mV
-                    //          sensitivity: type 30A ->  66mV/A ->   520 - 4480 mV
-                    //        */
-                    //      #define I712_FILT               0
-                    //      #define I712_DROP               0
-                    //      #define I712_1_IMAX             5000 // mA
-                    //      #define I712_1_ADC              OFF // not recommended, low resolution
-                    //      #if (I712_1_ADC > OFF)
-                    //          #define I712_1_ADC_ATT   ADC_ATTEN_DB_11
-                    //        #endif
-                    //      #define I712_1_1115             ON
-                    //      #if (I712_1_1115 > OFF)
-                      //          #define I712_1_1115_UNIDX    0
-                      //          #define I712_1_1115_CHIDX    1
-                      //          #if   (I712_1_IMAX ==  5000)
-                      //              #define ADS12_GAIN            GAIN_TWOTHIRDS
-                      //              #define ADS12_RATE            RATE_ADS1115_128SPS
-                      //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //              #define I712_1_SCAL_GAIN      185
-                      //              #define I712_1_SCAL_OFFREAL   0
-                      //            #endif
-                      //          #if (I712_1_IMAX == 20000)
-                      //              #define ADS12_GAIN            GAIN_ONE
-                      //              #define ADS12_RATE            RATE_ADS1115_128SPS
-                      //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //              #define I712_1_SCAL_GAIN      1
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //            #endif
-                      //          #if (I712_1_IMAX == 30000)
-                      //              #define ADS12_GAIN            GAIN_ONE
-                      //              #define ADS12_RATE            RATE_ADS1115_128SPS
-                      //              #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //              #define I712_1_SCAL_GAIN      1
-                      //              #define I712_1_SCAL_OFFRAW    0
-                      //            #endif
-                      //          #if (USE_MQTT > OFF)
-                      //              #define MQTT_I712_1         "acs7121"
-                      //            #endif
-                      //        #endif
-                      //      #if (USE_ACS712_ANA > 1)
-                      //          #define I712_2_IMAX             5000 // mA
-                      //          #define I712_2_ADC              OFF // not recommended, low resolution
-                      //          #define I712_2_1115             ON
-                      //          #if (I712_2_ADC > OFF)
-                      //              #define I712_2_ADC_ATT   ADC_ATTEN_DB_11
-                      //            #endif
-                      //          #if (I712_2_1115 > OFF)
-                      //              #define I712_2_1115_UNIDX     0
-                      //              #define I712_2_1115_CHIDX    2
-                      //              #if  (I712_2_IMAX ==  5000)
-                      //                  #define I712_2_1115_ATT       GAIN_ONE
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                  #define I712_2_SCAL_GAIN      1
-                      //                  #define I712_2_SCAL_OFFREAL   0
-                      //                #endif
-                      //              #if (I712_2_IMAX == 20000)
-                      //                  #define I712_2_1115_ATT      GAIN_TWOTHIRDS
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                  #define I712_2_SCAL_GAIN      1
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                #endif
-                      //              #if (I712_2_IMAX == 30000)
-                      //                  #define I712_2_1115_ATT      GAIN_TWOTHIRDS
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                  #define I712_2_SCAL_GAIN      1
-                      //                  #define I712_2_SCAL_OFFRAW    0
-                      //                #endif
-                      //              #if (USE_MQTT > OFF)
-                      //                  #define MQTT_I712_1         "acs7121"
-                      //                  #define MQTT_I712_2         "acs7122"
-                      //                #endif
-                      //            #endif
-                      //        #endif
-                      //    #endif
-                    //  #if (USE_ADC1115_I2C > OFF)
-                      //      #define ADS_I2C          DEV_I2C1
-                      //      #define ADS1_RUNMODE     MD_NORM
-                      //      //#define ADS1_RUNMODE     MD_SIM
-                      //      #define ADS1_ADDR        I2C_ADS1115_48
-                      //      #define ADS1_ANZ_CHANS   4
-                      //      #if (USE_ADC1115_I2C > 1)
-                      //          #define ADS2_ADDR        I2C_ADS1115_48 //I2C_ADS1115_49
-                      //          #define ADS2_ANZ_CHANS    4
-                      //          #if (USE_ADC1115_I2C > 2)
-                      //              #define ADS3_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4A
-                      //              #define ADS3_ANZ_CHANS    4
-                      //              #if (USE_ADC1115_I2C > 3)
-                      //                  #define ADS4_ADDR        I2C_ADS1115_48 //I2C_ADS1115_4B
-                      //                  #define ADS4_ANZ_CHANS    4
-                      //                #endif
-                      //            #endif
-                      //        #endif
-                      //    #endif
       //
       // --- cycle timing
         #define DISP_CYCLE_MS       100ul   // Intervallzeit [us]
@@ -934,33 +990,8 @@
   // ----------------------------------------------------------------
   // --- board management
   // ----------------------------------------------------------------
-    #if (PRJ_BOARD == MC_ESP32_Node)
-        #define SER_BAUDRATE ESP_SER_BAUD
+    #if (PRJ_BOARD == MC_ESP32_NODE)
       // --- system pins, connections
-        // blink LED
-        #if defined(USE_LED_BLINK_OUT)
-            #define PIN_BOARD_LED    2 // NC
-          #endif
-        // --- I2C board connection
-        #if defined(I2C1)
-            #define PIN_I2C1_SDA          21
-            #define PIN_I2C1_SCL          22
-          #endif // I2C1
-        #if defined(I2C2)
-            #define PIN_I2C2_SDA          !21
-            #define PIN_I2C2_SCL          !22
-          #endif // I2C1
-        // --- SPI board connection
-        #if defined(USE_VSPI)
-            //#define PIN_SPI_MOSI          23
-            //#define PIN_SPI_MISO          19
-            //#define PIN_SPI_SCL           18
-          #endif // USE_VSPI
-        // --- display
-        #if (USE_OLED_I2C > OFF)
-            #define OLED_I2C_SCL       PIN_I2C1_SCL
-            #define OLED_I2C_SDA       PIN_I2C1_SDA
-          #endif // USE_OLED_I2C
         // --- user input
               //#if (USE_CTRL_POTI > OFF)
               //    #define PIN_INP_POTI_1      35   // ADC 1-5
@@ -1071,12 +1102,6 @@
               //    #if (USE_DS18B20_1W_IO > 1)
               //        #define DS2_ONEWIRE_PIN 32
               //      #endif
-              //  #endif
-              //#if (USE_TYPE_K_SPI > OFF)
-              //    #define TYPEK_DATA_PIN      PIN_SPI_MISO
-              //    #define TYPEK_CLK_PIN       PIN_SPI_CLK
-              //    #define TYPEK1_CS_PIN       16
-              //    #define TYPEK2_CS_PIN       17
               //  #endif
               //#if (USE_MQ135_GAS_ANA > OFF)
               //    #define PIN_MQ135           35
