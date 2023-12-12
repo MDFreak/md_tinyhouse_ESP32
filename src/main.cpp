@@ -18,11 +18,11 @@
     static uint32_t freeHeap    = 10000000;
     static uint8_t  firstrun    = true;
   // --- system local usable values
-    static int8_t          tmp_i8      = 0;
-    static int16_t         tmp_i16     = 0;
-    static int32_t         tmp_i32     = 0;
-    static String          outStr      = "";
-    static char            tmp_c32[33] = "";
+    static int8_t   tmp_i8      = 0;
+    static int16_t  tmp_i16     = 0;
+    static int32_t  tmp_i32     = 0;
+    static String   outStr      = "";
+    static char     tmp_c32[33] = "";
   // --- system devices
     // i2C devices
     #if defined(USE_I2C)
@@ -51,7 +51,7 @@
       #endif
   // --- project devices
     // oled
-      #if defined (USE_OLED_I2C)
+      #ifdef USE_OLED_I2C
           #if (OLED_I2C == DEV_I2C1)                //#define OLED_I2C_SCL       PIN_I2C1_SCL
               #define OLED_I2C_SCL       PIN_I2C1_SCL
               #define OLED_I2C_SDA       PIN_I2C1_SDA
@@ -67,10 +67,19 @@
               //SH1106Wire oled(OLED_I2C_ADDR, OLED_I2C_SDA, OLED_I2C_SCL, (OLEDDISPLAY_GEOMETRY) OLED_GEO);
               SH1106Wire oled(OLED_I2C_ADDR, OLED_I2C_SDA, OLED_I2C_SCL, (OLEDDISPLAY_GEOMETRY) OLED_GEO);
             #endif // OLED_DRV
+          char outBuf[DISP_MAXCOLS + 1] = "";
           #ifdef TEST_OLED
               int oledCnt = 1;
             #endif
         #endif // USE_OLED_I2C
+      #ifdef USE_TFT
+          TFT_eSPI          tft            = TFT_eSPI();  // Invoke custom library
+          const   uint16_t  MAX_ITERATION  = 300; // Nombre de couleurs
+          #define SCREEN_WIDTH               tft.width()  //
+          #define SCREEN_HEIGHT              tft.height() // Taille de l'écran
+          static  float     zoom           = 0.5;
+          char              outBuf[DISP_MAXCOLS + 1] = "";
+        #endif
   // ------ user input ---------------
   // ------ user output ---------------
   // --- system cycles ---------------
@@ -86,7 +95,6 @@
         static msTimer dispT            = msTimer(DISP_CYCLE_MS);
         static uint8_t dispIdx  = 0;
         uint32_t      ze     = 1;      // aktuelle Schreibzeile
-        char          outBuf[OLED_MAXCOLS + 1] = "";
       #endif
     // memory
       #if (USE_FRAM_I2C > OFF)
@@ -132,7 +140,35 @@
               static String topBME280h = MQTT_BME280H;
             #endif
         #endif // USE_BME280_I2C
-
+    #ifdef USE_INA3221_I2C
+        SDL_Arduino_INA3221 ina3221(INA3221_ADDR); // def 0.1 ohm
+        #if (INA3221_I2C == DEV_I2C1)
+            TwoWire* ina1i2c = &i2c1;
+          #else
+            TwoWire* ina1i2c = &i2c2;
+          #endif
+        //md_val<float>    inaIVal[USE_INA3221_I2C][3];
+        //md_scale<float>  inaISkal[USE_INA3221_I2C][3];
+        //md_val<float>    inaUVal[USE_INA3221_I2C][3];
+        //md_scale<float>  inaUSkal[USE_INA3221_I2C][3];
+        static float     inaI   [USE_INA3221_I2C][3];
+        static float     inaU   [USE_INA3221_I2C][3];
+        static float     inaP   [USE_INA3221_I2C][3];
+        static float     inaIold[USE_INA3221_I2C][3];
+        static float     inaUold[USE_INA3221_I2C][3];
+        static float     inaPold[USE_INA3221_I2C][3];
+        static String    valINA3221i[USE_INA3221_I2C][3];
+        static String    valINA3221u[USE_INA3221_I2C][3];
+        static String    valINA3221p[USE_INA3221_I2C][3];
+        static int8_t    pubINA3221i[USE_INA3221_I2C][3];
+        static int8_t    pubINA3221u[USE_INA3221_I2C][3];
+        static int8_t    pubINA3221p[USE_INA3221_I2C][3];
+        #if (USE_MQTT > OFF)
+            static String topINA32211i[3] = { MQTT_INA32211I1, MQTT_INA32211I2, MQTT_INA32211I3 };
+            static String topINA32211u[3] = { MQTT_INA32211U1, MQTT_INA32211U2, MQTT_INA32211U3 };
+            static String topINA32211p[3] = { MQTT_INA32211P1, MQTT_INA32211P2, MQTT_INA32211P3 };
+          #endif
+      #endif
 // ----------------------------------------------------------------
 // --- system setup -----------------------------------
 // ----------------------------------------------------------------
@@ -236,6 +272,15 @@
                 STXT(" run TEST_LIB_TFT ");
                 //oled.clearUser();
               }
+            draw_Julia(-0.8,+0.156,zoom);
+            tft.fillRect(0, 0, 150, 20, TFT_BLACK);
+            //tft.setcursor(0,15);
+            tft.setTextColor(TFT_WHITE);
+            tft.print(" Zoom = ");
+            tft.println(zoom);
+            delay(2000);
+            zoom *= 1.5;
+            if (zoom > 100) zoom = 0.5;
           #endif
       // sensoren
         #if (USE_BME280_I2C > OFF)
@@ -284,9 +329,9 @@
 
                   if (statLen)
                     {
-                      if ( statLen > OLED_MAXCOLS)
+                      if ( statLen > DISP_MAXCOLS)
                         {
-                          msg.remove(OLED_MAXCOLS);
+                          msg.remove(DISP_MAXCOLS);
                         }
                       statOn = true;
                       statT.startT();
@@ -322,7 +367,7 @@
                       #if defined (USE_OLED_I2C)
                           oled.wrStatus(msg);
                         #endif
-                      #if (USE_DISP_TFT > 0)
+                      #if (USE_TFT > 0)
                           #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
                               mlcd.wrStatus((char*) statOut);
                             #endif
@@ -362,7 +407,7 @@
               #if (USE_OLED_I2C > OFF)
                   oled.wrText(msg, col, row, len);
                 #endif
-              #if (USE_DISP_TFT > 0)
+              #if (USE_TFT > 0)
                   #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
                       mlcd.wrText(msg, row, col);
                     #endif
@@ -382,7 +427,7 @@
                         #if defined(OLED2)
                             oled2.wrText(msg, col, row, len);
                           #endif
-                        #if (USE_DISP_TFT > 0)
+                        #if (USE_TFT > 0)
                             #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
                                 mlcd.wrText(msg, row, col);
                               #endif
@@ -417,9 +462,9 @@
                     #endif
                 #endif // USE_OLED_I2C
               #ifdef USE_STATUS
-                statOut[OLED_MAXCOLS] = 0;  // limit strlen
+                statOut[DISP_MAXCOLS] = 0;  // limit strlen
                 #endif
-              #if (USE_DISP_TFT > 0)
+              #ifdef USE_TFT
                   #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
                       mlcd.start(plcd);
                     #endif
@@ -428,6 +473,12 @@
                           #if (DEBUG_MODE >= CFG_DEBUG_DETAILS)
                             STXT(" startTouch ");
                           #endif
+                    #endif
+                  #ifdef USE_TFT_GC9A01
+                      tft.begin();
+                      tft.setRotation(1);
+                      tft.fillScreen(TFT_BLACK);
+                      tft.setFreeFont(&FreeMono9pt7b);
                     #endif
                 #endif
             }
@@ -726,7 +777,46 @@
                 //  // on how to create xbm files
                 //  oled.drawXbm(34, 14, WiFi_Logo_width, WiFi_Logo_height, WiFi_Logo_bits);
                 //}
-            #endif // TEST_OLED
+            #endif // PRJ_TEST_LIB_OLED
+          #if (PROJECT == PRJ_TEST_LIB_TFT)
+              void draw_Julia(float c_r, float c_i, float zoom)
+                {
+
+                  //tft.setcursor(0,0);
+                  float new_r = 0.0, new_i = 0.0, old_r = 0.0, old_i = 0.0;
+
+                  /* Pour chaque pixel en X */
+
+                  for(int16_t x = SCREEN_WIDTH/2 - 1; x >= 0; x--) { // Rely on inverted symmetry
+                    /* Pour chaque pixel en Y */
+                    for(uint16_t y = 0; y < SCREEN_HEIGHT; y++) {
+                      old_r = 1.5 * (x - SCREEN_WIDTH / 2) / (0.5 * zoom * SCREEN_WIDTH);
+                      old_i = (y - SCREEN_HEIGHT / 2) / (0.5 * zoom * SCREEN_HEIGHT);
+                      uint16_t i = 0;
+                      while ((old_r * old_r + old_i * old_i) < 4.0 && i < MAX_ITERATION) {
+                        new_r = old_r * old_r - old_i * old_i ;
+                        new_i = 2.0 * old_r * old_i;
+
+                        old_r = new_r+c_r;
+                        old_i = new_i+c_i;
+
+                        i++;
+                      }
+                      /* Affiche le pixel */
+                      if (i < 100){
+                        tft.drawPixel(x,y,tft.color565(255,255,map(i,0,100,255,0)));
+                        tft.drawPixel(SCREEN_WIDTH - x - 1,SCREEN_HEIGHT - y - 1,tft.color565(255,255,map(i,0,100,255,0)));
+                      }if(i<200){
+                        tft.drawPixel(x,y,tft.color565(255,map(i,100,200,255,0),0));
+                        tft.drawPixel(SCREEN_WIDTH - x - 1,SCREEN_HEIGHT - y - 1,tft.color565(255,map(i,100,200,255,0),0));
+                      }else{
+                        tft.drawPixel(x,y,tft.color565(map(i,200,300,255,0),0,0));
+                        tft.drawPixel(SCREEN_WIDTH - x - 1,SCREEN_HEIGHT - y - 1,tft.color565(map(i,200,300,255,0),0,0));
+                      }
+                    }
+                  }
+                }
+            #endif
         #endif // USE_DISP
   // --- sensors -------------------------
     // --- BME280

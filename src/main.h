@@ -35,12 +35,18 @@
               #include <SH1106Wire.h>
             #endif // OLED_DRV
         #endif // USE_OLED_I2C
+    //
+      #ifdef USE_SPI
+          #include <SPI.h>
+        #endif
+    // displays
+      #ifdef USE_TFT
+          #include <TFT_eSPI.h>
+        #endif
     // sensors
-      #if ( USE_BME280_I2C > OFF )
+      #ifdef USE_BME280_I2C
           #include <md_BME280.h>
         #endif
-
-
   // ---------------------------------------
   // --- prototypes
     // ------ system -------------------------
@@ -196,5 +202,7 @@
           void writeTextDemo();
           //void drawImageDemo()
         #endif
-
+      #if (PROJECT == PRJ_TEST_LIB_TFT)
+          void draw_Julia(float c_r, float c_i, float zoom);
+        #endif
 #endif // _MAIN_H_

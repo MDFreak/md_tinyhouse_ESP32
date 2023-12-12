@@ -1,3 +1,86 @@
+/*************************************************************************
+|* filename:   prj_conf_test_stdlib.h
+ * project:    part of standard utilities
+ * author:     Martin DORFNER (MD)
+ * maintainer: Martin DORFNER
+ * email:      git@martin-dorfner.at
+ * Date:       10.12.2023
+ *-----------------------------------------------------------------------
+ * function:
+ *   test elements of md_stdlib using shared projects
+ *   - OLED displays
+ *   - TFT Displays
+ *-----------------------------------------------------------------------
+ * external dependancies:
+ *   ext dependancies are set in 'platformio.h', depend on projects
+ *-----------------------------------------------------------------------
+ * internal dependancies:
+ *   - transfer C-type statement with make statement
+ *     use VSCode/PlatformIO
+ *        -> 'platformio.h'
+ *           -> [env:<project_name>]
+ *                i.e. build_flags = -D USE_MD_IP_LIST=1
+ *   - md_defines.h  (utility intern)
+ *-----------------------------------------------------------------------
+ * state of coding:
+ *   - initial coding
+ *   - already tested
+ *     - OLED displays
+ *       - MC_UO_OLED_066_AZ ; -> ok
+ *       - MC_UO_OLED_091_AZ ; -> ok
+ *       - MC_UO_OLED_096_AZ ; -> ok
+ *       - MC_UO_OLED_130_AZ ; -> ok
+ *     - TFT displays
+ *       - MC_UO_TFT1602_I2C_XA  ; -> to implment
+ *       - MC_UO_TFT1602_GPIO_RO ; -> to implment
+ *       - MC_UO_TXPT2046_AZ_SPI ; -> to implment
+ *       - MC_UO_TXPT2046_AZ_UNO ; -> to implment
+ *       - MC_UO_Keypad_ANA0_RO  ; -> to implment
+ *       - MC_UO_TFT_GC9A01A_SPI ; -> to implment
+ *     - outputs
+ *       - buzzer_pwm            ; -> to implement (acustic)
+ *       - fan_pwm               ; -> to implement
+ *       - dig_out_general       ; -> to implement
+ *       - WS2812_LINE_OUT       ; -> to implement
+ *       - USE_WS2812_MATRIX_OUT ; -> to implement
+ *       - USE_RGBLED_PWM        ; -> to implement
+ *     - sensors
+ *       - BME280_I2C (T,H,P)    ; -> ok
+ *       - BME680_I2C (T,H,P)    ; -> to implement
+ *       - CCS811_I2C            ; -> to implement
+ *       - ADC1115_I2C           ; -> to implement
+ *       - INA3221_I2C           ; -> to implement
+ *       - DS18B20_1W_IO         ; -> to implement
+ *       - MQ135_GAS_ANA         ; -> to implement
+ *       - PHOTO_SENS_ANA        ; -> to implement
+ *       - PHOTO_SENS_ANA        ; -> to implement
+ *       - POTI_ANA              ; -> to implement
+ *       - VCC50_ANA             ; -> to implement
+ *       - VCC33_ANA             ; -> to implement
+ *       - ACS712_ANA            ; -> to implement
+ *       - TYPE_K_SPI            ; -> to implement
+ *       - CNT_INP_IO            ; -> to implement
+ *       - DIG_INP_IO            ; -> to implement
+ *       - ESPHALL               ; -> to implement
+ *       - MCPWM                 ; -> to implement
+ *     - network
+ *       - WiFi              ; -> to implement
+ *       - NTPserver         ; -> to implement
+ *       - webserver         ; -> to implement
+ *       - MQTT              ; -> to implement
+ *       - RS485             ; -> to implement
+ *       - serial            ; -> to implement
+ *   TODO  testing
+ *-----------------------------------------------------------------------
+ * description
+ *   - for every device there is testing project
+ *   - normally a project uses one of the displays for output
+ ************************************************************************
+ * Version| Date   | Changes                                    | Autor
+ *-----------------------------------------------------------------------
+ * 0.001  |10.12.23| import from former project                 | MD
+*-----------------------------------------------------------------------*/
+
 #ifndef _PRJ_CONF_TEST_STDLIB_H_
   #define _PRJ_CONF_TEST_STDLIB_H_
 
@@ -13,7 +96,12 @@
           #define BLINKPWM_FREQ 400
           #define BLINKPWM_RES  8
           #if (PRJ_BOARD == MC_ESP32_NODE)
-              #define PIN_BOARD_LED    2 // NC
+              #ifndef PIN2
+                  #define PIN_BOARD_LED    2 // NC
+                  #define PIN2
+                #else
+                  PIN2 adready used
+                #endif
             #endif
         #endif // USE_LED_BLINK_OUT
     // --- I2C interface
@@ -35,26 +123,26 @@
               #define OLED_I2C           DEV_I2C1
               #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
               //#if (USE_OLED_I2C == MC_UO_OLED_066_AZ)
-                  #define OLED_MAXCOLS   OLED_066_MAXCOLS
-                  #define OLED_MAXROWS   OLED_066_MAXROWS
+                  #define DISP_MAXCOLS   OLED_066_MAXCOLS
+                  #define DISP_MAXROWS   OLED_066_MAXROWS
                   #define OLED_GEO       GEO_64_48
                   #define OLED_DRV       OLED_DRV_1306
                 #endif
               #if (OLED_I2C_TYP == MC_UO_OLED_091_AZ)
-                  #define OLED_MAXCOLS   OLED_091_MAXCOLS
-                  #define OLED_MAXROWS   OLED_091_MAXROWS
+                  #define DISP_MAXCOLS   OLED_091_MAXCOLS
+                  #define DISP_MAXROWS   OLED_091_MAXROWS
                   #define OLED_GEO       GEO_128_32
                   #define OLED_DRV       OLED_DRV_1306
                 #endif
               #if (OLED_I2C_TYP == MC_UO_OLED_096_AZ)
-                  #define OLED_MAXCOLS   OLED_096_MAXCOLS
-                  #define OLED_MAXROWS   OLED_096_MAXROWS
+                  #define DISP_MAXCOLS   OLED_096_MAXCOLS
+                  #define DISP_MAXROWS   OLED_096_MAXROWS
                   #define OLED_GEO       GEO_128_64
                   #define OLED_DRV       OLED_DRV_1306
                 #endif
               #if (OLED_I2C_TYP == MC_UO_OLED_130_AZ)
-                  #define OLED_MAXCOLS   OLED_130_MAXCOLS
-                  #define OLED_MAXROWS   OLED_130_MAXROWS
+                  #define DISP_MAXCOLS   OLED_130_MAXCOLS
+                  #define DISP_MAXROWS   OLED_130_MAXROWS
                   #define OLED_GEO       GEO_128_64
                   #define OLED_DRV       OLED_DRV_1106
                 #endif // OLED_I2C_TYP
@@ -227,9 +315,9 @@
                   #define USE_INPUT_CYCLE
                 #endif
             #endif
-          #if (USE_INA3221_I2C > OFF)
-              #define INA32211_I2C              DEV_I2C1
-              #define INA32211_ADDR             I2C_INA3221_41
+          #ifdef USE_INA3221_I2C
+              #define INA3221_I2C               DEV_I2C1
+              #define INA3221_ADDR              I2C_INA3221_41
               #define INA3221U1_FILT            0  // voltage in1+
               #define INA3221U1_DROP            0  // [0 - 26000 mV]
               #define INA3221I1_FILT            0  // current in1
@@ -242,14 +330,6 @@
               #define INA3221I3_DROP            0  // [-5000 - +5000 mA]
               #define INA3221U3_FILT            0  // voltage in3+
               #define INA3221U3_DROP            0  // [0 - 26000 mV]
-              #if (USE_INA3221_I2C > OFF) // 1)
-                  #define INA32212_I2C              DEV_I2C1
-                  #define INA32212_ADDR             I2C_INA3221_42
-                #endif
-                #if (USE_INA3221_I2C > OFF) // 2)
-                    #define INA32213_I2C              DEV_I2C1
-                    #define INA32213_ADDR             I2C_INA3221_43
-                  #endif
               #if (USE_MQTT > OFF)
                   #define MQTT_INA32211U1         "ina32211u1"
                   #define MQTT_INA32211I1         "ina32211i1"
@@ -260,40 +340,56 @@
                   #define MQTT_INA32211U3         "ina32211u3"
                   #define MQTT_INA32211I3         "ina32211i3"
                   #define MQTT_INA32211P3         "ina32211p3"
-                  #if (USE_MQTT > 1)
-                      #define MQTT_INA32212U1         "ina32212u1"
-                      #define MQTT_INA32212I1         "ina32212i1"
-                      #define MQTT_INA32212P1         "ina32212p1"
-                      #define MQTT_INA32212U2         "ina32212u2"
-                      #define MQTT_INA32212I2         "ina32212i2"
-                      #define MQTT_INA32212P2         "ina32212p2"
-                      #define MQTT_INA32212U3         "ina32212u3"
-                      #define MQTT_INA32212I3         "ina32212i3"
-                      #define MQTT_INA32212P3         "ina32212p3"
-                      #if (USE_MQTT > 2)
-                          #define MQTT_INA32213U1         "ina32213u1"
-                          #define MQTT_INA32213I1         "ina32213i1"
-                          #define MQTT_INA32213P1         "ina32213p1"
-                          #define MQTT_INA32213U2         "ina32213u2"
-                          #define MQTT_INA32213I2         "ina32213i2"
-                          #define MQTT_INA32213P2         "ina32213p2"
-                          #define MQTT_INA32213U3         "ina32213u3"
-                          #define MQTT_INA32213I3         "ina32213i3"
-                          #define MQTT_INA32213P3         "ina32213p3"
-                        #endif // USE_MQTT > 2
-                    #endif // USE_MQTT > 1
+                  #define MQTT_INA32212U1         "ina32212u1"
+                  #define MQTT_INA32212I1         "ina32212i1"
+                  #define MQTT_INA32212P1         "ina32212p1"
+                  #define MQTT_INA32212U2         "ina32212u2"
+                  #define MQTT_INA32212I2         "ina32212i2"
+                  #define MQTT_INA32212P2         "ina32212p2"
+                  #define MQTT_INA32212U3         "ina32212u3"
+                  #define MQTT_INA32212I3         "ina32212i3"
+                  #define MQTT_INA32212P3         "ina32212p3"
+                  #define MQTT_INA32213U1         "ina32213u1"
+                  #define MQTT_INA32213I1         "ina32213i1"
+                  #define MQTT_INA32213P1         "ina32213p1"
+                  #define MQTT_INA32213U2         "ina32213u2"
+                  #define MQTT_INA32213I2         "ina32213i2"
+                  #define MQTT_INA32213P2         "ina32213p2"
+                  #define MQTT_INA32213U3         "ina32213u3"
+                  #define MQTT_INA32213I3         "ina32213i3"
+                  #define MQTT_INA32213P3         "ina32213p3"
                 #endif // USE_MQTT > OFF
             #endif      //  #endif
           // define board pins at the end
           #if (PRJ_BOARD == MC_ESP32_NODE)
-              #if defined(I2C1)
-                  #define PIN_I2C1_SDA          21
-                  #define PIN_I2C1_SCL          22
+              #ifdef I2C1
+                  #ifndef PIN21
+                      #define PIN_I2C1_SDA       21
+                      #define PIN21
+                    #else
+                      PIN21 adready used
+                    #endif // PIN21
+                  #ifndef PIN22
+                      #define PIN_I2C1_SCL       22
+                      #define PIN22
+                    #else
+                      PIN22 adready used
+                    #endif // PIN22
                 #endif // I2C1
-              #if defined(I2C2)
-                  #define PIN_I2C2_SDA          !21
-                  #define PIN_I2C2_SCL          !22
-                #endif // I2C1
+              #ifdef I2C2
+                  #ifndef PIN21
+                      #define PIN_I2C2_SDA       21
+                      #define PIN21
+                    #else
+                      PIN21 adready used
+                    #endif
+                  #ifndef PIN22
+                      #define PIN_I2C2_SCL       22
+                      #define PIN22
+                    #else
+                      PIN22 adready used
+                    #endif
+                #endif // I2C2
             #endif //PRJ_BOARD
           #else
               #if defined(I2C1)
@@ -308,13 +404,47 @@
     // --- SPI interface
       #ifdef USE_SPI
           #if (PRJ_BOARD == MC_ESP32_NODE)
-              #ifndef PIN23
-              #define PIN_SPI_MOSI              23
-              #define PIN_SPI_MISO              19
-              #define PIN_SPI_SCL               18
+              #ifdef SPI_MOSI  // PIN_SPI_MOSI
+                  #define PIN_SPI_MOSI           SPI_MOSI
+                #else
+                  #ifndef PIN23
+                      #define PIN_SPI_MOSI           23
+                      #define PIN23
+                  #else
+                      PIN23 adready used
+                    #endif
+                #endif // PIN23
+              #ifdef SPI_MISO  // PIN_SPI_MOSI
+                    #define PIN_SPI_MISO           SPI_MISO
+                #else
+                  #ifndef PIN19 // PIN_SPI_MISO
+                      #define PIN_SPI_MISO       19
+                      #define PIN19
+                    #else
+                      PIN19 adready used
+                    #endif // PIN19
+                #endif
+              #ifdef SPI_SCLK  // PIN_SPI_SCLK
+                    #define PIN_SPI_SCLK           SPI_SCLK
+                #else
+                  #ifndef PIN18 // PIN_SPI_SCLK
+                      #define PIN_SPI_SCLK        18
+                      #define PIN18
+                    #else
+                      PIN18 adready used
+                    #endif // PIN18
+                #endif
             #endif //PRJ_BOARD
-          #ifdef  USE_DISP_TFT
-              #if (DISP_TFT == MC_UO_TOUCHXPT2046_AZ)
+          #ifdef  USE_TFT
+              // TFTs
+                //MC_UO_TFT1602_I2C_XA   // 0x1401u
+                //MC_UO_TFT1602_GPIO_RO  // 0x3402u used by KEYPADSHIELD
+                //MC_UO_TXPT2046_AZ_SPI  // 0x1403u used by Arduino-touch-case
+                //MC_UO_TXPT2046_AZ_UNO  // 0x1404u used by Arduino-touch-case
+                //MC_UO_Keypad_ANA0_RO   // 0x3405u used by KEYPADSHIELD
+                //MC_UO_TFT_GC9A01A_SPI  // 0x1406u round display 240x240 16bit color
+              // TFT shpuld be defined in 'platformio.h' with defines from TFT_eSPI.h
+              #ifdef UNUSED // (TFT_TYP == MC_UO_TOUCHXPT2046_AZ)
                   #define DISP_ORIENT    3      // 0:USB oben, 1:USB links, 2:USB unten, 3:USB rechts
                   //        #define DATE_DISP_COL  0
                       //        #define DATE_DISP_LINE 9      // line on display for date / time
@@ -340,24 +470,57 @@
                       //        #define STATUS_FCOL    0xF81F // TFT_MAGENTA
                       //        #define STATUS_BCOL    0x0000 // TFT_BLACK
                 #endif
-              #if (DISP_TFT == MC_UO_TFT1602_GPIO_RO)
+              #ifdef UNUSED // TFT_TYP == MC_UO_TFT1602_GPIO_RO)
                   #define DATE_DISP_COL   0
                   //        #define DATE_DISP_LINE  0    // line on display for date / time
                   //        #define LCD_ROWS        2
                   //        #define LCD_CULS        2
                 #endif
-              #if (DISP_TFT == MC_UO_TFT_GC9A01A_SPI)
+              #ifdef USE_TFT_GC9A01
+                  #if (PRJ_BOARD == MC_ESP32_NODE)
+                      #ifdef TFT_CS
+                          #define PIN_TFT_CS  TFT_CS
+                        #else
+                          #ifndef PIN5 // PIN_SPI_MOSI
+                              #define PIN_TFT_CS         5
+                              #define PIN5
+                            #else
+                              PIN5 adready used
+                            #endif // PIN5
+                        #endif
+                      #ifdef TFT_DC
+                          #define PIN_TFT_DC  TFT_DC
+                        #else
+                          #ifndef PIN26 // PIN_TFT_DC
+                              #define PIN_TFT_DC        26
+                              #define PIN26
+                            #else
+                              PIN26 adready used
+                            #endif // PIN26
+                        #endif
+                      #ifdef TFT_RST
+                          #define PIN_TFT_RST  TFT_RST
+                        #else
+                          #ifndef PIN33 // PIN_TFT_RST
+                              #define PIN_TFT_RST       33 //
+                              #define PIN_33
+                            #else
+                              PIN33 adready used
+                            #endif // PIN18
+                        #endif //PRJ_BOARD
+                    #endif
                   #define DATE_DISP_COL   0
-                  //        #define DATE_DISP_LINE  0    // line on display for date / time
-                  //        #define LCD_ROWS        2
-                  //        #define LCD_CULS        2
+                  #define DISP_MAXCOLS     30
+                          //        #define DATE_DISP_LINE  0    // line on display for date / time
+                          //        #define LCD_ROWS        2
+                          //        #define LCD_CULS        2
                 #endif
             #endif
             // --- SPI board connection
           #if (USE_TYPE_K_SPI > OFF)
               //#if (USE_TYPE_K_SPI > OFF)
               //    #define TYPEK_DATA_PIN      PIN_SPI_MISO
-              //    #define TYPEK_CLK_PIN       PIN_SPI_CLK
+              //    #define TYPEK_CLK_PIN       PIN_SPI_SCLK
               //    #define TYPEK1_CS_PIN       16
               //    #define TYPEK2_CS_PIN       17
               //  #endif
@@ -1071,7 +1234,7 @@
               //      //#define PIN_WS2812_L3  x
               //      //#define PIN_WS2812_L4  x
               //  #endif
-              //#if (USE_DISP_TFT > OFF)
+              //#if (USE_TFT > OFF)
               //    #if !(DISP_TFT ^ MC_UO_TFT1602_GPIO_RO)
               //        #define LCD_BL      5    // D10/SS  ARDUINO
               //        #define LCD_EN      13   // D9
