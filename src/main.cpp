@@ -25,13 +25,13 @@
     static char     tmp_c32[33] = "";
   // --- system devices
     // i2C devices
-    #if defined(USE_I2C)
-               //#ifdef I2C1
-               //    TwoWire i2c1 = TwoWire(0);
-               //  #endif
-               //#ifdef I2C2
-               //    TwoWire i2c2 = TwoWire(1);
-               //  #endif
+    #ifdef USE_I2C
+        #ifdef I2C1
+            TwoWire i2c1 = TwoWire(0);
+          #endif
+        #ifdef I2C2
+            TwoWire i2c2 = TwoWire(1);
+          #endif
       #endif // USE_I2C
     // SPI devices
     #if ( DEV_VSPI > OFF )
@@ -199,6 +199,10 @@
         #if (USE_BME280_I2C > OFF)
             initBME280();
           #endif
+      // temp. current sensor INA3221
+        #if (USE_INA3221_I2C > OFF)
+            initINA3221();
+          #endif
      STXT(" ... setup finished");
     }
 // ----------------------------------------------------------------
@@ -282,10 +286,879 @@
             zoom *= 1.5;
             if (zoom > 100) zoom = 0.5;
           #endif
+        #if (PROJECT == PRJ_TEST_LIB_INA3221)
+          #if (USE_INA3221_I2C > OFF)
+              // U 3.3V supply
+                inaU[0][0] = ina3221.getBusVoltage_V(1);
+                  //SVAL(" U 3.3    new ", inaU[0][0]);
+                  sprintf(outBuf, "U33 %.1fV", inaU[0][0]);
+                  STXT(outBuf);
+                  dispText(outBuf,0,1);
+                #if (INA3221I1_FILT > OFF)
+                    inaU[0][0] = ccsCVal.doVal(inaU[0][0]);
+                  #endif
+                    //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
+              // I 3.3V not used
+                #ifdef NOTUSED
+                    inaI[0][0] = ina3221.getCurrent_mA(1);
+                  #endif
+              // P 3.3V not used
+              // U 5V supply
+                inaU[0][1] = ina3221.getBusVoltage_V(2);
+                  //SVAL(" U 5.0    new ", inaU[0][1]);
+              #if (INA3221I1_FILT > OFF)
+                    inaU[0][1] = ccsCVal.doVal(inaU[0][1]);
+                  #endif
+              // I 5V supply
+                inaI[0][1] = -ina3221.getCurrent_mA(2);
+                  //SVAL(" I 5.0    new ", inaI[0][1]);
+              // P 5V supply
+                inaP[0][1] = (inaU[0][1] * inaI[0][1]);
+                  //SVAL(" P 5.0    new ", inaP[0][1]);
+                  sprintf(outBuf, "U50 %.1fV %.1fmA %.1fmW", inaU[0][1], inaI[0][1], inaP[0][1]);
+                  STXT(outBuf);
+                  dispText(outBuf,0,2);
+              // U main supply 12V/19V supply
+                inaU[0][2] = ina3221.getBusVoltage_V(3);
+                  //SVAL(" U supply new ", inaU[0][2]);
+                #if (INA3221U3_FILT > OFF)
+                    inaU[0][2] = ccsCVal.doVal(inaU[0][2]);
+                  #endif
+              // I main supply 12V/19V supply
+                inaI[0][2] = -ina3221.getCurrent_mA(3);
+                  //SVAL(" I supply new ", inaI[0][2]);
+                #if (INA3221I3_FILT > OFF)
+                    inaI[0][2] = ccsCVal.doVal(inaI[0][2]);
+                  #endif
+              // P main supply
+                inaP[0][2] = (inaU[0][2] * inaI[0][2]);
+                  //SVAL(" P supply new ", inaP[0][2]);
+                  sprintf(outBuf, "UIn %.1fV %.1fmA %.1fmW", inaU[0][2], inaI[0][2], inaP[0][2]);
+                  STXT(outBuf);
+                  dispText(outBuf,0,3);
+            #endif
+        #endif
       // sensoren
         #if (USE_BME280_I2C > OFF)
 
           #endif
+      // --- Display -------------------
+        #ifdef USE_DISP
+        #ifdef USE_OUTPUT_CYCLE
+            if (outpT.TOut())
+              {
+                outpIdx++;
+                outpT.startT();
+                switch(outpIdx)
+                  {
+                    case 1:  // BME280_I2C / BME680
+                        #if (USE_BME280_I2C > OFF)
+                            if (bmeT != bmeTold)
+                              {
+                                    //SVAL(" 280readT  new ", bmeT);
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valBME280t = bmeT;
+                                        errMQTT = (int8_t) mqtt.publish(topBME280t.c_str(), (uint8_t*) valBME280t.c_str(), valBME280t.length());
+                                        soutMQTTerr(topBME280t.c_str(), errMQTT);
+                                            //SVAL(topBME280t, valBME280t);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA0";
+                                    tmpval16 = (int16_t) (bmeT+ 0.5);
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                bmeTold = bmeT;
+                              }
+                            if (bmeP != bmePold)
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valBME280p = bmeP;
+                                        errMQTT = (int8_t) mqtt.publish(topBME280p.c_str(), (uint8_t*) valBME280p.c_str(), valBME280p.length());
+                                        soutMQTTerr(topBME280p.c_str(), errMQTT);
+                                            //SVAL(topBME280p, valBME280p);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA1";
+                                    tmpval16 = (uint16_t) bmeP;
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                bmePold = bmeP;
+                              }
+                            if (bmeH != bmeHold)
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valBME280h = bmeH;
+                                        errMQTT = (int8_t) mqtt.publish(topBME280h.c_str(), (uint8_t*) valBME280h.c_str(), valBME280h.length());
+                                        soutMQTTerr(topBME280h.c_str(), errMQTT);
+                                            //SVAL(topBME280h, valBME280h);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA2";
+                                    tmpval16 = (int16_t) bmeH;
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                bmeHold = bmeH;
+                              }
+                          #endif
+                        #if (USE_BME680_I2C > OFF)
+                            if (bme680T != bme680Told)
+                              {
+                                    //SVAL(" 680readT  new ", bmeT);
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valBME680t = bme680T;
+                                        errMQTT = (int8_t) mqtt.publish(topBME680t.c_str(), (uint8_t*) valBME680t.c_str(), valBME680t.length());
+                                        soutMQTTerr(topBME680t.c_str(), errMQTT);
+                                            //SVAL(topBME280t, valBME280t);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA0";
+                                    tmpval16 = (int16_t) (bme680T+ 0.5);
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                bme680Told = bme680T;
+                              }
+                            if (bme680P != bme680Pold)
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valBME680p = bme680P;
+                                        errMQTT = (int8_t) mqtt.publish(topBME680p.c_str(), (uint8_t*) valBME680p.c_str(), valBME680p.length());
+                                        soutMQTTerr(topBME680p.c_str(), errMQTT);
+                                            //SVAL(topBME680p, valBME680p);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA1";
+                                    tmpval16 = (uint16_t) bme680P;
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                bme680Pold = bme680P;
+                              }
+                            if (bme680H != bme680Hold)
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valBME680h = bme680H;
+                                        errMQTT = (int8_t) mqtt.publish(topBME680h.c_str(), (uint8_t*) valBME680h.c_str(), valBME680h.length());
+                                        soutMQTTerr(topBME680h.c_str(), errMQTT);
+                                            //SVAL(topBME680h, valBME680h);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA2";
+                                    tmpval16 = (int16_t) bme680H;
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                bme680Hold = bme680H;
+                              }
+                            if (bme680G != bme680Gold)
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valBME680g = bme680G;
+                                        errMQTT = (int8_t) mqtt.publish(topBME680g.c_str(), (uint8_t*) valBME680g.c_str(), valBME680g.length());
+                                        soutMQTTerr(topBME680g.c_str(), errMQTT);
+                                            //SVAL(topBME680g, valBME680g);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA2";
+                                    tmpval16 = (int16_t) bme680G;
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                bme680Gold = bme680G;
+                              }
+                          #endif
+                          //outpIdx++;
+                      break;
+                    case 2:  // CCS811_I2C
+                        #if (USE_CCS811_I2C > OFF)
+                            if (ccsC != ccsCold)
+                              {
+                                valCCS811c = ccsC;
+                                //pubCCS811c = TRUE;
+                                    //SVAL(" 811readC  new ", ccsC);
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        errMQTT = (int8_t) mqtt.publish(topCCS811c.c_str(), (uint8_t*) valCCS811c.c_str(), valCCS811c.length());
+                                        soutMQTTerr(topCCS811c.c_str(), errMQTT);
+                                            //SVAL(topCCS811c.c_str(), valCCS811c);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                  #endif
+                                ccsCold    = ccsC;
+                              }
+
+                            if (ccsT != ccsTold)
+                              {
+                                valCCS811t = ccsT;
+                                //pubCCS811t = TRUE;
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        errMQTT = (int8_t) mqtt.publish(topCCS811t.c_str(), (uint8_t*) valCCS811t.c_str(), valCCS811t.length());
+                                        soutMQTTerr(topCCS811t.c_str(), errMQTT);
+                                            //SVAL(topCCS811t.c_str(), valCCS811t);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                  #endif
+                                ccsTold    = ccsT;
+                                    //SVAL(" 811readT  new ", ccsT);
+                              }
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 3:  // INA3221_I2C 3x U+I measures
+                        #if (USE_INA3221_I2C > OFF)
+                            // U 3.3V supply
+                              if (inaU[0][0] != inaUold[0][0])
+                                {
+                                  valINA3221u[0][0] = inaU[0][0];
+                                      //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
+                                      //SVAL(" U 3.3    new ", inaU[0][0]);
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                          errMQTT = (int8_t) mqtt.publish(topINA32211u[0].c_str(),
+                                                                           (uint8_t*) valINA3221u[0][0].c_str(),
+                                                                          valINA3221u[0][0].length());
+                                          soutMQTTerr(topINA32211u[0].c_str(), errMQTT);
+                                              //SVAL(topINA32211u[0].c_str(), valINA3221u[0][0]);
+                                        }
+                                    #endif
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                                  inaUold[0][0]     = inaU[0][0];
+                                }
+                            // I 3.3V not used
+                              #ifdef NOTUSED
+                                  if (inaI[0][0] != inaIold[0][0])
+                                    {
+                                      valINA3221i[0][0] = inaI[0][0];
+                                          SVAL(" I 3.3 new ", inaI[0][0]);
+                                      #if (USE_MQTT > OFF)
+                                          if (errMQTT == MD_OK)
+                                            {
+                                              errMQTT = (int8_t) mqtt.publish(topINA32211i[0].c_str(),
+                                                                              (uint8_t*) valINA3221i[0][0].c_str(),
+                                                                              valINA3221i[0][0].length());
+                                              soutMQTTerr(topINA32211i[0].c_str(), errMQTT);
+                                                  SVAL(topINA32211i[0].c_str(), valINA3221i[0][0]);
+                                            }
+                                        #endif
+                                    }
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                                  inaIold[0][0]     = inaI[0][0];
+                                #endif
+                            // P 3.3V not used
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                        }
+                                    #endif
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                            // U 5V supply
+                              if (inaU[0][1] != inaUold[0][1])
+                                {
+                                  valINA3221u[0][1] = inaU[0][1];
+                                  //pubINA3221u[0][1] = TRUE;
+                                      //SVAL(" U 5.0    new ", inaU[0][1]);
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                          errMQTT = (int8_t) mqtt.publish(topINA32211u[1].c_str(),
+                                                                          (uint8_t*) valINA3221u[0][1].c_str(),
+                                                                          valINA3221u[0][1].length());
+                                          soutMQTTerr(topINA32211u[1].c_str(), errMQTT);
+                                              //SVAL(topINA32211u[1].c_str(), valINA3221u[0][1]);
+                                        }
+                                    #endif
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                                  inaUold[0][1]     = inaU[0][1];
+                                }
+                            // I 5V supply
+                              if (inaI[0][1] != inaIold[0][1])
+                                {
+                                  valINA3221i[0][1] = inaI[0][1];
+                                  //pubINA3221i[0][1] = TRUE;
+                                      //SVAL(" I 5.0    new ", inaI[0][1]);
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                          errMQTT = (int8_t) mqtt.publish(topINA32211i[1].c_str(),
+                                                                          (uint8_t*) valINA3221i[0][1].c_str(),
+                                                                          valINA3221i[0][1].length());
+                                          soutMQTTerr(topINA32211i[1].c_str(), errMQTT);
+                                              //SVAL(topINA32211i[1].c_str(), valINA3221i[0][1]);
+                                        }
+                                    #endif
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                                  inaIold[0][1]     = inaI[0][1];
+                                }
+                            // P 5V supply
+                              if (inaP[0][1] != inaPold[0][1])
+                                {
+                                  valINA3221p[0][1] = inaP[0][1];
+                                  //pubINA3221p[0][1] = TRUE;
+                                      //SVAL(" P 5.0    new ", inaP[0][1]);
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                          errMQTT = (int8_t) mqtt.publish(topINA32211p[1].c_str(),
+                                                                          (uint8_t*) valINA3221p[0][1].c_str(),
+                                                                          valINA3221p[0][1].length());
+                                          soutMQTTerr(topINA32211p[1].c_str(), errMQTT);
+                                              //SVAL(topINA32211p[1].c_str(), valINA3221p[0][1]);
+                                        }
+                                    #endif
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                                }
+                              inaPold[0][1]     = inaP[0][1];
+                            // U main supply 12V/19V supply
+                              if (inaU[0][2] != inaUold[0][2])
+                                {
+                                  valINA3221u[0][2] = inaU[0][2];
+                                  //pubINA3221u[0][2] = TRUE;
+                                      //SVAL(" U supply new ", inaU[0][2]);
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                          errMQTT = (int8_t) mqtt.publish(topINA32211u[2].c_str(),
+                                                                          (uint8_t*) valINA3221u[0][2].c_str(),
+                                                                          valINA3221u[0][2].length());
+                                          soutMQTTerr(topINA32211u[2].c_str(), errMQTT);
+                                              //SVAL(topINA32211u[2].c_str(), valINA3221u[0][2]);
+                                        }
+                                    #endif
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                                  inaUold[0][2]     = inaU[0][2];
+                                }
+                            // I main supply 12V/19V supply
+                              if (inaI[0][2] != inaIold[0][2])
+                                {
+                                  valINA3221i[0][2] = inaI[0][2];
+                                  //pubINA3221i[0][2] = TRUE;
+                                  inaIold[0][2]     = inaI[0][2];
+                                      //SVAL(" I supply new ", inaI[0][2]);
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                          errMQTT = (int8_t) mqtt.publish(topINA32211i[2].c_str(),
+                                                                          (uint8_t*) valINA3221i[0][2].c_str(),
+                                                                          valINA3221i[0][2].length());
+                                          soutMQTTerr(topINA32211i[2].c_str(), errMQTT);
+                                              //SVAL(topINA32211i[2].c_str(), valINA3221i[0][2]);
+                                        }
+                                    #endif
+                                  #if (USE_WEBSERVER > OFF)
+                                    #endif
+                                  inaIold[0][2]     = inaI[0][2];
+                                }
+                            // P main supply
+                              if (inaP[0][2] != inaPold[0][2])
+                                {
+                                  valINA3221p[0][2] = inaP[0][2];
+                                  //pubINA3221p[0][2] = TRUE;
+                                  inaPold[0][2]     = inaP[0][2];
+                                      //SVAL(" P supply new ", inaP[0][2]);
+                                  #if (USE_MQTT > OFF)
+                                      if (errMQTT == MD_OK)
+                                        {
+                                          errMQTT = (int8_t) mqtt.publish(topINA32211p[2].c_str(),
+                                                                          (uint8_t*) valINA3221p[0][2].c_str(),
+                                                                          valINA3221p[0][2].length());
+                                          soutMQTTerr(topINA32211p[2].c_str(), errMQTT);
+                                              //SVAL(topINA32211p[2].c_str(), valINA3221p[0][2]);
+                                        }
+                                    #endif
+                                }
+                          #endif
+                      //outpIdx++;
+                      break;
+                    case 4:  // DS18B20_1W temperature
+                        #if (USE_DS18B20_1W_IO > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 5:  // MQ135_GAS_ANA
+                        #if (USE_MQ135_GAS_ANA > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 6:  // MQ3_ALK_ANA
+                        #if (USE_MQ3_ALK_ANA > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 7:  // PHOTO_SENS_ANA
+                        #if (USE_PHOTO_SENS_ANA > OFF)
+                            if (photof[0] != photofold[0])
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valPhoto[0]  = photof[0];
+                                        errMQTT = (int8_t) mqtt.publish(topPhoto1.c_str(), (uint8_t*) valPhoto[0].c_str(), valPhoto[0].length());
+                                        soutMQTTerr(topPhoto1.c_str(), errMQTT);
+                                            //SVAL(topPhoto1, valPhoto[0]);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                    tmpStr = "SVA3";
+                                    tmpval16 = valPhoto[0].toInt();
+                                    tmpStr.concat(tmpval16);
+                                    pmdServ->updateAll(tmpStr);
+                                  #endif
+                                photofold[0] = photof[0];
+                                    //SVAL(" photo1  new ", photof[0]);
+                              }
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 8:  // POTI_ANA
+                        #if (USE_POTI_ANA > OFF)
+                            if (potif[0] != potifold[0])
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valPoti[0]  = potif[0];
+                                        errMQTT = (int8_t) mqtt.publish(topPoti1.c_str(),
+                                                                        (uint8_t*) valPoti[0].c_str(),
+                                                                        valPoti[0].length());
+                                        soutMQTTerr(topPoti1.c_str(), errMQTT);
+                                            //SVAL(topINA32211u[1].c_str(), valINA3221u[0][1]);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                  #endif
+                                potifold[0] = potif[0];
+                              }
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 9:  // VCC50_ANA
+                        #if (USE_VCC50_ANA > OFF)
+                            if (vcc50f != vcc50fold)
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valVCC50  = vcc50f;
+                                        errMQTT = (int8_t) mqtt.publish(topVCC50.c_str(),
+                                                                        (uint8_t*) valVCC50.c_str(),
+                                                                        valVCC50.length());
+                                        soutMQTTerr(topVCC50.c_str(), errMQTT);
+                                            //SVAL(topVCC50.c_str(), valVCC50);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                  #endif
+                                vcc50fold = vcc50f;
+                              }
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 10: // VCC33_ANA
+                        #if (USE_VCC33_ANA > OFF)
+                            if (vcc33f != vcc33fold)
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        valVCC33  = vcc33f;
+                                        errMQTT = (int8_t) mqtt.publish(topVCC33.c_str(),
+                                                                        (uint8_t*) valVCC33.c_str(),
+                                                                        valVCC33.length());
+                                        soutMQTTerr(topVCC33.c_str(), errMQTT);
+                                            //SVAL(topVCC33.c_str(), valVCC33);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                  #endif
+                                vcc33fold = vcc33f;
+                              }
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 11: // ACS712_ANA
+                        #if (USE_ACS712_ANA > OFF)
+                            if (i712f[0] != i712fold[0])
+                              {
+                                #if (USE_MQTT > OFF)
+                                    if (errMQTT == MD_OK)
+                                      {
+                                        vali712[0]  = i712f[0];
+                                        errMQTT = (int8_t) mqtt.publish(topi7121.c_str(),
+                                                                        (uint8_t*) vali712[0].c_str(),
+                                                                        vali712[0].length());
+                                        soutMQTTerr(topi7121.c_str(), errMQTT);
+                                            //SVAL(topi7121.c_str(), vali712[0]);
+                                      }
+                                  #endif
+                                #if (USE_WEBSERVER > OFF)
+                                  #endif
+                                i712fold[0] = i712f[0];
+                              }
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 12: // TYPE_K_SPI
+                        #if (USE_TYPE_K_SPI > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 13: // CNT_INP
+                        #if (USE_CNT_INP > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 14: // DIG_INP
+                        #if (USE_DIG_INP > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 15: // ESPHALL
+                        #if (USE_ESPHALL > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 16: // MCPWM
+                        #if (USE_MCPWM > OFF)
+                            #if (USE_MQTT > OFF)
+                                if (errMQTT == MD_OK)
+                                  {
+                                  }
+                              #endif
+                            #if (USE_WEBSERVER > OFF)
+                              #endif
+                          #endif
+                        outpIdx++;
+                      //break;
+                    case 17: // RGBLED_PWM
+                      #if (USE_RGBLED_PWM > OFF)
+                          if (rgbledT.TOut())
+                            {
+                                  //STXT(" # Out RGBLED");
+                              rgbledT.startT();
+                              #if (TEST_RGBLED_PWM > OFF)
+                                /*
+                                  switch (colRGBLED)
+                                    {
+                                      case 0:
+                                        if (RGBLED_rt >= 254)
+                                          {
+                                            RGBLED_rt = 0;
+                                            RGBLED_gr += incRGBLED;
+                                            colRGBLED++;
+                                          }
+                                          else
+                                          { RGBLED_rt += incRGBLED; }
+                                        break;
+                                      case 1:
+                                        if (RGBLED_gr >= 254)
+                                          {
+                                            RGBLED_gr = 0;
+                                            RGBLED_bl += incRGBLED;
+                                            colRGBLED++;
+                                          }
+                                          else
+                                          { RGBLED_gr += incRGBLED; }
+                                        break;
+                                      case 2:
+                                        if (RGBLED_bl >= 254)
+                                          {
+                                            RGBLED_bl = 0;
+                                            RGBLED_rt += incRGBLED;
+                                            colRGBLED = 0;
+                                          }
+                                          else
+                                          { RGBLED_bl += incRGBLED; }
+                                        break;
+                                      default:
+                                        break;
+                                    }
+                                  */
+
+                                  #if (USE_WEBCTRL_RGB > OFF)
+                                      _tmp += 4;
+                                      if (_tmp > 50)
+                                        { _tmp = 0; }
+                                          //SVAL(" _tmp = ", _tmp);
+                                      ledcWrite(PWM_RGB_RED,   webMD.getDutyCycle(0));
+                                      ledcWrite(PWM_RGB_GREEN, webMD.getDutyCycle(1));
+                                      ledcWrite(PWM_RGB_BLUE,  webMD.getDutyCycle(2));
+                                    #endif
+
+
+                                  if(*RGBLED[0] == *RGBLED[1]) {}
+                                    else
+                                    {
+                                      SOUT(" RGBLED changed 0/1 "); SOUTHEX((uint32_t) *RGBLED[0]);
+                                      SOUT(" / "); SOUTHEXLN((uint32_t) *RGBLED[1]);
+                                      *RGBLED[0] = *RGBLED[1];
+                                      //ledcWrite(PWM_RGB_RED,   BrightCol(RGBLED[0][LED_RED],RGBLED[0][LED_BRIGHT]));
+                                      //ledcWrite(PWM_RGB_GREEN, BrightCol(RGBLED[0][LED_GREEN],RGBLED[0][LED_BRIGHT]));
+                                      //ledcWrite(PWM_RGB_BLUE, BrightCol()  BrightCol(RGBLED[0][LED_BLUE],RGBLED[0][LED_BRIGHT]));
+                                      ledcWrite(PWM_RGB_RED,   Bright_x_Col(Red(RGBLED[0]->col24()),   RGBLED[0]->bright()));
+                                      ledcWrite(PWM_RGB_GREEN, Bright_x_Col(Green(RGBLED[0]->col24()), RGBLED[0]->bright()));
+                                      ledcWrite(PWM_RGB_BLUE,  Bright_x_Col(Blue(RGBLED[0]->col24()),  RGBLED[0]->bright()));
+                                    }
+                                #endif
+                                    //S2HEXVAL(" outcycle vor udate RGBLEDold RGBLED ", RGBLEDold->toInt(), RGBLED->toInt());
+                              if (RGBLED->toInt() != RGBLEDold->toInt())
+                                {
+                                  // update HW
+                                    LEDout = (uint8_t) map(RGBLED->bright(), 0, 255, 0, Green(RGBLED->col24()));
+                                    ledcWrite(PWM_RGB_GREEN, LEDout);
+                                    LEDout = (uint8_t) map(RGBLED->bright(), 0, 255, 0, Red(RGBLED->col24()));
+                                    ledcWrite(PWM_RGB_RED, LEDout);
+                                    LEDout = (uint8_t) map(RGBLED->bright(), 0, 255, 0, Blue(RGBLED->col24()));
+                                    ledcWrite(PWM_RGB_BLUE, LEDout);
+                                    LEDout = FALSE;
+                                  // update brightness
+                                    if (RGBLED->bright() != RGBLEDold->bright())
+                                      {
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                valRGBBright = (RGBLED->bright());    // RGB-LED col24
+                                                    //SVAL(topRGBBright, valRGBBright);
+                                                errMQTT = (int8_t) mqtt.publish(topRGBBright.c_str(), (uint8_t*) valRGBBright.c_str(), valRGBBright.length());
+                                                    soutMQTTerr(" MQTT publish RGBBright", errMQTT);
+                                              }
+                                          #endif
+
+                                        #if (USE_WEBSERVER > OFF)
+                                            outStr = "SVB1";
+                                            outStr.concat(RGBLED->bright());    // RGB-LED col24
+                                            pmdServ->updateAll(outStr);
+                                              //STXT(outStr);
+                                          #endif
+                                      }
+                                  // update color
+                                    if (RGBLED->col24() != RGBLEDold->col24())
+                                      {
+                                        #if (USE_MQTT > OFF)
+                                            colToHexStr(cMQTT, RGBLED->col24());
+                                            valRGBCol = cMQTT;    // RGB-LED col24
+                                                //SVAL(topRGBCol, valRGBCol);
+                                            errMQTT = (int8_t) mqtt.publish(topRGBCol.c_str(), (uint8_t*) valRGBCol.c_str(), valRGBCol.length());
+                                                soutMQTTerr(" MQTT publish RGBCol", errMQTT);
+                                          #endif
+
+                                        #if (USE_WEBSERVER > OFF)
+                                            outStr = "SVC1";
+                                            colToHexStr(ctmp8, RGBLED->col24());
+                                            outStr.concat(ctmp8);    // RGB-LED col24
+                                            pmdServ->updateAll(outStr);
+                                                //STXT(outStr);
+                                          #endif
+                                      }
+                                          //S2HEXVAL(" outcycle update RGBLEDold RGBLED ", RGBLEDold->toInt(), RGBLED->toInt());
+                                    RGBLEDold->fromInt(RGBLED->toInt());
+                                          //S2HEXVAL(" outcycle update RGBLEDold RGBLED ", RGBLEDold->toInt(), RGBLED->toInt());
+                                }
+                            }
+                        #endif
+                      break;
+                    case 18: // FAN_PWM
+                      #if (USE_FAN_PWM > OFF)
+                          if (fanT.TOut())
+                            {
+                                  //STXT(" # Out FAN");
+                              fanT.startT();
+                              if (fanIdx++ > 1000)
+                                {
+                                  fanIdx = 0;
+                                  for (uint8_t i=0 ; i < USE_FAN_PWM ; i++)
+                                    {
+                                      valFanPWM[i] += 1;
+                                      if (valFanPWM[i] >= 255) { valFanPWM[i] = 0; } // -50%
+                                    }
+                                  #if (USE_POTICTRL_FAN > 0)
+                                      valFan[INP_CNT_FAN_1] = map((long) -inpValADC[INP_POTI_CTRL], -4095, 0, 0, 255);
+                                          //SVAL(" fan poti ", inpValADC[INP_POTI_CTRL]);
+                                          //SVAL(" fan cnt ", valFan[INP_CNT_FAN_1]);
+                                      valFanPWM[0] = valFan[INP_CNT_FAN_1];
+                                      #if (USE_POTICTRL_FAN > 1)
+                                          valFan[INP_CNT_FAN_2] = map((long) -inpValADC[INP_POTI_CTRL], -4095, 0, 0, 255);
+                                          valFanPWM[1] = valFan[INP_CNT_FAN_2];
+                                        #endif
+                                    #endif
+                                  ledcWrite(PWM_FAN_1, valFanPWM[0]);
+                                  #if (USE_FAN_PWM > 1)
+                                      ledcWrite(PWM_FAN_2, valFanPWM[1]);
+                                    #endif
+                                }
+                              #if (USE_MQTT > OFF)
+                                  if (errMQTT == MD_OK)
+                                    {
+                                    }
+                                #endif
+                              #if (USE_WEBSERVER > OFF)
+                                #endif
+                            }
+                        #endif
+                      break;
+                    case 19: // digital output
+                      #if (USE_GEN_DIG_OUT > OFF)
+                          if (testLED != testLEDold)
+                            {
+                              valtestLED = testLED;
+                              #if (DIG_OUT1_INV > OFF)
+                                  digitalWrite(PIN_GEN_DIG_OUT1, !testLED);
+                              #else
+                                  digitalWrite(PIN_GEN_DIG_OUT1, testLED);
+                                #endif
+                              #if (USE_MQTT)
+                                  if (errMQTT == MD_OK)
+                                    {
+                                      errMQTT = (int8_t) mqtt.publish(toptestLED.c_str(), (uint8_t*) valtestLED.c_str(),  valtestLED.length());
+                                          soutMQTTerr(" MQTT subscribe testLED", errMQTT);
+                                    }
+                                #endif
+                              #if (USE_WEBSERVER > OFF)
+                                #endif
+                              testLEDold = testLED;
+                            }
+                        #endif
+                    case 20: // WEBSERVER
+                      #if (USE_WEBSERVER > OFF)
+                          if (newClient)
+                            {
+                              // EL_TSLIDER
+                              #if (USE_WS2812_LINE_OUT > OFF)
+                                  outStr = "SVB2";
+                                  outStr.concat(line2812[0]->bright());    // RGB-LED col24
+                                  pmdServ->updateAll(outStr);
+                                  STXT(outStr);
+                                #endif
+                              #if (USE_WS2812_MATRIX_OUT > OFF)
+                                  outStr = "SVB3";
+                                  md_LEDPix24* ppix = outM2812[0].text->pix24;
+                                  outStr.concat(ppix->bright());           // RGB-LED col24
+                                  pmdServ->updateAll(outStr);
+                                  STXT(outStr);                              outStr = "SVB3";
+                                #endif
+                                  //tmpStr = "SVB4";
+                                  //tmpStr.concat(line2812[0]->bright());    // RGB-LED col24
+                                  //pmdServ->updateAll(tmpStr);
+
+                              // EL_TCOLOR
+                              #if (USE_WS2812_LINE_OUT > OFF)
+                                  outStr = "SVC2";
+                                  colToHexStr(ctmp, line2812[0]->col24());
+                                  outStr.concat(ctmp);    // RGB-LED col24
+                                  pmdServ->updateAll(outStr);
+                                  //STXT(outStr);
+                                #endif
+                              #if (USE_WS2812_MATRIX_OUT > OFF)
+                                  outStr = "SVC3";
+                                  ppix = outM2812[0].text->pix24;
+                                  colToHexStr(ctmp, ppix->col24());
+                                  outStr.concat(ctmp);    // RGB-LED col24
+                                  pmdServ->updateAll(outStr);
+                                  STXT(outStr);
+                                  outStr = "SVC4";
+                                  ppix = outM2812[0].bmpB->pix24;
+                                  colToHexStr(ctmp, ppix->col24());
+                                  outStr.concat(ctmp);    // RGB-LED col24
+                                  pmdServ->updateAll(outStr);
+                                  STXT(outStr);
+                                #endif
+
+                              newClient = false;
+                            }
+                        #endif
+                      break;
+                    default:
+                      outpIdx = 0;
+                      break;
+                  }
+              }
+          #endif
+          #endif // defined(DISP)
       // system loop end
         if (firstrun == true)
           {
@@ -846,5 +1719,40 @@
                 }
             }
         #endif
+      #if (USE_INA3221_I2C > OFF)
+          void initINA3221()
+            {
+              dispStatus("init INA3221");
+              STX(" init INA3221 ID "); SOUTHEXLN((ina3221.getManufID()));
+              ina3221.begin();
+              for (uint8_t i = 0; i < 3 ; i++ )
+                {
+                  pubINA3221i[0][i] = OFF;
+                  pubINA3221u[0][i] = OFF;
+                }
+              // channel 1
+                #if (INA3221U1_FILT > OFF)
+                    inaUVal[0][0].begin(INA3221U1_FILT, INA3221U1_DROP);
+                  #endif
+                #if (INA3221I1_FILT > OFF)
+                    inaIVal[0][0].begin(INA3221I1_FILT, INA3221I1_DROP);
+                  #endif
+              // channel 2
+                #if (INA3221U2_FILT > OFF)
+                    inaUVal[0][1].begin(INA3221U2_FILT, INA3221U2_DROP);
+                  #endif
+                #if (INA3221I2_FILT > OFF)
+                    inaIVal[0][1].begin(INA3221I2_FILT, INA3221I2_DROP);
+                  #endif
+              // channel 3
+                #if (INA3221U3_FILT > OFF)
+                   inaUVal[0][2].begin(INA3221U3_FILT, INA3221U3_DROP);
+                  #endif
+                #if (INA3221I3_FILT > OFF)
+                    inaIVal[0][2].begin(INA3221I3_FILT, INA3221I3_DROP);
+                  #endif
+            }
+        #endif
+
 #endif // ESP32_TEST_MD_LIB
 

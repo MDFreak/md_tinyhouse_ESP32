@@ -47,6 +47,10 @@
       #ifdef USE_BME280_I2C
           #include <md_BME280.h>
         #endif
+      #if (USE_INA3221_I2C > OFF)
+          #include <SDL_Arduino_INA3221.h>
+        #endif
+
   // ---------------------------------------
   // --- prototypes
     // ------ system -------------------------
@@ -204,5 +208,11 @@
         #endif
       #if (PROJECT == PRJ_TEST_LIB_TFT)
           void draw_Julia(float c_r, float c_i, float zoom);
+        #endif
+      #if (USE_BME280_I2C > OFF)
+          void initBME280();
+        #endif
+      #if (USE_INA3221_I2C > OFF)
+          void initINA3221();
         #endif
 #endif // _MAIN_H_
