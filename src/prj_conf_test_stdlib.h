@@ -160,24 +160,14 @@
             #endif // USE_OLED_I2C
           // --- I2C board connection
           #if (USE_FRAM_I2C > OFF)
-              #define FRAM1_I2C_ADDR      I2C_FRAM_50
-              #define FRAM1_SIZE          0x8000
-              #define FRAM1_I2C           DEV_I2C1
+              #define FRAM_I2C_ADDR      I2C_FRAM_50
+              #define FRAM_SIZE          0x8000
+              #define FRAM_I2C           DEV_I2C1
               #if (FRAM1_I2C == DEV_I2C1)
                   #ifndef I2C1
                       #define I2C1
                     #endif //I2C1
                 #endif // FRAM1_I2C
-              #if (USE_FRAM_I2C > 1 )
-                  #define FRAM2_I2C_ADDR  I2C_FRAM_50
-                  #define FRAM1_SIZE      0x8000
-                  #define FRAM2_I2C       DEV_I2C2
-                  #if (FRAM2_I2C == DEV_I2C2)
-                      #ifndef I2C2
-                          #define I2C2
-                        #endif //I2C2
-                    #endif // FRAM2_I2C
-                #endif // USE_FRAM_I2C
             #endif
           #if (USE_CCS811_I2C > OFF )
               //    #define CCS811_I2C_ADDR     I2C_CSS811_
@@ -1124,13 +1114,9 @@
                     //          #define MOD_REED_1          INPUT_PULLUP // INPUT, INPUT_PULLDOWN
                     //        #endif
                     //    #endif
-                // --- memories
+    // --- memories
                   //// ---
                   //  #define FORMAT_SPIFFS_IF_FAILED true
-                // --- FRAM
-                  //  #if (USE_FRAM_I2C > OFF)
-                  //      #define SIZE_FRAM               0x8000
-                  //    #endif
                 // --- sensors
                   //#if (USE_DS18B20_1W_IO > OFF)
                   //    #define DS_T_PRECISION            9

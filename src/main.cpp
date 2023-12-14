@@ -97,10 +97,8 @@
         uint32_t      ze     = 1;      // aktuelle Schreibzeile
       #endif
     // memory
-      #if (USE_FRAM_I2C > OFF)
-          #define FRAM1_I2C_ADDR      I2C_FRAM_50
-          #define FRAM1_SIZE          0x8000
-          #define FRAM1_I2C           I2C1
+      #ifdef USE_FRAM_I2C
+          md_FRAM fram = md_FRAM();
         #endif // USE_FRAM_I2C
     // sensors
       #if (USE_CCS811_I2C > OFF )
@@ -110,7 +108,7 @@
       #if (USE_BME680_I2C > OFF )
           #define BME680_I2C         I2C1
         #endif // USE_BME680_I2C
-      #if (USE_BME280_I2C > OFF) // 1
+      #ifdef USE_BME280_I2C // 1
           static md_BME280  bme280_1;
           //static md_BME280* pbme280_1 = &bme280_1;
           #if (BME280_I2C == DEV_I2C1)
@@ -140,35 +138,35 @@
               static String topBME280h = MQTT_BME280H;
             #endif
         #endif // USE_BME280_I2C
-    #ifdef USE_INA3221_I2C
-        SDL_Arduino_INA3221 ina3221(INA3221_ADDR); // def 0.1 ohm
-        #if (INA3221_I2C == DEV_I2C1)
-            TwoWire* ina1i2c = &i2c1;
-          #else
-            TwoWire* ina1i2c = &i2c2;
-          #endif
-        //md_val<float>    inaIVal[USE_INA3221_I2C][3];
-        //md_scale<float>  inaISkal[USE_INA3221_I2C][3];
-        //md_val<float>    inaUVal[USE_INA3221_I2C][3];
-        //md_scale<float>  inaUSkal[USE_INA3221_I2C][3];
-        static float     inaI   [USE_INA3221_I2C][3];
-        static float     inaU   [USE_INA3221_I2C][3];
-        static float     inaP   [USE_INA3221_I2C][3];
-        static float     inaIold[USE_INA3221_I2C][3];
-        static float     inaUold[USE_INA3221_I2C][3];
-        static float     inaPold[USE_INA3221_I2C][3];
-        static String    valINA3221i[USE_INA3221_I2C][3];
-        static String    valINA3221u[USE_INA3221_I2C][3];
-        static String    valINA3221p[USE_INA3221_I2C][3];
-        static int8_t    pubINA3221i[USE_INA3221_I2C][3];
-        static int8_t    pubINA3221u[USE_INA3221_I2C][3];
-        static int8_t    pubINA3221p[USE_INA3221_I2C][3];
-        #if (USE_MQTT > OFF)
-            static String topINA32211i[3] = { MQTT_INA32211I1, MQTT_INA32211I2, MQTT_INA32211I3 };
-            static String topINA32211u[3] = { MQTT_INA32211U1, MQTT_INA32211U2, MQTT_INA32211U3 };
-            static String topINA32211p[3] = { MQTT_INA32211P1, MQTT_INA32211P2, MQTT_INA32211P3 };
-          #endif
-      #endif
+      #ifdef USE_INA3221_I2C
+          SDL_Arduino_INA3221 ina3221(INA3221_ADDR); // def 0.1 ohm
+          #if (INA3221_I2C == DEV_I2C1)
+              TwoWire* ina1i2c = &i2c1;
+            #else
+              TwoWire* ina1i2c = &i2c2;
+            #endif
+          //md_val<float>    inaIVal[USE_INA3221_I2C][3];
+          //md_scale<float>  inaISkal[USE_INA3221_I2C][3];
+          //md_val<float>    inaUVal[USE_INA3221_I2C][3];
+          //md_scale<float>  inaUSkal[USE_INA3221_I2C][3];
+          static float     inaI   [USE_INA3221_I2C][3];
+          static float     inaU   [USE_INA3221_I2C][3];
+          static float     inaP   [USE_INA3221_I2C][3];
+          static float     inaIold[USE_INA3221_I2C][3];
+          static float     inaUold[USE_INA3221_I2C][3];
+          static float     inaPold[USE_INA3221_I2C][3];
+          static String    valINA3221i[USE_INA3221_I2C][3];
+          static String    valINA3221u[USE_INA3221_I2C][3];
+          static String    valINA3221p[USE_INA3221_I2C][3];
+          static int8_t    pubINA3221i[USE_INA3221_I2C][3];
+          static int8_t    pubINA3221u[USE_INA3221_I2C][3];
+          static int8_t    pubINA3221p[USE_INA3221_I2C][3];
+          #if (USE_MQTT > OFF)
+              static String topINA32211i[3] = { MQTT_INA32211I1, MQTT_INA32211I2, MQTT_INA32211I3 };
+              static String topINA32211u[3] = { MQTT_INA32211U1, MQTT_INA32211U2, MQTT_INA32211U3 };
+              static String topINA32211p[3] = { MQTT_INA32211P1, MQTT_INA32211P2, MQTT_INA32211P3 };
+            #endif
+        #endif
 // ----------------------------------------------------------------
 // --- system setup -----------------------------------
 // ----------------------------------------------------------------

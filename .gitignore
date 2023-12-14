@@ -7,5 +7,7 @@ doxygen_sqlite3.db
 html
 *.tmp
 .pio*
-./MD_ESP32-Test*
-./md_ESP32-Test2*
+./MD_ESP32-Test/*
+md_ESP32-Test2/*
+./_NIO_WLAN/*
+./_NIO_Webserver/*
