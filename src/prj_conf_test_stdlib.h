@@ -801,7 +801,13 @@
     // --- network
       // --- WIFI
         #define UTC_SEASONTIME UTC_SUMMERTIME
-        #ifdef USE_WIFI
+        #if defined(USE_WIFI)
+            #if defined(USE_NTP_SERVER)
+                #if not defined(USE_OUTPUT_CYCLE)
+                    #define USE_OUTPUT_CYCLE
+                  #endif
+                #define NTPSERVER_CYCLE 1000ul   // Intervallzeit [us]
+              #endif // USE_NTP_SERVER
             #define WIFI_ANZ_LOGIN  8
             #define WIFI_IS_DUTY    ON
             #define WIFI_SSID0      "M&M_mobil"   // Bauwagen
@@ -827,14 +833,8 @@
             #define WIFI_CONN_DELAY 500000ul // Scan-Abstand [us]
             #define WIFI_CONN_REP   5        // Anzahle der Connect-Schleifen
             #define WIFI_CONN_CYCLE 4000ul   // Intervallzeit fuer Recoonect [us]
-            #define NTPSERVER_CYCLE 1000ul   // Intervallzeit [us]
             #define WIFI_ANZ_LOCIP  WIFI_ANZ_LOGIN
-              //#define WIFI_FIXIP0           0x1800000Aul // 10.0.0.24   lowest first
-              //#define WIFI_GATEWAY0         0x8B00000Aul // 10.0.0.139 // Moosgraben
-              //#define WIFI_FIXIP1           0x1800000Aul // 10.0.0.24
-              //#ifdef USE_LOCAL_IP
             #if defined(USE_FIXIP)
-                //#define USE_LOCAL_IP
                 #define WIFI_FIXIP        0x01000000ul * USE_FIXIP
                 #define WIFI_GATEWAY0     0x0100000Aul // 10.0.0.1        // Bauwagen
                 #define WIFI_FIXIP0       0x0000000Aul + WIFI_FIXIP
@@ -860,7 +860,7 @@
               #endif
           #endif
       // --- webserver
-            #if (USE_WEBSERVER > OFF)
+            #if defined(USE_WEBSERVER)
                 #define WEBSERVER_CYCLE       1000ul  // Intervallzeit [us]
               #endif
       // --- MQTT Mosquitto client
@@ -1135,7 +1135,7 @@
         // output status line
         #define STAT_DELTIME_MS     5000ul  // default time to clear status
         #define STAT_NEWTIME_MS     1000ul  // default time to clear status
-        #ifdef USE_INPUT_CYCLE
+        #if defined(USE_INPUT_CYCLE)
             #define INPUT_CYCLE_MS  10u
           #endif // USE_INPUT_CYCLE
         #ifdef USE_OUTPUT_CYCLE

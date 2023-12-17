@@ -65,7 +65,7 @@
         #include <spi.h>
       #endif
   // --- network
-    #if (USE_WIFI > OFF)
+    #if defined(USE_WIFI)
         #include <AsyncTCP.h>
         #include <ESPAsyncWebServer.h>
         #include <md_webserver.h>
@@ -205,14 +205,14 @@
             #endif
     // ------ network -------------------------
       // --- WIFI
-        #if (USE_WIFI > OFF)
+        #if defined(USE_WIFI)
             uint8_t startWIFI(bool startup);
             #if (USE_NTP_SERVER > OFF)
                 void    initNTPTime();
               #endif
           #endif
       // --- webserver
-        #if (USE_WEBSERVER > OFF)
+        #if defined(USE_WEBSERVER)
             //void handlingIncomingData(AsyncWebSocketClient *client, void *arg, uint8_t *data, size_t len);
             //void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type,
             //             void * arg, uint8_t *data, size_t len);
