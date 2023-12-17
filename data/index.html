@@ -1,0 +1,234 @@
+<!-- index.html v22.11.01 -->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="MDFreak Test">
+    <meta name="keywords" content="HTML, CSS, JavaScript">
+    <meta name="author" content="Martin Dorfner">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MD ESP Server</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+    <script src="https://cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.7/all/gauge.min.js"></script>
+    <link rel="stylesheet"
+          type="text/css"
+          href="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2/dist/spectrum.min.css">
+    <link rel="stylesheet"
+          href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+          integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr"
+          crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="script.js"></script>
+  </head>
+  <body>
+    <section class="main">
+      <div id="content">
+        <div id="sidebar">
+          <input type="checkbox" id="nav-toggle-cb" checked="checked">
+          <nav id="menu">
+            <!-- RGB LED controllers -->
+            <div class="input-group" id="quality-group">
+              <div class="buttons">
+                  <input type="color" id="LEDC_1" class="default-action"
+                         onchange="updateVal(this)">
+              </div>
+              <label for="LEDV_1">| RGB LED</label>
+              <input type="range" id="LEDV_1" class="LEDslider"
+                     oninput="updateVal(this)"
+                     min="0" max="255" value="10" step="1">
+              <div class="valLEDV"><span id="valLEDV_1"></span></div>
+            </div>
+            <div class="input-group" id="brightness-group">
+              <div class="buttons">
+                  <input type="color" id="LEDC_2" class="default-action"
+                         onchange="updateVal(this)">
+              </div>
+              <label for="LEDV_2">| 2812 Line</label>
+              <input type="range" id="LEDV_2" class="BrightSlider"
+                     oninput="updateVal(this)"
+                     min="0" max="255" value="15" step="1">
+              <div class="valLEDV"><span id="valLEDV_2"></span></div>
+            </div>
+            <div class="input-group" id="brightness-group">
+              <div class="buttons">
+                  <input type="color" id="LEDC_3" class="default-action"
+                         onchange="updateVal(this)">
+              </div>
+              <label for="LEDV_3">| 2812 Matrix</label>
+              <input type="range" id="LEDV_3" class="BrightSlider"
+                     oninput="updateVal(this)"
+                     min="0" max="255" value="15" step="1">
+              <div class="valLEDV"><span id="valLEDV_3"></span></div>
+            </div>
+            <div class="input-group" id="brightness-group">
+              <div class="buttons">
+                  <input type="color" id="LEDC_4" class="default-action"
+                         onchange="updateVal(this)">
+              </div>
+              <label for="LEDV_4">| 2812 Smilies</label>
+              <input type="range" id="LEDV_4" class="BrightSlider"
+                     oninput="updateVal(this)"
+                     min="0" max="255" value="15" step="1">
+              <div class="valLEDV"><span id="valLEDV_4"></span></div>
+            </div>
+          </nav>
+        </div>
+        <div id="sidebar">
+          <nav id="menu1">
+            <div class="input-group" id="switch-group">
+              <div class="switch">
+                <input type="checkbox" id="SLSW_1" class="default-action"
+                       oninput="updateVal(this)">
+                <label class="slider" for="SLSW_1"></label>
+              </div>
+              <label for="SLSW_1">| Switch 1</label>
+            </div>
+            <div class="input-group" id="switch-group">
+              <div class="switch">
+                <input type="checkbox" id="SLSW_2" class="default-action"
+                       oninput="updateVal(this)">
+                <label class="slider" for="SLSW_2"></label>
+              </div>
+              <label for="SLSW_2">| Switch 2</label>
+            </div>
+            <div class="input-group" id="switch-group">
+              <div class="switch">
+                <input type="checkbox" id="SLSW_3" class="default-action"
+                       oninput="updateVal(this)">
+                <label class="slider" for="SLSW_3"></label>
+              </div>
+              <label for="SLSW_3">| Switch 3</label>
+            </div>
+            <div class="input-group" id="switch-group">
+              <div class="switch">
+                <input type="checkbox" id="SLSW_4" class="default-action"
+                       oninput="updateVal(this)">
+                <label class="slider" for="SLSW_4"></label>
+              </div>
+              <label for="SLSW_4">| Switch 4</label>
+            </div>
+          </nav>
+        </div>
+        <!-- sensor values -->
+        <!--
+            <div class="card">
+              <p class="card-title">
+                <i class="fas fa-thermometer-three-quarters" style="color:#059e8a;"></i>
+                Temperatur
+              </p>
+              <p class="reading"><span id="valANAL_0"></span> &deg;C</p>
+            </div>
+            <div class="card">
+              <p class="card-title">
+                <i class="fas fa-tint" style="color:#00add6;"></i>
+                Humidity
+              </p>
+              <p class="reading"><span id="valANAL_1"></span> &percnt;</p>
+            </div>
+            <div class="card">
+              <p class="card-title">
+                <i class="fas fa-angle-double-down" style="color:#e1e437;"></i>
+                Pressure
+              </p>
+              <p class="reading"><span id="valANAL_2"></span> mb</p>
+            </div>
+        -->
+        <div id="sidebar">
+          <nav id="menu2">
+            <div class="input-group" id="analog-group">
+              <div class="analogs" id="ANAL_0">
+                <label for="ANAL_0">
+                  <span id="lANAL_0"> ? </span>
+                </label>
+              </div>
+              <div class="valANAL" id="valANAL">
+                <span id="valANAL_0"></span> °C
+              </div>
+            </div>
+            <div class="input-group" id="analog-group">
+              <div class="analogs" id="ANAL_1">
+                <label for="ANAL_1">
+                  <span id="lANAL_1"> ? </span>
+                </label>
+              </div>
+              <div class="valANAL" id="valANAL">
+                <span id="valANAL_1"></span> %
+              </div>
+            </div>
+            <div class="input-group" id="analog-group">
+              <div class="analogs" id="ANAL_2">
+                <label for="ANAL_2">
+                  <span id="lANAL_2"> ? </span>
+                </label>
+              </div>
+              <div class="valANAL" id="valANAL">
+                <span id="valANAL_2"></span> mb
+              </div>
+            </div>
+            <div class="input-group" id="analog-group">
+              <div class="analogs" id="ANAL_3">
+                <label for="ANAL_3">
+                  <span id="lANAL_3"> ? </span>
+                </label>
+              </div>
+              <div class="valANAL" id="valANAL">
+                <span id="valANAL_3"></span> dig
+              </div>
+            </div>
+          </nav>
+        </div>
+
+<!--
+            <div class="input-group" id="button-group">
+              <label for="BUTT_1">ColorPicker</label>
+              <div class="buttons">
+                  <input type="color" id="BUTT_1" class="default-action"         onchange="updateVal(this)">
+              </div>
+            </div>
+            <div class="input-group" id="button-group">
+              <div class="buttons">
+                  <input type="color" id="BUTT_2" class="default-action"         onchange="updateVal(this)">
+              </div>
+            </div>
+
+            <div class="input-group" id="quality-group">
+              <label for="LEDV_g">LED green [%]</label>
+              <input type="range" id="LEDV_g" class="LEDslider"
+                     oninput="updateVal(this)"
+                     min="0" max="100" value="10" step="1">
+              <div class="valLEDV"><span id="valLEDV_g"></span></div>
+            </div>
+            <div class="input-group" id="quality-group">
+              <label for="LEDV_b">LED blue [%]</label>
+              <input type="range" id="LEDV_b" class="LEDslider"
+                     oninput="updateVal(this)"
+                     min="0" max="100" value="10" step="1">
+              <div class="valLEDV"><span id="valLEDV_b"></span></div>
+            </div>
+            <div class="input-group" id="wb_mode-group">
+              <label for="wb_mode">PickBox1</label>
+              <select id="wb_mode" class="default-action">
+                <option value="0" selected="selected">Auto</option>
+                <option value="1">Sunny</option>
+                <option value="2">Cloudy</option>
+                <option value="3">Office</option>
+                <option value="4">Home</option>
+              </select>
+            </div>
+            <div class="input-group" id="colorbar-group">
+              <label for="colorbar">Color Bar</label>
+              <div class="switch">
+                <input id="colorbar" type="checkbox"   class="default-action">
+                <label class="slider" for="colorbar"></label>
+              </div>
+            </div>
+            <section id="buttons">
+              <button id="get-still">Get Still</button>
+              <button id="toggle-stream">Stop Stream</button>
+              <button id="face_enroll" class="disabled"     disabled="disabled">Enroll Face</button>
+            </section>
+-->
+      </div>
+    </section>
+  </body>
+</html>

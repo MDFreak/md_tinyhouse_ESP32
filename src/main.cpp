@@ -100,15 +100,158 @@
       #ifdef USE_FRAM_I2C
           md_FRAM fram = md_FRAM();
         #endif // USE_FRAM_I2C
+    // network
+      #ifdef USE_WIFI
+          md_wifi wifi  = md_wifi();
+          msTimer wifiT = msTimer(WIFI_CONN_CYCLE);
+          #if (USE_LOCAL_IP > OFF)
+            #endif // USE_LOCAL_IP
+          #if (USE_NTP_SERVER > OFF)
+              msTimer ntpT    = msTimer(NTPSERVER_CYCLE);
+              time_t  ntpTime = 0;
+              //bool    ntpGet  = true;
+              uint8_t ntpOk   = FALSE;
+            #endif // USE_WEBSERVER
+        #endif
+      #if defined(USE_WEBSERVER)
+          #if (TEST_SOCKET_SERVER > OFF)
+            /*
+              const char index_html[] PROGMEM = R"rawliteral(
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1">  <title>ESP32 Websocket</title>
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">
+                <script src="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+
+                <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2/dist/spectrum.min.css">
+                <script language="javascript">
+
+                  window.alert(location.host);
+                  var gwUrl = "ws://" + location.host + "/ws";
+                  var webSocket = new WebSocket(gwUrl);
+                  webSocket.onopen = function(e) {
+                      console.log("open");
+                  }
+                  webSocket.onclose = function(e) {
+                      console.log("close");
+                  }
+
+                 webSocket.onmessage = function(e) {
+                      console.log("message");
+                  }
+                  function handleColor() {
+                    var val = document.getElementById('type-color-on-page').value;
+                    webSocket.send(val.substring(1));
+                  }
+                </script>
+
+                <style>
+                  h2 {background: #3285DC;
+                      color: #FFFFFF;
+                      align:center;
+                  }
+
+                  .content {
+                      border: 1px solid #164372;
+                      padding: 5px;
+                  }
+
+                  .button {
+                     background-color: #00b300;
+                     border: none;
+                     color: white;
+                     padding: 8px 10px;
+                     text-align: center;
+                     text-decoration: none;
+                     display: inline-block;
+                     font-size: 14px;
+                }
+                </style>
+              </head>
+              <body>
+                <h2>ESP32 Websocket</h2>
+                <div class="content">
+                <p>Pick a color</p>
+                <div id="qunit"></div>
+
+                <input type="color" id="type-color-on-page"  />
+                 <p>
+                   <input type="button" class="button" value="Send to ESP32" id="btn" onclick="handleColor()" />
+                 </p>
+
+                </div>
+              </body>
+              </html>
+              )rawliteral";
+
+              // Web server running on port 80
+              AsyncWebServer serv(80);
+              // Web socket
+              AsyncWebSocket socket("/ws");
+            */
+          #else
+              md_server*   pmdServ   = new md_server();
+              static bool  newClient = false;
+            #endif
+          static msTimer   servT  = msTimer(WEBSERVER_CYCLE);
+          static uint8_t   pubWeb = TRUE;
+          static uint8_t   webOn  = OFF;
+        #endif // USE_WEBSERVER
+      #ifdef USE_MQTT
+          const char cerrMQTT[10][20]  =
+            {
+              "success",          "UnknownError",
+              "TimedOut",         "AlreadyConnected",
+              "BadParameter",     "BadProperties",
+              "NetworkError",     "NotConnected",
+              "TranscientPacket", "WaitingForResult"
+            };
+          const  String     mqttID       = MQTT_DEVICE;
+          const  String     topDevice    = MQTT_TOPDEV;
+          static char       cMQTT[20]    = "";
+          static String     tmpMQTT      = "";
+          static MQTTmsg_t  MQTTmsgs[MQTT_MSG_MAXANZ];
+          static MQTTmsg_t* pMQTTWr      = &MQTTmsgs[0];
+          static MQTTmsg_t* pMQTTRd      = &MQTTmsgs[0];
+          static uint8_t    anzMQTTmsg   = 0;
+          static uint8_t    pubMQTT      = TRUE;
+          static int8_t     errMQTT      = 0;
+          struct MessageReceiver : public Network::Client::MessageReceived
+            {
+              void messageReceived(const Network::Client::MQTTv5::DynamicStringView & topic,
+                                   const Network::Client::MQTTv5::DynamicBinDataView & payload,
+                                   const uint16 packetIdentifier,
+                                   const Network::Client::MQTTv5::PropertiesView & properties)
+                {
+                  fprintf(stdout, "  Topic: %.*s ", topic.length, topic.data);
+                  fprintf(stdout, "  Payload: %.*s\n", payload.length, payload.data);
+                  if (anzMQTTmsg < (MQTT_MSG_MAXANZ - 1))
+                    {
+                      sprintf(pMQTTWr->topic,   "%.*s", topic.length,   topic.data);
+                      sprintf(pMQTTWr->payload, "%.*s", payload.length, payload.data);
+                      pMQTTWr->topic[topic.length] = 0;
+                      pMQTTWr->payload[payload.length] = 0;
+                      anzMQTTmsg++;
+                          S3VAL(" topic payload count", pMQTTWr->topic, pMQTTWr->payload, anzMQTTmsg);
+                      pMQTTWr = (MQTTmsg_t*) pMQTTWr->pNext;
+                    }
+                  //fprintf(stdout, "Msg received: (%04X)\n", packetIdentifier);
+                  //readMQTTmsg(topic, payload);
+                }
+            };
+          MessageReceiver msgHdl;
+          Network::Client::MQTTv5 mqtt(mqttID.c_str(), &msgHdl);
+        #endif
     // sensors
-      #if (USE_CCS811_I2C > OFF )
+      #ifdef USE_CCS811_I2C
           #define CCS811_I2C_ADDR     I2C_CSS811_
           #define CCS811_I2C          I2C1
         #endif // USE_CCS811_I2C
-      #if (USE_BME680_I2C > OFF )
+      #ifdef USE_BME680_I2C
           #define BME680_I2C         I2C1
         #endif // USE_BME680_I2C
-      #ifdef USE_BME280_I2C // 1
+      #if defined(USE_BME280_I2C)
           static md_BME280  bme280_1;
           //static md_BME280* pbme280_1 = &bme280_1;
           #if (BME280_I2C == DEV_I2C1)
@@ -180,7 +323,7 @@
       // disable watchdog
         STXT(" ... disable WD ...");
         disableCore0WDT();
-        //disableCore1WDT();
+         //disableCore1WDT();
         disableLoopWDT();
       // start I2C
         #if defined(USE_I2C)
@@ -192,6 +335,56 @@
       // start display
         #ifdef USE_DISP
             startDisp();
+          #endif
+      // start WIFI
+        #if (USE_WIFI > OFF)
+            uint8_t rep = WIFI_ANZ_LOGIN;
+            while(rep > 0)
+              {
+                    //STXT(" setup   Start WiFi ");
+                tmp_i8 = startWIFI(true);
+                if (tmp_i8 == MD_OK)
+                    {
+                      dispStatus("WIFI connected",true);
+                      break;
+                    }
+                  else
+                    {
+                      #if (WIFI_IS_DUTY > OFF)
+                          dispStatus("WIFI error -> halted", true);
+                      #else
+                          rep--;
+                          if (rep > 0)
+                            { dispStatus("WIFI error ..."); }
+                          else
+                            { dispStatus("WIFI not connected"); }
+                        #endif
+                    }
+                //usleep(50000);
+              }
+          #endif // USE_WIFI
+      // start Webserer
+        #if (USE_WEBSERVER > OFF)
+            {
+              servT.startT();
+              #if (TEST_SOCKET_SERVER > OFF)
+                  //socket.onEvent(onEvent);
+                  //serv.addHandler(&socket);
+
+                  //serv.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+                  //  {
+                  //    request->send_P(200, "text/html", index_html, NULL);
+                  //  });
+
+                  // serv.begin();
+              #else
+                  startWebServer();
+                #endif
+            }
+          #endif
+      // start MQTT
+        #if (USE_MQTT > OFF)
+            startMQTT();
           #endif
       // BME280 temperature, pessure, humidity
         #if (USE_BME280_I2C > OFF)
@@ -350,14 +543,14 @@
                 switch(outpIdx)
                   {
                     case 1:  // BME280_I2C / BME680
-                        #if (USE_BME280_I2C > OFF)
-                            if (bmeT != bmeTold)
+                        #if defined(USE_BME280_I2C)
+                            if (bme280T != bme280Told)
                               {
-                                    //SVAL(" 280readT  new ", bmeT);
+                                    //SVAL(" 280readT  new ", bme280T);
                                 #if (USE_MQTT > OFF)
                                     if (errMQTT == MD_OK)
                                       {
-                                        valBME280t = bmeT;
+                                        valBME280t = bme280T;
                                         errMQTT = (int8_t) mqtt.publish(topBME280t.c_str(), (uint8_t*) valBME280t.c_str(), valBME280t.length());
                                         soutMQTTerr(topBME280t.c_str(), errMQTT);
                                             //SVAL(topBME280t, valBME280t);
@@ -365,18 +558,18 @@
                                   #endif
                                 #if (USE_WEBSERVER > OFF)
                                     tmpStr = "SVA0";
-                                    tmpval16 = (int16_t) (bmeT+ 0.5);
+                                    tmpval16 = (int16_t) (bme280T+ 0.5);
                                     tmpStr.concat(tmpval16);
                                     pmdServ->updateAll(tmpStr);
                                   #endif
-                                bmeTold = bmeT;
+                                bme280Told = bme280T;
                               }
-                            if (bmeP != bmePold)
+                            if (bme280P != bme280Pold)
                               {
                                 #if (USE_MQTT > OFF)
                                     if (errMQTT == MD_OK)
                                       {
-                                        valBME280p = bmeP;
+                                        valBME280p = bme280P;
                                         errMQTT = (int8_t) mqtt.publish(topBME280p.c_str(), (uint8_t*) valBME280p.c_str(), valBME280p.length());
                                         soutMQTTerr(topBME280p.c_str(), errMQTT);
                                             //SVAL(topBME280p, valBME280p);
@@ -384,18 +577,18 @@
                                   #endif
                                 #if (USE_WEBSERVER > OFF)
                                     tmpStr = "SVA1";
-                                    tmpval16 = (uint16_t) bmeP;
+                                    tmpval16 = (uint16_t) bme280P;
                                     tmpStr.concat(tmpval16);
                                     pmdServ->updateAll(tmpStr);
                                   #endif
-                                bmePold = bmeP;
+                                bme280Pold = bme280P;
                               }
-                            if (bmeH != bmeHold)
+                            if (bme280H != bme280Hold)
                               {
                                 #if (USE_MQTT > OFF)
                                     if (errMQTT == MD_OK)
                                       {
-                                        valBME280h = bmeH;
+                                        valBME280h = bme280H;
                                         errMQTT = (int8_t) mqtt.publish(topBME280h.c_str(), (uint8_t*) valBME280h.c_str(), valBME280h.length());
                                         soutMQTTerr(topBME280h.c_str(), errMQTT);
                                             //SVAL(topBME280h, valBME280h);
@@ -403,17 +596,17 @@
                                   #endif
                                 #if (USE_WEBSERVER > OFF)
                                     tmpStr = "SVA2";
-                                    tmpval16 = (int16_t) bmeH;
+                                    tmpval16 = (int16_t) bme280H;
                                     tmpStr.concat(tmpval16);
                                     pmdServ->updateAll(tmpStr);
                                   #endif
-                                bmeHold = bmeH;
+                                bme280Hold = bme280H;
                               }
                           #endif
                         #if (USE_BME680_I2C > OFF)
                             if (bme680T != bme680Told)
                               {
-                                    //SVAL(" 680readT  new ", bmeT);
+                                    //SVAL(" 680readT  new ", bme280T);
                                 #if (USE_MQTT > OFF)
                                     if (errMQTT == MD_OK)
                                       {
@@ -1690,6 +1883,775 @@
             #endif
         #endif // USE_DISP
   // --- sensors -------------------------
+  // --- network -------------------------
+    // --- WIFI
+      #if defined(USE_WIFI) || defined(USE_WEBSERVER)
+          uint8_t startWIFI(bool startup)
+            {
+              bool ret = MD_ERR;
+              char _cssid[LOGINTXT_MAX_LEN + 1];
+              char _cpw[LOGINTXT_MAX_LEN + 1];
+                  //SVAL(" startWIFI   Start WiFi ", startup);
+              #if (USE_WIFI > OFF)
+                  dispStatus("  start WIFI");
+                      //heapFree(" before generating ipList ");
+                  if (startup)
+                    {
+                      md_ip_list ipList = md_ip_list(); // temporary object
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    SHEXVAL(" setup startWIFI created ipList ", (int) &ipList);
+                                    STXT(" setup startWIFI add WIFI 0");
+                                  #endif
+                      sprintf(_cssid, "%s\0", WIFI_SSID0);
+                      sprintf(_cpw, "%s\0", WIFI_SSID0_PW);
+                      ipList.append(WIFI_FIXIP0, WIFI_GATEWAY0, WIFI_SUBNET, _cssid, _cpw);
+                      #if (WIFI_ANZ_LOGIN > 1)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup startWIFI add WIFI 1");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID1);
+                          sprintf(_cpw, "%s\0", WIFI_SSID1_PW);
+                          ipList.append(WIFI_FIXIP1, WIFI_GATEWAY1, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                      #if (WIFI_ANZ_LOGIN > 2)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup startWIFI add WIFI 2");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID2);
+                          sprintf(_cpw, "%s\0", WIFI_SSID2_PW);
+                          ipList.append(WIFI_FIXIP2, WIFI_GATEWAY2, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                      #if (WIFI_ANZ_LOGIN > 3)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup startWIFI add WIFI 3");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID3);
+                          sprintf(_cpw, "%s\0", WIFI_SSID3_PW);
+                          ipList.append(WIFI_FIXIP3, WIFI_GATEWAY3, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                      #if (WIFI_ANZ_LOGIN > 4)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup startWIFI add WIFI 4");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID4);
+                          sprintf(_cpw, "%s\0", WIFI_SSID4_PW);
+                          ipList.append(WIFI_FIXIP4, WIFI_GATEWAY4, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                      #if (WIFI_ANZ_LOGIN > 5)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup startWIFI add WIFI 5");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID5);
+                          sprintf(_cpw, "%s\0", WIFI_SSID5_PW);
+                          ipList.append(WIFI_FIXIP5, WIFI_GATEWAY5, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                      #if (WIFI_ANZ_LOGIN > 6)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup startWIFI add WIFI 6");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID6);
+                          sprintf(_cpw, "%s\0", WIFI_SSID6_PW);
+                          ipList.append(WIFI_FIXIP6, WIFI_GATEWAY6, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                      #if (WIFI_ANZ_LOGIN > 7)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup startWIFI add WIFI 7");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID7);
+                          sprintf(_cpw, "%s\0", WIFI_SSID7_PW);
+                          ipList.append(WIFI_FIXIP7, WIFI_GATEWAY7, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                      #if (WIFI_ANZ_LOGIN > 8)
+                                #if (DEBUG_MODE > CFG_DEBUG_STARTUP)
+                                    STXT(" setup add WIFI 8");
+                                  #endif
+                          sprintf(_cssid, "%s\0", WIFI_SSID8);
+                          sprintf(_cpw, "%s\0", WIFI_SSID8_PW);
+                          ipList.append(WIFI_FIXIP8, WIFI_GATEWAY8, WIFI_SUBNET, _cssid, _cpw);
+                        #endif
+                                //STXT(UTLN(" setup startWIFI locWIFI fertig");
+
+                                //md_ip_cell* pip = (md_ip_cell*) ipList.pFirst();
+                                //char stmp[NET_MAX_SSID_LEN] = "";
+                                        /*
+                                          SOUT(" setup md_ip_list addr "); SOUT((u_long) &ipList);
+                                          SOUT(" count "); SOUTLN(ipList.count());
+                                          SOUT(" ip1: addr "); SOUTHEX((u_long) pip);
+                                          SOUT(" locIP "); SOUTHEX(pip->locIP());
+                                          SOUT(" gwIP ");  SOUTHEX(pip->gwIP());
+                                          SOUT(" snIP ");  SOUTHEX(pip->snIP());
+                                          pip->getSSID(stmp); SOUT(" ssid "); SOUT(stmp);
+                                          pip->getPW(stmp); SOUT(" pw "); SOUTLN(stmp);
+                                          pip = (md_ip_cell*) pip->pNext();
+                                          SOUT(" ip2: addr "); SOUTHEX((u_long) pip);
+                                          SOUT(" locIP "); SOUTHEX(pip->locIP());
+                                          SOUT(" gwIP ");  SOUTHEX(pip->gwIP());
+                                          SOUT(" snIP ");  SOUTHEX(pip->snIP());
+                                          pip->getSSID(stmp); SOUT(" ssid "); SOUT(stmp);
+                                          pip->getPW(stmp); SOUT(" pw "); SOUTLN(stmp);
+                                          pip = (md_ip_cell*) pip->pNext();
+                                          SOUT(" ip3: addr "); SOUTHEX((u_long) pip);
+                                          SOUT(" locIP "); SOUTHEX(pip->locIP());
+                                          SOUT(" gwIP ");  SOUTHEX(pip->gwIP());
+                                          SOUT(" snIP ");  SOUTHEX(pip->snIP());
+                                          pip->getSSID(stmp); SOUT(" ssid "); SOUT(stmp);
+                                          pip->getPW(stmp); SOUT(" pw "); SOUTLN(stmp);
+                                        */
+
+                          //heapFree(" ipList generated ");
+                      ret = wifi.scanWIFI(&ipList);
+                              //SVAL(" scanWIFI ret=", ret);
+                          //heapFree(" before deleting ipList ");
+                      ipList.~md_ip_list();
+                          //heapFree(" after deleting ipList ");
+                    }
+                  ret = wifi.startWIFI();
+                      //SVAL(" startWIFI ret ", ret);
+                  if (ret == MD_OK)
+                    {
+                      #if (USE_MD_ATSMARTHOME > OFF)
+                          ctmp30[0]=0;
+                          iret               = wifi.getSSID(ctmp30);
+                            //S2VAL(" SSID ", iret, ctmp30);
+                          atdbSetup.SSID     = ctmp30;
+                          ctmp30[0]=0;
+                          iret               = wifi.getPW(ctmp30);
+                            //S2VAL(" PW ", iret, ctmp30);
+                          atdbSetup.password = ctmp30;
+                          atdbSetup.useWlan  = true;
+                            //database.setupWiFi(&atdbSetup);
+                        #endif
+                      dispStatus("WIFI connected");
+                    }
+                    else
+                    {
+                      dispStatus("WIFI error");
+                      #if (USE_MD_ATSMARTHOME > OFF)
+                          atdbSetup.useWlan  = false;
+                        #endif
+                    }
+                #endif // USE_WIFI
+              return ret;
+            }
+    // --- NTP server
+          void initNTPTime()
+
+            {
+              #if (USE_NTP_SERVER > OFF)
+                  bool ret = wifi.initNTP();
+                        #if (DEBUG_MODE >= CFG_DEBUG_DETAIL)
+                          //Serial.print("initNTPTime ret="); Serial.print(ret);
+                        #endif
+                  if (ret = MD_OK)
+                    {
+                      dispStatus("NTPTime ok");
+                    }
+                    else
+                    {
+                      dispStatus("NTPTime error");
+                    }
+                #endif // USE_NTP_SERVER
+            }
+        #endif // USE_WIFI
+    // --- webserver
+      #if defined(USE_WEBSERVER)
+          void startWebServer()
+            {
+              tmp_i8 = MD_ERR;
+              if (!webOn)
+                {
+                  dispStatus("start webserver");
+                  STXT(" startServer ... ");
+                  if (WiFi.status() == WL_CONNECTED)
+                    {
+                      tmp_i8 = pmdServ->md_startServer();
+                          #if (DEBUG_MODE >= CFG_DEBUG_DETAIL)
+                              SVAL(" webserver ret ", tmp_i8);
+                            #endif
+                      if (tmp_i8 == MD_OK)
+                        {
+                          webOn = TRUE;
+                        }
+                    }
+                  if (webOn)
+                    {
+                      dispStatus("Webserver online");
+                      STXT("Webserver online");
+                    }
+                    else
+                    {
+                      dispStatus("Webserver ERROR");
+                      STXT("Webserver ERROR");
+                    }
+                }
+            }
+          void readWebMessage()
+            {
+              md_message *pM   = NULL;
+              int         itmp = 0;
+              char*       ctmp = NULL;
+              #if (USE_WS2812_MATRIX_OUT > OFF)
+                  md_LEDPix24* ppix = NULL;
+                #endif
+              uint8_t     idx;
+              char        tval;
+              char        tdata;
+
+              if (inMsgs->count() > 0)
+                {
+                  pM   = (md_message*) inMsgs->pFirst();
+                  switch (pM->msgType())
+                    {
+                      case ME_TSOCKET:
+                        SOUT(" Socket ");
+                        break;
+
+                      case ME_TREQ:
+                        pmdServ->isRequest = true;
+                        break;
+
+                      case ME_TCONN:
+                        newClient = true;
+                        break;
+
+                      default:
+                        ctmp  = pM->payload();
+                        tdata = pM->dataType();
+                        tval  = ctmp[0];
+                        idx   = ctmp[1] - '0';
+                        ctmp += 2;
+                            SVAL(" msg client ", pM->client());
+                            SVAL(" tMsg ",       pM->msgType());
+                            SVAL(" tData ",      (char) pM->dataType());
+                            SVAL(" tval ",       tval);
+                            SVAL(" payload ",    pM->payload());
+                            SVAL(" idx ",        idx);
+                            SVAL(" ctmp '",      ctmp);
+                        if (tdata == MD_SINGLE)
+                          {
+                            //STXT("---- switch(tval) ----");
+                            switch (tval)
+                              {
+                                case EL_TANALOG:
+                                    SOUT(" -- Analog nu ");
+                                  break;
+                                case EL_TSLIDER:
+                                    STXT(" -- Slider");
+                                    itmp  = (int)strtol(ctmp, NULL, 10);
+                                    switch (idx) // index of serverelement
+                                      {
+                                        case 1: // RGB-LED col24
+                                          #if (USE_RGBLED_PWM > OFF)
+                                              RGBLED->bright(itmp);
+                                              //S2VAL("  -- rgbLED bright old new ", RGBLEDold->bright(), RGBLED->bright());
+                                            #endif
+                                          break;
+                                        case 2: // 2821 line col24
+                                          #if (USE_WS2812_LINE_OUT >OFF)
+                                              //SVAL("  -- line bright old", line2812[1]->bright());
+                                              line2812[1]->bright((uint8_t) itmp);
+                                              //SVAL("  -- line bright new", line2812[1]->bright());
+                                            #endif
+                                          break;
+                                        case 3:
+                                          #if (USE_WS2812_MATRIX_OUT > OFF)
+                                              ppix = outM2812[1].text->pix24;
+                                              //SVAL("  -- matrix bright old", ppix->bright());
+                                              ppix->bright((uint8_t) itmp);
+                                              //SVAL("  -- matrix bright new", ppix->bright());
+                                            #endif
+                                          break;
+                                        case 4:
+                                          #if (USE_WS2812_MATRIX_OUT > OFF)
+                                              ppix = outM2812[1].bmpB->pix24;
+                                              //SVAL("  -- smilyB bright old"); SOUT(ppix->bright());
+                                              ppix->bright((uint8_t) itmp);
+                                              //SVAL("  -- smilyB bright new"); SOUT(ppix->bright());
+                                              ppix = outM2812[1].bmpE->pix24;
+                                              //SVAL("  -- smilyE bright old"); SOUT(ppix->bright());
+                                              ppix->bright((uint8_t) itmp);
+                                              //SVAL("  -- smilyE bright new"); SOUT(ppix->bright());
+                                            #endif
+                                          break;
+                                      }
+                                  break;
+                                case EL_TCOLOR:
+                                    STXT(" ---- Color ----");
+                                    itmp  = (int)strtol(ctmp, NULL, 16);
+                                    switch (idx) // index of serverelement
+                                      {
+                                        case 1: // RGB-LED col24
+                                          #if (USE_RGBLED_PWM > OFF)
+                                              //SVAL("  -- RGBLED color old", RGBLED[1]->col24());
+                                              RGBLED->col24(itmp);
+                                              //SVAL("  -- RGBLED color new", RGBLED[1]->col24());
+                                            #endif
+                                          break;
+                                        case 2: // 2821 line col24
+                                          #if (USE_WS2812_LINE_OUT >OFF)
+                                              SHEXVAL(" -- line2812 color24 old ", line2812[1]->col24());
+                                              line2812[1]->col24(itmp);
+                                              SHEXVAL(" -- line2812 color24 new ", line2812[1]->col24());
+                                              SHEXVAL(" -- line2812 color16 new ", Col16(line2812[1]->col24()));
+                                            #endif
+                                          break;
+                                        case 3: // 2821 matrix col16
+                                          #if (USE_WS2812_MATRIX_OUT > OFF)
+                                              ppix = outM2812[1].text->pix24;
+                                              SHEXVAL(" -- matrix color24 old", ppix->col24());
+                                              ppix->col24(itmp);
+                                              SHEXVAL(" -- matrix color24 new", ppix->col24());
+                                              SHEXVAL(" -- matrix color16 new", Col16(ppix->col24()));
+                                            #endif
+                                          break;
+                                        case 4: // 2821 matrix col16 bmp
+                                          #if (USE_WS2812_MATRIX_OUT > OFF)
+                                              ppix = outM2812[1].bmpB->pix24;
+                                              SHEXVAL(" -- matrixB color24 old", ppix->col24());
+                                              ppix->col24(itmp);
+                                              SHEXVAL(" -- matrixB color24 new", ppix->col24());
+                                              SHEXVAL(" -- matrixB color16 new", Col16(ppix->col24()));
+                                              SHEXVAL(" -- matrixB color24 old", ppix->col24());
+                                              ppix = outM2812[1].bmpE->pix24;
+                                              SHEXVAL(" -- matrixE color24 old", ppix->col24());
+                                              ppix->col24(itmp);
+                                              SHEXVAL(" -- matrixE color24 new", ppix->col24());
+                                              SHEXVAL(" -- matrixE color16 new", Col16(ppix->col24()));
+                                            #endif
+                                          break;
+                                      }
+                                  break;
+                                case EL_TSWITCH:
+                                    SOUT(" Switch ");
+                                  break;
+                                case EL_TTEXT:
+                                    SOUT(" Text ");
+                                  break;
+                                case EL_TOFFSET:
+                                    SOUT(" Offset ");
+                                  break;
+                                case EL_TGRAPH:
+                                    SOUT(" Graph ");
+                                  break;
+                                case EL_TINDEX:
+                                    SOUT(" Index ");
+                                  break;
+                                default:
+                                    SOUT(" ERROR ");
+                                  break;
+                              }
+                          }
+                        break;
+                    }
+                  SOUT("'"); SOUT(pM->payload()); SOUT("'");
+                  inMsgs->rem();
+                  SVAL(" inMsgs.count ", inMsgs->count());
+                }
+            }
+            /*
+              void    handleClient(AsyncWebSocketClient *client, void *arg, uint8_t *data, size_t len)
+                {
+                  AwsFrameInfo *info = (AwsFrameInfo*)arg;
+                  char* txt = (char*) data;
+                  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
+                    { //  SOUT(" handleWebSocketMessage info->index "); SOUT(info->index); SOUT(" info->final "); SOUT(info->final); SOUT(" info->len "); SOUTLN(info->len);
+                      data[len] = 0;
+                      uint8_t type  = txt[0];  // extract obj type
+                      uint8_t index = txt[1] - WS_IDX_OFFSET;  // extract index
+                      int16_t value = atoi(&txt[2]);
+                                //SOUT(" Payload type "); SOUT(type);
+                                //SOUT(" index "); SOUT(index); SOUT(" len "); SOUT(len);
+                                //SOUT(" data '"); SOUT(&txt[2]); SOUT(" = "); SOUT(value);
+                                //SOUT(" ledList cnt "); SOUTLN(psliderList->count());
+
+                      if (type == EL_TSLIDER)
+                        {
+                          md_slider* psl = (md_slider*) psliderList->pIndex(index);
+                                //SOUT(" psl "); SOUTHEX((uint32_t) psl);
+                          if (psl != NULL)
+                            {
+                              psl->destVal = value;
+                              SOUT(" slider "); SOUT((index+1)); SOUT("="); SOUTLN(value);
+                            }
+                        }
+
+                      else if (type == EL_TSWITCH)
+                        {
+                          md_switch* psw = (md_switch*) pswitchList->pIndex(index);
+                          while (psw != NULL)
+                            {
+                              psw->destVal = value; SOUT(" switch "); SOUTLN(value);
+                            }
+                        }
+
+                      else if (type == EL_TANALOG)
+                        {
+                          md_analog* pana = (md_analog*) panalogList->pIndex(index);
+                          while (pana != NULL)
+                            {
+                              pana->destVal = value; SOUT(" analog "); SOUTLN(value);
+                            }
+                        }
+
+                      else { }
+                    }
+                }
+              */
+            /*
+              void handlingIncomingData()
+                {
+
+
+                  AwsFrameInfo *info = (AwsFrameInfo*)arg;
+
+                  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
+                    {
+                      String hexColor = "";
+                      for (int i=0; i < len; i++)
+                        hexColor += ((char) data[i]);
+
+                      Serial.println("Hex Color: " + hexColor);
+
+                      long n = strtol(&hexColor[0], NULL, 16);
+                      Serial.println(n);
+                      strip.fill(n);
+                      strip.show();
+                    }
+                }
+              */
+              // Callback for incoming event
+            /*
+              void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type,
+                             void * arg, uint8_t *data, size_t len)
+                {
+                  switch(type)
+                    {
+                      case WS_EVT_CONNECT:
+                        Serial.printf("Client connected: \n\tClient id:%u\n\tClient IP:%s\n",
+                             client->id(), client->remoteIP().toString().c_str());
+                        break;
+                      case WS_EVT_DISCONNECT:
+                        Serial.printf("Client disconnected:\n\tClient id:%u\n", client->id());
+                        break;
+                      case WS_EVT_DATA:
+                        handlingIncomingData(client, arg, data, len);
+                        break;
+                      case WS_EVT_PONG:
+                        Serial.printf("Pong:\n\tClient id:%u\n", client->id());
+                        break;
+                      case WS_EVT_ERROR:
+                        Serial.printf("Error:\n\tClient id:%u\n", client->id());
+                        break;
+                    }
+                }
+              void configWebsite()
+                {
+                  webMD.createElement(EL_TSLIDER, "LED red", "%");
+                  webMD.createElement(EL_TSLIDER, "LED green", "%");
+                  webMD.createElement(EL_TSLIDER, "LED blue", "%");
+
+                  webMD.createElement(EL_TANALOG, "DS18B20 Temp", "°C");
+                  webMD.createElement(EL_TANALOG, "Type-K Temp", "°C");
+                  webMD.createElement(EL_TANALOG, "BME_Temp", "°C");
+                  webMD.createElement(EL_TANALOG, "BME_Humidity", "%");
+                  webMD.createElement(EL_TANALOG, "BME_Pressure", "mb");
+                  webMD.createElement(EL_TANALOG, "Gaswert", "");
+                }
+              */
+        #endif // USE_WEBSERVER
+    // --- MQTT
+      #if (USE_MQTT > OFF)
+          void startMQTT()
+            {
+              STXT("Connecting to MQTT...");
+                  S2VAL(" startMQTT msgs-len &msgs[0]", sizeof(MQTTmsg_t), (uint32_t) &MQTTmsgs[0]);
+              for ( uint8_t i=0 ; i < MQTT_MSG_MAXANZ - 1; i++)
+                {
+                  MQTTmsgs[i].pNext = (void*) &MQTTmsgs[i+1];
+                      //S3VAL(" startMQTT i msgs[i] pNext", i, (uint32_t) &MQTTmsgs[i], (uint32_t) MQTTmsgs[i].pNext);
+                }
+              MQTTmsgs[MQTT_MSG_MAXANZ-1].pNext = (void*) &MQTTmsgs[0];
+                  //S3VAL(" startMQTT i msgs[i] pNext", MQTT_MSG_MAXANZ-1, (uint32_t) &MQTTmsgs[MQTT_MSG_MAXANZ-1], (uint32_t) MQTTmsgs[MQTT_MSG_MAXANZ-1].pNext);
+              connectMQTT();
+            } // tested -> ok
+
+          void connectMQTT() // TODO: move all subcribes to here -> reconnect
+            {
+              errMQTT = (int8_t) mqtt.connectTo(MQTT_HOST, MQTT_PORT);
+              soutMQTTerr(" MQTT connect", errMQTT);
+              if (errMQTT == MD_OK)
+                {
+                  #if (USE_BME280_I2C > OFF) // 1
+                      topBME280t = topDevice + topBME280t;
+                      errMQTT = (int8_t) mqtt.subscribe(topBME280t.c_str());
+                          soutMQTTerr(" MQTT subscribe BME280t", errMQTT);
+                      topBME280p = topDevice + topBME280p;
+                      errMQTT = (int8_t) mqtt.subscribe(topBME280p.c_str());
+                          soutMQTTerr(" MQTT subscribe BME280p", errMQTT);
+                      topBME280h = topDevice + topBME280h;
+                      errMQTT = (int8_t) mqtt.subscribe(topBME280h.c_str());
+                          soutMQTTerr(" MQTT subscribe BME280h", errMQTT);
+                    #endif
+                  #if (USE_BME680_I2C > OFF) // 1
+                      topBME680t = topDevice + topBME680t;
+                      errMQTT = (int8_t) mqtt.subscribe(topBME680t.c_str());
+                          soutMQTTerr(" MQTT subscribe BME680t", errMQTT);
+                      topBME680p = topDevice + topBME680p;
+                      errMQTT = (int8_t) mqtt.subscribe(topBME680p.c_str());
+                          soutMQTTerr(" MQTT subscribe BME680p", errMQTT);
+                      topBME680h = topDevice + topBME680h;
+                      errMQTT = (int8_t) mqtt.subscribe(topBME680h.c_str());
+                          soutMQTTerr(" MQTT subscribe BME680h", errMQTT);
+                      topBME680g = topDevice + topBME680g;
+                      errMQTT = (int8_t) mqtt.subscribe(topBME680g.c_str());
+                          soutMQTTerr(" MQTT subscribe BME680G", errMQTT);
+                    #endif
+                  #if (USE_CCS811_I2C > OFF)
+                          topCCS811t = topDevice + topCCS811t;
+                          errMQTT = (int8_t) mqtt.subscribe(topCCS811t.c_str());
+                              soutMQTTerr(" MQTT subscribe CCS811t", errMQTT);
+                          topCCS811c = topDevice + topCCS811c;
+                          errMQTT = (int8_t) mqtt.subscribe(topCCS811c.c_str());
+                              soutMQTTerr(" MQTT subscribe CCS811c", errMQTT);
+                    #endif
+                  #if (USE_INA3221_I2C > OFF) // unit 1
+                      // channel 1
+                        topINA32211i[0] = topDevice + topINA32211i[0];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211i[0].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211i[0]", errMQTT);
+
+                        topINA32211u[0] = topDevice + topINA32211u[0];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211u[0].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211u[0]", errMQTT);
+
+                        topINA32211p[0] = topDevice + topINA32211p[0];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211p[0].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211p[0]", errMQTT);
+                      // channel 2
+                        topINA32211i[1] = topDevice + topINA32211i[1];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211i[1].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211i[1]", errMQTT);
+
+                        topINA32211u[1] = topDevice + topINA32211u[1];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211u[1].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211u[1]", errMQTT);
+
+                        topINA32211p[1] = topDevice + topINA32211p[1];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211p[1].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211p[1]", errMQTT);
+                      // channel 3
+                        topINA32211i[2] = topDevice + topINA32211i[2];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211i[2].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211i[2]", errMQTT);
+                        topINA32211u[2] = topDevice + topINA32211u[2];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211u[2].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211u[2]", errMQTT);
+                        topINA32211p[2] = topDevice + topINA32211p[2];
+                        errMQTT = (int8_t) mqtt.subscribe(topINA32211p[2].c_str());
+                            soutMQTTerr(" MQTT subscribe topINA32211p[2]", errMQTT);
+                      #if (USE_INA3221_I2C > 1)  // unit 2
+                          // channel 1
+                            topINA32212i[0] = topDevice + topINA32212i[0];
+                            errMQTT = (int8_t) mqtt.subscribe(topINA32212i[0].c_str());
+                                soutMQTTerr(" MQTT subscribe topINA32212i[0]", errMQTT);
+                            topINA32212u[0] = topDevice + topINA32212u[0];
+                            errMQTT = (int8_t) mqtt.subscribe(topINA32212u[0].c_str());
+                                soutMQTTerr(" MQTT subscribe topINA32212u[0]", errMQTT);
+                          // channel 2
+                            topINA32212i[1] = topDevice + topINA32212i[1];
+                            errMQTT = (int8_t) mqtt.subscribe(topINA32212i[1].c_str());
+                                soutMQTTerr(" MQTT subscribe topINA32212i[1]", errMQTT);
+                            topINA32212u[1] = topDevice + topINA32212u[1];
+                            errMQTT = (int8_t) mqtt.subscribe(topINA32212u[1].c_str());
+                                soutMQTTerr(" MQTT subscribe topINA32212u[1]", errMQTT);
+                          // channel 3
+                            topINA32212i[2] = topDevice + topINA32212i[2];
+                            errMQTT = (int8_t) mqtt.subscribe(topINA32212i[2].c_str());
+                                soutMQTTerr(" MQTT subscribe topINA32212i[2]", errMQTT);
+                            topINA32212u[2] = topDevice + topINA32212u[2];
+                            errMQTT = (int8_t) mqtt.subscribe(topINA32212u[2].c_str());
+                                soutMQTTerr(" MQTT subscribe topINA32212u[2]", errMQTT);
+                          #if (USE_INA3221_I2C > 2)  // unit 3
+                              // channel 1
+                                topINA32213i[0] = topDevice + topINA32213i[0];
+                                errMQTT = (int8_t) mqtt.subscribe(topINA32213i[0].c_str());
+                                    soutMQTTerr(" MQTT subscribe topINA32213i[0]", errMQTT);
+                                topINA32213u[0] = topDevice + topINA32212u[0];
+                                errMQTT = (int8_t) mqtt.subscribe(topINA32213u[0].c_str());
+                                    soutMQTTerr(" MQTT subscribe topINA32213u[0]", errMQTT);
+                              // channel 2
+                                topINA32213i[1] = topDevice + topINA32213i[1];
+                                errMQTT = (int8_t) mqtt.subscribe(topINA32213i[1].c_str());
+                                    soutMQTTerr(" MQTT subscribe topINA32213i[1]", errMQTT);
+                                topINA32213u[1] = topDevice + topINA32213u[1];
+                                errMQTT = (int8_t) mqtt.subscribe(topINA32213u[1].c_str());
+                                    soutMQTTerr(" MQTT subscribe topINA32213u[1]", errMQTT);
+                              // channel 3
+                                topINA32213i[2] = topDevice + topINA32213i[2];
+                                errMQTT = (int8_t) mqtt.subscribe(topINA32213i[2].c_str());
+                                    soutMQTTerr(" MQTT subscribe topINA32213i[2]", errMQTT);
+                                topINA32213u[2] = topDevice + topINA32213u[2];
+                                errMQTT = (int8_t) mqtt.subscribe(topINA32213u[2].c_str());
+                                    soutMQTTerr(" MQTT subscribe topINA32213u[2]", errMQTT);
+                            #endif
+                        #endif
+                    #endif
+                  #if (USE_DS18B20_1W_IO > OFF)
+                      topDS18B201 = topDevice + topDS18B201;
+                      errMQTT = (int8_t) mqtt.subscribe(topDS18B201.c_str());
+                          soutMQTTerr(" MQTT subscribe DS18B201 ", errMQTT);
+                      #if (USE_DS18B20_1W_IO > 1)
+                          topDS18B202 = topDevice + topDS18B202;
+                          errMQTT = (int8_t) mqtt.subscribe(topDS18B202.c_str());
+                              soutMQTTerr(" MQTT subscribe DS18B202 ", errMQTT);
+                        #endif
+                    #endif
+                  #if (USE_MQ135_GAS_ANA > OFF)
+                    #endif
+                  #if (USE_MQ3_ALK_ANA > OFF)
+                      topMQ3alk = topDevice + topMQ3alk;
+                      errMQTT = (int8_t) mqtt.subscribe(topMQ3alk.c_str());
+                          soutMQTTerr(" MQTT subscribe MQ3alk", errMQTT);
+                    #endif
+                  #if (USE_PHOTO_SENS_ANA > OFF)
+                      topPhoto1 = topDevice + topPhoto1;
+                      errMQTT = (int8_t) mqtt.subscribe(topPhoto1.c_str());
+                          soutMQTTerr(" MQTT subscribe Photo1 ", errMQTT);
+                    #endif
+                  #if (USE_POTI_ANA > OFF)
+                      topPoti1 = topDevice + topPoti1;
+                      errMQTT = (int8_t) mqtt.subscribe(topPoti1.c_str());
+                          soutMQTTerr(" MQTT subscribe poti1", errMQTT);
+                    #endif
+                  #if (USE_VCC50_ANA > OFF)
+                      topVCC50 = topDevice + topVCC50;
+                      errMQTT = (int8_t) mqtt.subscribe(topVCC50.c_str());
+                          soutMQTTerr(" MQTT subscribe VCC50", errMQTT);
+                    #endif
+                  #if (USE_VCC33_ANA > OFF)
+                      topVCC33 = topDevice + topVCC33;
+                      errMQTT = (int8_t) mqtt.subscribe(topVCC33.c_str());
+                          soutMQTTerr(" MQTT subscribe VCC33", errMQTT);
+                    #endif
+                  #if (USE_ACS712_ANA > OFF)
+                      topi7121 = topDevice + topi7121;
+                      errMQTT = (int8_t) mqtt.subscribe(topi7121.c_str());
+                          soutMQTTerr(" MQTT subscribe i7121", errMQTT);
+                      #if (USE_ACS712_ANA > 1)
+                          topi7122 = topDevice + topi7122;
+                          errMQTT = (int8_t) mqtt.subscribe(topi7122.c_str());
+                              soutMQTTerr(" MQTT subscribe i7122", errMQTT);
+                          #if (USE_ACS712_ANA > 2)
+                              topi7123 = topDevice + topi7123;
+                              errMQTT = (int8_t) mqtt.subscribe(topi7123.c_str());
+                                  soutMQTTerr(" MQTT subscribe i7123", errMQTT);
+                              #if (USE_ACS712_ANA > 3)
+                                  topi7124 = topDevice + topi7124;
+                                  errMQTT = (int8_t) mqtt.subscribe(topi7124.c_str());
+                                      soutMQTTerr(" MQTT subscribe i7124", errMQTT);
+                                #endif
+                            #endif
+                        #endif
+                    #endif
+                  #if (USE_TYPE_K_SPI > 0)
+                    #endif
+                  #if (USE_CNT_INP > OFF)
+                    #endif
+                  #if (USE_DIG_INP > OFF)
+                    #endif
+                  #if (USE_ESPHALL > OFF)
+                    #endif
+                  #if (USE_MCPWM > OFF)
+                    #endif
+                  #if (USE_RGBLED_PWM > OFF)
+                      topRGBBright = topDevice + topRGBBright;
+                      errMQTT = (int8_t) mqtt.subscribe(topRGBBright.c_str());
+                          soutMQTTerr(" MQTT subscribe LEDBright ", errMQTT);
+
+                      topRGBCol = topDevice + topRGBCol;
+                      errMQTT = (int8_t) mqtt.subscribe(topRGBCol.c_str());
+                          soutMQTTerr(" MQTT subscribe LEDCol ", errMQTT);
+                    #endif
+                  #if (USE_WS2812_MATRIX_OUT > OFF)
+                    #endif
+                  #if (USE_WS2812_LINE_OUT > OFF)
+                    #endif
+                  #if (USE_BUZZER_PWM > OFF)
+                    #endif
+                  #if (USE_GEN_DIG_OUT > OFF)
+                      toptestLED = topDevice + toptestLED;
+                      errMQTT = (int8_t) mqtt.subscribe(toptestLED.c_str());
+                          soutMQTTerr(" MQTT subscribe testLED", errMQTT);
+                    #endif
+                }
+            }
+
+          void soutMQTTerr(String text, int8_t errMQTT)
+            {
+              if (errMQTT == MD_OK)
+                {
+                  errMQTTold = errMQTT;
+                }
+              if (errMQTT < MD_OK)
+                {
+                  if ((errMQTT != errMQTTold) && (errMQTT != -3))
+                    {
+                      SVAL(text, cerrMQTT[(-1) * errMQTT]);
+                    }
+                  if (errMQTT != -7) // not connected stays
+                    { errMQTT = MD_OK; }
+                }
+            }
+
+          void readMQTTmsg()
+            {
+              if (errMQTT != MD_OK) // not connected
+                {
+                  connectMQTT();
+                }
+
+              if (errMQTT == MD_OK) // connected
+                {
+                  char* ptopic = NULL;
+                  while (anzMQTTmsg > 0)
+                    {
+                      ptopic = pMQTTRd->topic + strlen(MQTT_TOPDEV); // remove device ID
+                          //S3VAL(" readMQTT pMQTTRd ptopic payload ", (uint32_t) pMQTTRd->topic, ptopic, pMQTTRd->payload);
+                          //S3VAL(" readMQTT Bright  result ", topRGBBright, pMQTTRd->topic, topRGBBright.equals(pMQTTRd->topic));
+                          //S3VAL(" readMQTT Color   result ", topRGBCol,    pMQTTRd->topic, topRGBCol.equals(pMQTTRd->topic));
+                          //S3VAL(" readMQTT testLED result ", toptestLED,   pMQTTRd->topic, toptestLED.equals(pMQTTRd->topic));
+                      #if (USE_RGBLED_PWM > OFF)
+                          //if (strcmp(ptopic, topRGBBright.c_str())) // RGB LED bright
+                          if (topRGBBright.equals(pMQTTRd->topic)) // RGB LED bright
+                            {
+                              RGBLED->bright(atoi(pMQTTRd->payload));
+                              //S2VAL(" readMQTT RGBLED new bright payload ", RGBLED->bright(), pMQTTRd->payload);
+                            }
+                          else if (topRGBCol.equals(pMQTTRd->topic)) // RGB LED bright
+                            {
+                              tmpMQTT = pMQTTRd->payload;
+                              sscanf(tmpMQTT.c_str(), "%x", &tmpval32);
+                              RGBLED->col24(tmpval32);
+                              //SHEXVAL(" readMQTT RGBLED new color  payload ", RGBLED->col24());
+                            }
+                          else {}
+                        #endif
+                      #if (USE_GEN_DIG_OUT > OFF)
+                          if (toptestLED.equals(pMQTTRd->topic)) // test-led
+                            {
+                              if (strcmp(pMQTTRd->payload, "false") == 0)
+                                { testLED = OFF;}
+                              else
+                                { testLED = ON; }
+                              //SVAL(" readMQTT testLED new val ", testLED);
+                            }
+                        #endif
+                      pMQTTRd = (MQTTmsg_t*) pMQTTRd->pNext;
+                      anzMQTTmsg--;
+                    }
+                }
+            }
+        #endif
     // --- BME280
       #if (USE_BME280_I2C > OFF)
           static void initBME280()

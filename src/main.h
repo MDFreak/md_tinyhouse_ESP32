@@ -22,10 +22,9 @@
       #endif // USE_I2C
   // standard project includes
     #include <prj_conf_test_stdlib.h>
-    //#include <md_time.hpp>
+    //#include <md_time.h>
   // project devices md_library
     // timer
-    // OLED
     // I2C
       #ifdef USE_I2C
           #if (OLED_DRV == OLED_DRV_1306)
@@ -50,7 +49,31 @@
       #if (USE_INA3221_I2C > OFF)
           #include <SDL_Arduino_INA3221.h>
         #endif
-
+  // --- memory
+    #if (USE_FLASH_MEM > OFF)
+        #include <FS.h>
+        //#include <SPIFFS.h>
+        #include <md_spiffs.h>
+      #endif
+    #if (USE_FRAM_I2C > OFF)
+        #include <md_FRAM.h>
+      #endif
+    #if (USE_SD_SPI > OFF)
+        //#include "sdmmc_cmd.h"
+        #include <FS.h>
+        #include <sd.h>
+        #include <spi.h>
+      #endif
+  // --- network
+    #if (USE_WIFI > OFF)
+        #include <AsyncTCP.h>
+        #include <ESPAsyncWebServer.h>
+        #include <md_webserver.h>
+        #include <md_ip_list.h>
+        #if (USE_MQTT > OFF)
+            #include <Network/Clients/MQTT.hpp>
+          #endif
+      #endif
   // ---------------------------------------
   // --- prototypes
     // ------ system -------------------------
@@ -115,6 +138,21 @@
               static void initPCNT();
               void getCNTIn();
             #endif
+      // memory
+          #if (USE_FLASH_MEM > OFF)
+              #include <FS.h>
+              //#include <SPIFFS.h>
+              #include <md_spiffs.h>
+            #endif
+          #if (USE_FRAM_I2C > OFF)
+              #include <md_FRAM.h>
+            #endif
+          #if (USE_SD_SPI > OFF)
+              //#include "sdmmc_cmd.h"
+              #include <FS.h>
+              #include <sd.h>
+              #include <spi.h>
+            #endif
       // --- sensors
         // --- BME280
           #if (USE_BME280_I2C > OFF)
@@ -161,7 +199,7 @@
           #if (USE_ACS712_ANA > OFF)
               void initACS712();
             #endif
-    // ----- memory ---------------------------
+    // ------ memory ---------------------------
           #if (USE_FLASH_MEM > OFF)
               void testFlash();
             #endif

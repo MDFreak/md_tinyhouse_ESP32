@@ -800,91 +800,90 @@
             #endif
     // --- network
       // --- WIFI
-          //#define UTC_SEASONTIME UTC_SUMMERTIME
-        //#if (USE_WIFI > OFF)
-        //    #define WIFI_ANZ_LOGIN  8
-        //    #define WIFI_IS_DUTY    ON
-        //    #define WIFI_SSID0      "M&M_mobil"   // Bauwagen
-        //    #define WIFI_SSID0_PW   "M&M2KsR&N#"
-        //    #define WIFI_SSID1      "MAMD-HomeG" // WLAN Moosgrabenstrasse 26
-        //    #define WIFI_SSID1_PW   "ElaNanniRalf3"
-        //    #define WIFI_SSID2      "HS-HomeG" // WLAN Am Jungberg 9
-        //    #define WIFI_SSID2_PW   "ElaNanniRalf3"
-        //    #define WIFI_SSID3      "WL-Fairnetz" //Weltladen
-        //    #define WIFI_SSID3_PW   "WL&Fair2Live#"
-        //    #define WIFI_SSID4      "MachNet" //machQuadrat
-        //    #define WIFI_SSID4_PW   "!Machquadrat1"
-        //    #define WIFI_SSID5      "MD_KingKong" //Hotspot Martin
-        //    #define WIFI_SSID5_PW   "ElaNanniRalf3"
-        //    #define WIFI_SSID6      "CDWiFi"        //OEBB Raijet
-        //    #define WIFI_SSID6_PW   ""
-        //    #define WIFI_SSID7      "xWIFI@DB"        //DB ICE
-        //    #define WIFI_SSID7_PW   ""
-        //    #define WIFI_SSID8      ""        //?
-        //    #define WIFI_SSID8_PW   ""
-        //    #define WIFI_SSID9      ""    // ?
-        //    #define WIFI_SSID9_PW   ""
-        //    #define WIFI_CONN_DELAY 500000ul // Scan-Abstand [us]
-        //    #define WIFI_CONN_REP   5        // Anzahle der Connect-Schleifen
-        //    #define WIFI_CONN_CYCLE 4000ul   // Intervallzeit fuer Recoonect [us]
-        //    #define NTPSERVER_CYCLE 1000ul   // Intervallzeit [us]
-
-        //    #define WIFI_ANZ_LOCIP  WIFI_ANZ_LOGIN
-        //    //#define WIFI_FIXIP0           0x1800000Aul // 10.0.0.24   lowest first
-        //    //#define WIFI_GATEWAY0         0x8B00000Aul // 10.0.0.139 // Moosgraben
-        //    //#define WIFI_FIXIP1           0x1800000Aul // 10.0.0.24
-        //    //#ifdef USE_LOCAL_IP
-        //    #if (PIO_FIXIP >0)
-        //        //#define USE_LOCAL_IP
-        //        #define WIFI_FIXIP        0x01000000ul * PIO_FIXIP
-        //        #define WIFI_GATEWAY0     0x0100000Aul // 10.0.0.1        // Bauwagen
-        //        #define WIFI_FIXIP0       0x0000000Aul + WIFI_FIXIP
-        //        #define WIFI_GATEWAY1     0x8B00000Aul // 10.0.0.139      // Moosgraben
-        //        #define WIFI_FIXIP1       0x0000000Aul + WIFI_FIXIP
-        //        #define WIFI_GATEWAY2     0x8B00000Aul // 10.0.0.139      // Jungberg
-        //        #define WIFI_FIXIP2       0x0000000Aul + WIFI_FIXIP
-        //        #define WIFI_GATEWAY3     0x8A00000Aul // 10.0.0.138      // Weltladen
-        //        #define WIFI_FIXIP3       0x1600000Aul // 10.0.0.22
-        //        #define WIFI_GATEWAY4     0x01250D0Aul // 10.0.0.1        // machquadrat
-        //        #define WIFI_FIXIP4       0x6F250D0Aul // 10.0.0.22
-        //        #define WIFI_GATEWAY5     0x012BA8C0ul // 192.168.43.154  // hotspot KingKong
-        //        #define WIFI_FIXIP5       0x002BA8C0ul + WIFI_FIXIP
-        //        #define WIFI_GATEWAY6     0x0926A8C0ul // 192.168.32.1    // OEBB Railjet
-        //        #define WIFI_FIXIP6       0x1620A8C0ul // 192.168.32.22
-        //        #define WIFI_GATEWAY7     0x01AE12ACul // 172.18.0.1    // DB ICE
-        //        #define WIFI_FIXIP7       0x16AE12ACul // 172.18.174.22
-        //        #define WIFI_GATEWAY8     0x0100000Aul // 10.0.0.10       // ?
-        //        #define WIFI_FIXIP8       0x1600000Aul // 10.0.0.22  // ?
-        //        #define WIFI_GATEWAY9     0x0100000Aul // 10.0.0.1        // ?
-        //        #define WIFI_FIXIP9       0x1600000Aul // 10.0.0.22  // ?
-        //        #define WIFI_SUBNET       0x0000FFFFul // 255.255.255.0
-        //      #endif
-        //  #endif
+        #define UTC_SEASONTIME UTC_SUMMERTIME
+        #ifdef USE_WIFI
+            #define WIFI_ANZ_LOGIN  8
+            #define WIFI_IS_DUTY    ON
+            #define WIFI_SSID0      "M&M_mobil"   // Bauwagen
+            #define WIFI_SSID0_PW   "M&M2KsR&N#"
+            #define WIFI_SSID1      "MAMD-HomeG" // WLAN Moosgrabenstrasse 26
+            #define WIFI_SSID1_PW   "ElaNanniRalf3"
+            #define WIFI_SSID2      "HS-HomeG" // WLAN Am Jungberg 9
+            #define WIFI_SSID2_PW   "ElaNanniRalf3"
+            #define WIFI_SSID3      "WL-Fairnetz" //Weltladen
+            #define WIFI_SSID3_PW   "WL&Fair2Live#"
+            #define WIFI_SSID4      "MachNet" //machQuadrat
+            #define WIFI_SSID4_PW   "!Machquadrat1"
+            #define WIFI_SSID5      "MD_KingKong" //Hotspot Martin
+            #define WIFI_SSID5_PW   "ElaNanniRalf3"
+            #define WIFI_SSID6      "CDWiFi"        //OEBB Raijet
+            #define WIFI_SSID6_PW   ""
+            #define WIFI_SSID7      "xWIFI@DB"        //DB ICE
+            #define WIFI_SSID7_PW   ""
+            #define WIFI_SSID8      ""        //?
+            #define WIFI_SSID8_PW   ""
+            #define WIFI_SSID9      ""    // ?
+            #define WIFI_SSID9_PW   ""
+            #define WIFI_CONN_DELAY 500000ul // Scan-Abstand [us]
+            #define WIFI_CONN_REP   5        // Anzahle der Connect-Schleifen
+            #define WIFI_CONN_CYCLE 4000ul   // Intervallzeit fuer Recoonect [us]
+            #define NTPSERVER_CYCLE 1000ul   // Intervallzeit [us]
+            #define WIFI_ANZ_LOCIP  WIFI_ANZ_LOGIN
+              //#define WIFI_FIXIP0           0x1800000Aul // 10.0.0.24   lowest first
+              //#define WIFI_GATEWAY0         0x8B00000Aul // 10.0.0.139 // Moosgraben
+              //#define WIFI_FIXIP1           0x1800000Aul // 10.0.0.24
+              //#ifdef USE_LOCAL_IP
+            #if defined(USE_FIXIP)
+                //#define USE_LOCAL_IP
+                #define WIFI_FIXIP        0x01000000ul * USE_FIXIP
+                #define WIFI_GATEWAY0     0x0100000Aul // 10.0.0.1        // Bauwagen
+                #define WIFI_FIXIP0       0x0000000Aul + WIFI_FIXIP
+                #define WIFI_GATEWAY1     0x8B00000Aul // 10.0.0.139      // Moosgraben
+                #define WIFI_FIXIP1       0x0000000Aul + WIFI_FIXIP
+                #define WIFI_GATEWAY2     0x8B00000Aul // 10.0.0.139      // Jungberg
+                #define WIFI_FIXIP2       0x0000000Aul + WIFI_FIXIP
+                #define WIFI_GATEWAY3     0x8A00000Aul // 10.0.0.138      // Weltladen
+                #define WIFI_FIXIP3       0x1600000Aul // 10.0.0.22
+                #define WIFI_GATEWAY4     0x01250D0Aul // 10.0.0.1        // machquadrat
+                #define WIFI_FIXIP4       0x6F250D0Aul // 10.0.0.22
+                #define WIFI_GATEWAY5     0x012BA8C0ul // 192.168.43.154  // hotspot KingKong
+                #define WIFI_FIXIP5       0x002BA8C0ul + WIFI_FIXIP
+                #define WIFI_GATEWAY6     0x0926A8C0ul // 192.168.32.1    // OEBB Railjet
+                #define WIFI_FIXIP6       0x1620A8C0ul // 192.168.32.22
+                #define WIFI_GATEWAY7     0x01AE12ACul // 172.18.0.1    // DB ICE
+                #define WIFI_FIXIP7       0x16AE12ACul // 172.18.174.22
+                #define WIFI_GATEWAY8     0x0100000Aul // 10.0.0.10       // ?
+                #define WIFI_FIXIP8       0x1600000Aul // 10.0.0.22  // ?
+                #define WIFI_GATEWAY9     0x0100000Aul // 10.0.0.1        // ?
+                #define WIFI_FIXIP9       0x1600000Aul // 10.0.0.22  // ?
+                #define WIFI_SUBNET       0x0000FFFFul // 255.255.255.0
+              #endif
+          #endif
       // --- webserver
-            //#if (USE_WEBSERVER > OFF)
-            //    #define WEBSERVER_CYCLE       1000ul  // Intervallzeit [us]
-            //  #endif
+            #if (USE_WEBSERVER > OFF)
+                #define WEBSERVER_CYCLE       1000ul  // Intervallzeit [us]
+              #endif
       // --- MQTT Mosquitto client
-            //#if (USE_MQTT > OFF)
-            //    #define MQTT_HOST             "10.0.0.203"
-            //    #define MQTT_PORT             1883
-            //    #define MQTT_SECURE           OFF
-            //    #define MQTT_DEVICE           "esp-24"
-            //    #define MQTT_TOPDEV           "esp-24/"
-            //    #define MQTT_TOPIC_MAXLEN     20
-            //    #define MQTT_PAYLOAD_MAXLEN   20
-            //    #define MQTT_MSG_MAXANZ       10
-            //    typedef struct MQTT_MSG
-            //      {
-            //        char  topic[MQTT_TOPIC_MAXLEN];
-            //        char  payload[MQTT_PAYLOAD_MAXLEN];
-            //        void* pNext;
-            //      } MQTTmsg_t;
-            //    #if(MQTT_SECURE > OFF)
-            //        #define MQTT_BROKER_USER  "<user>"
-            //        #define MQTT_BROKER_PASS  "<pass>"
-            //      #endif
-            //  #endif
+            #if (USE_MQTT > OFF)
+                #define MQTT_HOST             "10.0.0.203"
+                #define MQTT_PORT             1883
+                #define MQTT_SECURE           OFF
+                #define MQTT_DEVICE           "esp-24"
+                #define MQTT_TOPDEV           "esp-24/"
+                #define MQTT_TOPIC_MAXLEN     20
+                #define MQTT_PAYLOAD_MAXLEN   20
+                #define MQTT_MSG_MAXANZ       10
+                typedef struct MQTT_MSG
+                  {
+                    char  topic[MQTT_TOPIC_MAXLEN];
+                    char  payload[MQTT_PAYLOAD_MAXLEN];
+                    void* pNext;
+                  } MQTTmsg_t;
+                #if(MQTT_SECURE > OFF)
+                    #define MQTT_BROKER_USER  "<user>"
+                    #define MQTT_BROKER_PASS  "<pass>"
+                  #endif
+              #endif
     // --- user output
                 // --- acoustic output
                   //  #if (USE_AOUT > OFF)
