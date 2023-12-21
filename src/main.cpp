@@ -23,6 +23,9 @@
     static int32_t  tmp_i32     = 0;
     static String   outStr      = "";
     static char     tmp_c32[33] = "";
+    static char     cmsg[MSG_MAXLEN+1] = "";
+    static char     ctmp30[33];
+    static String   tmpStr;
   // --- system devices
     // i2C devices
     #ifdef USE_I2C
@@ -305,9 +308,9 @@
           static int8_t    pubINA3221u[USE_INA3221_I2C][3];
           static int8_t    pubINA3221p[USE_INA3221_I2C][3];
           #if (USE_MQTT > OFF)
-              static String topINA32211i[3] = { MQTT_INA32211I1, MQTT_INA32211I2, MQTT_INA32211I3 };
-              static String topINA32211u[3] = { MQTT_INA32211U1, MQTT_INA32211U2, MQTT_INA32211U3 };
-              static String topINA32211p[3] = { MQTT_INA32211P1, MQTT_INA32211P2, MQTT_INA32211P3 };
+              static String topina3221i[3] = { MQTT_ina3221I1, MQTT_ina3221I2, MQTT_ina3221I3 };
+              static String topina3221u[3] = { MQTT_ina3221U1, MQTT_ina3221U2, MQTT_ina3221U3 };
+              static String topina3221p[3] = { MQTT_ina3221P1, MQTT_ina3221P2, MQTT_ina3221P3 };
             #endif
         #endif
 // ----------------------------------------------------------------
@@ -387,14 +390,18 @@
             startMQTT();
           #endif
       // BME280 temperature, pessure, humidity
-        #if (USE_BME280_I2C > OFF)
+        #if defined(USE_BME280_I2C)
             initBME280();
           #endif
       // temp. current sensor INA3221
         #if (USE_INA3221_I2C > OFF)
             initINA3221();
           #endif
-     STXT(" ... setup finished");
+      // DC energy measurement with PZEM003/PZEM017
+        #if defined(USE_PZEM017_RS485)
+            initBME280();
+          #endif
+      STXT(" ... setup finished");
     }
 // ----------------------------------------------------------------
 // --- system loop  ---------------
@@ -455,6 +462,435 @@
                 ntpT.startT();
               }
           #endif // USE_NTP_SERVER
+      // --- trigger measurement ---
+        #if (USE_ADC1115_I2C > OFF)
+            md_ADS1115_run();
+          #endif
+      // --- direct input ---
+        #if (USE_CNT_INP > OFF)
+            uint64_t        lim  = 0ul;
+            pcnt_evt_type_t ev;
+            uint8_t         doIt = false;
+            pcnt_unit_t     unit;
+            sprintf(cmsg,"  loop/cnt_inp");
+            for ( uint8_t i = 0; i < USE_CNT_INP ; i++ )
+              {
+                switch (i)
+                  {
+                    case 0:
+                      lim  = PCNT0_UFLOW;
+                      ev   = PCNT0_EVT_0;
+                      unit = PCNT0_UNIDX;
+                      pcnt_res = xQueueReceive(pcnt_evt_queue[PCNT0_UNIDX], &cntErg[i], 0);
+                      break;
+                    #if (USE_CNT_INP > 1)
+                        case 1:
+                          lim  = PCNT1_UFLOW;
+                          ev   = PCNT1_EVT_0;
+                          unit = PCNT1_UNIDX;
+                          pcnt_res = xQueueReceive(pcnt_evt_queue[PCNT1_UNIDX], &cntErg[i], 0);
+                          break;
+                      #endif
+                    #if (USE_CNT_INP > 2)
+                        case 2:
+                          lim  = PCNT2_UFLOW;
+                          ev   = PCNT2_EVT_0;
+                          unit = PCNT2_UNIDX;
+                          pcnt_res = xQueueReceive(pcnt_evt_queue[PCNT2_UNIDX], &tmpErg, 0);
+                          break;
+                      #endif
+                    #if (USE_CNT_INP > 3)
+                        case 3:
+                          lim  = PCNT3_UFLOW;
+                          ev   = PCNT3_EVT_0;
+                          unit = PCNT3_UNIDX;
+                          pcnt_res = xQueueReceive(pcnt_evt_queue[PCNT3_UNIDX], &tmpErg, 0);
+                          break;
+                      #endif
+                    default:
+                      break;
+                  }
+                if (pcnt_res == pdTRUE)
+                  {
+                            //if (i == 0) { SOUT(cmsg); }
+                            //SOUT("  "); SOUT(millis()); SOUT("  "); SOUT(i);
+                            //SOUT(" "); SOUT("usCnt"); SOUT(" "); SOUT(cntErg[i].usCnt);
+                            //SOUT(" T "); SOUT(cntThresh[i]); Serial.flush();
+
+                    if ( (cntErg[i].usCnt > 0) )
+                      {
+                        cntErg[i].freq = (uint16_t) (1000000ul * cntThresh[i] * cntFakt[i] / cntErg[i].usCnt);
+                          //cntErg[i].freq = (uint16_t) (cntErg[i].pulsCnt * 1000000ul / cntErg[i].usCnt);
+                        //SOUT(" "); SOUT(cntErg[i].freq); Serial.flush();
+                      }
+                    else
+                      {
+                        cntErg[i].freq = 0;
+                      }
+                            //SOUT(" "); SOUT(i); SOUT(" "); SOUT((uint32_t) cntErg[i].freq);
+                  }
+                // autorange
+                #if (USE_CNT_AUTORANGE > OFF)
+                    // check for auto range switching
+
+                    if (cntErg[i].usCnt > PNCT_AUTO_SWDN)
+                      { // low freq
+                        if (cntFilt[i] > -5)
+                          {
+                            SVAL("SWDN filt ", cntFilt[i]);
+                            cntFilt[i]--;
+                            usleep(500000);
+                          }
+                        if ((cntThresh[i] > 1) && (cntFilt[i] > -5))
+                          {
+                            cntThresh[i] /= 2;
+                            doIt = true;
+                            STXT("SWDN new ", cntThresh[i]);
+                            usleep(500000);
+                          }
+                      }
+                    else if ( (cntErg[i].usCnt < PNCT_AUTO_SWUP) && (cntErg[i].pulsCnt > 0) )
+                      { // high freq
+                        if (cntFilt[i] < 5)
+                          {
+                            STXT("SWUP filt ", cntFilt[i]);
+                            cntFilt[i]++;
+                            usleep(500000);
+                          }
+                        if ((cntThresh[i] < 16) && (cntFilt[i] > 5))
+                          {
+                            cntThresh[i] *= 2;
+                            doIt = true;
+                            STXT("SWUP new ", cntThresh[i]);
+                            usleep(500000);
+                          }
+                      }
+                    else
+                      {
+                        cntFilt[i] = 0;
+                      }
+
+                    if (doIt)
+                      {
+                        pcnt_counter_pause(unit);
+                        logESP(pcnt_event_disable  (unit, ev),            cmsg, i);
+                        logESP(pcnt_set_event_value(unit, ev, cntThresh[i]), cmsg, i);
+                        pcnt_counter_clear(unit);
+                        pcnt_counter_resume(unit);
+                        logESP(pcnt_event_enable   (unit, ev),            cmsg, i);
+                        doIt = false;
+                        cntThresh[i] = 0;
+                      }
+                  #endif // USE_CNT_AUTORANGE
+              }
+                      //Serial.flush();
+          #endif
+        #if (USE_PWM_INP > OFF)
+            mcpwm_capture_enable(MCPWM_UNIDX_0, MCPWM_SELECT_CAP0, MCPWM_NEG_EDGE, 1);
+            pwmInVal->lowVal = mcpwm_capture_signal_get_value(MCPWM_UNIDX_0, MCPWM_SELECT_CAP0);
+
+            mcpwm_capture_enable(MCPWM_UNIDX_0, MCPWM_SELECT_CAP0, MCPWM_POS_EDGE, 1);
+            pwmInVal->highVal = mcpwm_capture_signal_get_value(MCPWM_UNIDX_0, MCPWM_SELECT_CAP0);
+          #endif
+      // --- standard input cycle ---
+        #ifdef USE_INPUT_CYCLE
+            if (inputT.TOut())
+              {
+                inpIdx++;
+                    //SOUT("b1a ");
+                    //heapFree("+meascyc");
+                    //STXT(" # MEASCYCLE ");
+                inputT.startT();
+                  //SOUT("b1b ");
+                switch(inpIdx)
+                  {
+                    case 1: // BME280_I2C / BME680_I2C
+                        //SOUT("c1 ");
+                        #if (USE_BME280_I2C > OFF)
+                            // BME280 temperature
+                              bme280T = round(bme280_1.readTemperature() * 10) / 10;
+                              #if (BME280T_FILT > 0)
+                                  bme280T = bme280TVal.doVal(bme280T);
+                                #endif
+                            // BME280 humidity
+                              bme280H = round(bme280_1.readHumidity() * 10) / 10;
+                              #if (BME280H_FILT > 0)
+                                  bme280H = bme280HVal[0].doVal( bme280H);
+                                #endif
+                            // BME280 envirement air pressure
+                              bme280P = round((bme280_1.readPressure() / 100) + 0.5);
+                              #if (BME280P_FILT > 0)
+                                  bme280P = bme280PVal[0].doVal(bme280P);
+                                #endif
+                          #endif
+                        #if (USE_BME680_I2C > OFF)
+                            // BME680 temperature
+                              //bme680T = round((bme680.readTemperature() * 10 + 5)/10);
+                              bme680T = round((bme680.temperature * 10 + 5) / 10);
+                              #if (BME680T_FILT > 0)
+                                  bme680T = bme280TVal.doVal(bme680T);
+                                #endif
+                            // BME680 humidity
+                              //bme680H = round((bme680.readHumidity() * 10 + 5 ) / 10);
+                              bme680H = round((bme680.humidity * 10 + 5 ) / 10);
+                              #if (BME680H_FILT > 0)
+                                  bme680H = bme680HVal[0].doVal( bme680H);
+                                #endif
+                            // BME680 envirement air pressure
+                              //bme680P = round((bme680.readPressure() / 100) + 0.5);
+                              bme680P = round((bme680.pressure / 100) + 0.5);
+                              #if (BME680P_FILT > 0)
+                                  bme680P = bme680PVal[0].doVal(bme680P);
+                                #endif
+                            // BME680 gas sensor resistance
+                              //bme680G = (float) (bme680.readGas() / 100);
+                              bme680G = (float) (bme680.gas_resistance / 100);
+                                  //S4VAL(" BME680 values T H P G", bme680T, bme680H, bme680P, bme680G );
+                              #if (BME680G_FILT > 0)
+                                  bme680G = bme680GVal[0].doVal(bme680G);
+                                #endif
+                          #endif
+                      break;
+                    case 2: // CCS811_I2C
+                        #if (USE_CCS811_I2C > OFF)
+                            if (ccs811.available())
+                              {
+                                if (ccs811.readData());  // CSS811 internal read data
+                                // CO2 value
+                                  ccsC = ccs811.geteCO2();
+                                  #if (CCS811C_FILT > OFF)
+                                      ccsC = ccsCVal.doVal(ccsC);
+                                    #endif
+                                // TVOC value
+                                  ccsT = ccs811.getTVOC();
+                                  #if (CCS811T_FILT > 0)
+                                      ccsT = ccsTVal.doVal(ccsT);
+                                    #endif
+                              }
+                          #endif
+                      break;
+                    case 3: // INA3221_I2C 3x U+I measures
+                        //SOUT(" c3");
+                        #if (USE_INA3221_I2C > OFF)
+                            #if (INA3221U1_ACT > OFF)
+                                inaU[0][0] = ina3221.getBusVoltage_V(1);
+                                #if (INA3221I1_FILT > OFF)
+                                    inaU[0][0] = ccsCVal.doVal(inaU[0][0]);
+                                  #endif
+                                //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
+                              #endif // INA3221U1_ACT
+                            #if (INA3221I1_ACT > OFF)
+                                inaI[0][0] = ina3221.getCurrent_mA(1);
+                                #if (INA3221U1_ACT > OFF)
+                                    inaP[0][0] = (inaU[0][0] * inaI[0][0]) / 1000;
+                                  #endif
+                              #endif // INA3221I1_ACT
+                            #if (INA3221U2_ACT > OFF)
+                                inaU[0][1] = ina3221.getBusVoltage_V(2);
+                                #if (INA3221U2_FILT > OFF)
+                                    inaU[0][1] = ccsCVal.doVal(inaU[0][1]);
+                                  #endif
+                              #endif // INA3221U2_ACT
+                            #if (INA3221I2_ACT > OFF)
+                                inaI[0][1] = -ina3221.getCurrent_mA(2);
+                                #if (INA3221U2_ACT > OFF)
+                                    inaP[0][1] = (inaU[0][1] * inaI[0][1]) / 1000;
+                                  #endif // INA3221U2_ACT
+                              #endif // INA3221I2_ACT
+                            #if (INA3221U3_ACT > OFF)
+                                inaU[0][2] = ina3221.getBusVoltage_V(3);
+                                #if (INA3221U3_FILT > OFF)
+                                    inaU[0][2] = ccsCVal.doVal(inaU[0][2]);
+                                  #endif
+                              #endif // INA3221U3_ACT
+                            #if (INA3221I3_ACT > OFF)
+                                inaI[0][2] = -ina3221.getCurrent_mA(3);
+                                #if (INA3221I3_FILT > OFF)
+                                    inaI[0][2] = ccsCVal.doVal(inaI[0][2]);
+                                  #endif
+                                #if (INA3221U3_ACT > OFF)
+                                    inaP[0][2] = (inaU[0][2] * inaI[0][2]) / 1000;
+                                  #endif // INA3221U3_ACT
+                              #endif // INA3221I3_ACT
+                          #endif
+                      break;
+                    case 4: // DS18B20_1W
+                        //SOUT(" c4");
+                        #if (USE_DS18B20_1W_IO > OFF)
+                            outStr = "";
+                            //outStr = getDS18D20Str();
+                            dispText(outStr ,  0, 1, outStr.length());
+                          #endif
+                      break;
+                    case 5: // MQ135_GAS_ANA
+                        //SOUT(" c5");
+                        #if (USE_MQ135_GAS_ANA > OFF)
+                            #if (MQ135_GAS_ADC > OFF)
+                                gasVal.doVal(analogRead(PIN_MQ135));
+                                      //STXT(" gas measurment val = ", gasValue);
+                                gasValue = (int16_t) valGas.value((double) gasValue);
+                                      //STXT("    gasValue = ", gasValue);
+                              #endif
+                            #if (MQ135_GAS_1115 > OFF)
+                              #endif
+                          #endif
+                      break;
+                    case 6: // MQ3_ALK_ANA
+                        //SOUT(" c6");
+                        #if (USE_MQ3_ALK_ANA > OFF)
+                            #if (MQ3_ALK_ADC > OFF)
+                              #endif
+                            #if (MQ3_ALK_1115 > OFF)
+                                //ads[0].setGain(MQ3_1115_ATT);
+                                //ads[0].setDataRate(RATE_ADS1115_860SPS);
+                                //ads[0].startADCReading(MUX_BY_CHANNEL[MQ3_1115_CHIDX], /*continuous=*/false);
+                                usleep(1200); // Wait for the conversion to complete
+                                //while (!ads[0].conversionComplete());
+                                //alk = ads[0].getLastConversionResults();   // Read the conversion results
+                                alkVal.doVal(alk);   // Read the conversion results
+                                //alk[0] = (uint16_t) (1000 * ads[0].computeVolts(alkVal[0].doVal(ads->readADC_SingleEnded(MQ3_1115_CHIDX))));
+                              #endif
+                          #endif
+                      break;
+                    case 7: // PHOTO_SENS_ANA
+                        //SOUT(" c7");
+                        #if (USE_PHOTO_SENS_ANA > OFF)
+                            #if (PHOTO1_ADC > OFF)
+                                //photoVal[0].doVal(analogRead(PIN_PHOTO1_SENS));
+                                photof[0] = (float) analogRead(PIN_PHOTO1_SENS);
+                                        //SVAL(" photo1  new ", photof[0]);
+                                //photof[0] = photof[0];
+                                        //SVAL(" photo1  new ", photof[0]);
+                                photof[0] = photoScal[0].scale(photof[0]);
+                              #endif
+                            #if (PHOTO1_1115 > OFF)
+                              #endif
+                          #endif
+                      break;
+                    case 8: // POTI_ANA
+                        //SOUT(" c8");
+                        #if (USE_POTI_ANA > OFF)
+                            #if (POTI1_ADC > OFF)
+                              #endif
+                            #if (POTI1_1115 > OFF)
+                                poti[0]  = ads[POTI1_1115_UNIDX].getResult(POTI1_1115_CHIDX);
+                                potif[0] = ads[POTI1_1115_UNIDX].getVolts(POTI1_1115_CHIDX);
+                                    //S3VAL(" main vcc50f unit chan Volts ", VCC_1115_UNIDX, VCC50_1115_CHIDX, vcc50f );
+                                //potif[0] = potifScal[0].scale(potif[0]);
+                              #endif
+                          #endif
+                      break;
+                    case 9: // USE_VCC50_ANA
+                        //SOUT(" c9");
+                        #if (USE_VCC50_ANA > OFF)
+                            #if (VCC50_ADC > OFF)
+                              #endif
+                            #if (VCC50_1115 > OFF)
+                                vcc50  = ads[VCC_1115_UNIDX].getResult(VCC50_1115_CHIDX);
+                                vcc50f = ads[VCC_1115_UNIDX].getVolts(VCC50_1115_CHIDX);
+                                    //S3VAL(" main vcc50f unit chan Volts ", VCC_1115_UNIDX, VCC50_1115_CHIDX, vcc50f );
+                                vcc50f = vcc50fScal.scale(vcc50f);
+                              #endif
+                          #endif
+                      break;
+                    case 10: // USE_VCC33_ANA
+                        //SOUT(" c10");
+                        #if (USE_VCC33_ANA > OFF)
+                            #if (VCC33_ADC > OFF)
+                              #endif
+                            #if (VCC33_1115 > OFF)
+                                vcc33  = ads[VCC_1115_UNIDX].getResult(VCC33_1115_CHIDX);
+                                vcc33f = ads[VCC_1115_UNIDX].getVolts(VCC33_1115_CHIDX);
+                                    //S3VAL(" main vcc33f unit chan Volts ", VCC_1115_UNIDX, VCC33_1115_CHIDX, vcc33f );
+                                //vcc33f = vcc33fScal.scale(vcc33f);
+                              #endif
+                          #endif
+                    case 11: // ACS712_ANA
+                        //SOUT(" c11");
+                        #if (USE_ACS712_ANA > OFF)
+                            #if (I712_1_ADC > OFF)
+                              #endif
+                            #if (I712_1_1115 > OFF)
+                                i712[0]  = ads[I712_1_1115_UNIDX].getResult(VCC33_1115_CHIDX);
+                                i712f[0] = ads[I712_1_1115_UNIDX].getVolts(VCC33_1115_CHIDX);
+                                i712f[0] -= vcc50f/2;
+                                i712f[0] *= 185;
+                                        //S2VAL(" 712 Isup     ", i712[0], i712f[0]);
+                              #endif
+                          #endif
+                      break;
+                    case 12: // TYPE_K_SPI
+                        //SOUT(" c12");
+                        #if (USE_TYPE_K_SPI > OFF)
+                            int8_t  tkerr = (int8_t) ISOK;
+                            int16_t ival = TypeK1.actT();
+                            tkerr = TypeK1.readErr();
+                                  //SVAL(" typeK1 err ", tkerr);
+                            if (!tkerr)
+                              {
+                                tk1Val    = valTK1.value((double) ival);
+                                    //SVAL(" k1val ", tk1Val);
+                                ival      = TypeK1.refT();
+                                    //SVAL(" k1ref raw = ", (int) ival);
+                                tk1ValRef = valTK1ref.value((double) ival);
+                                    //SVAL(" k1ref = ", (int) tk1ValRef);
+                              }
+                            #if (USE_TYPE_K_SPI > 1)
+                                ival      = TypeK2.actT();
+                                tkerr     = TypeK2.readErr() % 8;
+                                    //SVAL(" typeK1 err ", tkerr);
+                                if (!tkerr)
+                                  {
+                                    tk2Val    = valTK2.value((double) ival);
+                                        //SVAL(" k2val ", tk2Val);
+                                    ival      = TypeK2.refT();
+                                        //SVAL(" k2ref raw = ", (int) ival);
+                                    tk2ValRef = valTK2ref.value((double) ival);
+                                        //SVAL(" k2ref = ", (int) tk2ValRef);
+                                  }
+                              #endif
+                          #endif
+                      break;
+                    case 13: // CNT_INP
+                        //SOUT(" c13");
+                        #if (USE_CNT_INP > OFF)
+                            #ifdef USE_PW
+                                getCNTIn();
+                              #endif
+                          #endif
+                      break;
+                    case 14: // DIG_INP
+                        //SOUT(" c14");
+                        #if (USE_DIG_INP > OFF)
+                            getDIGIn();
+                          #endif
+                      break;
+                    case 15: // ESPHALL
+                        //SOUT(" c15");
+                        #if (USE_ESPHALL > OFF)
+                            valHall = hallRead();
+                          #endif
+                      break;
+                    case 16: // MCPWM
+                        //SOUT(" c16");
+                        #if (USE_MCPWM > OFF)
+                            getCNTIn();
+                          #endif
+                      break;
+                    case 17: // MQTT
+                        //SOUT(" c17");
+                        #if (USE_MQTT > OFF)
+                            mqtt.eventLoop();
+                          #endif
+                        //SOUT(" c17a");
+                      break;
+                    default:
+                        inpIdx = 0;
+                      break;
+                  }
+                    //heapFree("-meascyc");
+              }
+          #endif
       // library tests
         #if (PROJECT == PRJ_TEST_LIB_OLED)
             if (firstrun == true) { STXT(" run TEST_LIB_OLED "); }
@@ -507,57 +943,57 @@
             if (zoom > 100) zoom = 0.5;
           #endif
         #if (PROJECT == PRJ_TEST_LIB_INA3221)
-          #if (USE_INA3221_I2C > OFF)
-              // U 3.3V supply
-                inaU[0][0] = ina3221.getBusVoltage_V(1);
-                  //SVAL(" U 3.3    new ", inaU[0][0]);
-                  sprintf(outBuf, "U33 %.1fV", inaU[0][0]);
-                  STXT(outBuf);
-                  dispText(outBuf,0,1);
+            #if (USE_INA3221_I2C > OFF)
+                // U 3.3V supply
+                  inaU[0][0] = ina3221.getBusVoltage_V(1);
+                    //SVAL(" U 3.3    new ", inaU[0][0]);
+                    sprintf(outBuf, "U33 %.1fV", inaU[0][0]);
+                    STXT(outBuf);
+                    dispText(outBuf,0,1);
+                  #if (INA3221I1_FILT > OFF)
+                      inaU[0][0] = ccsCVal.doVal(inaU[0][0]);
+                    #endif
+                      //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
+                // I 3.3V not used
+                  #ifdef NOTUSED
+                      inaI[0][0] = ina3221.getCurrent_mA(1);
+                    #endif
+                // P 3.3V not used
+                // U 5V supply
+                  inaU[0][1] = ina3221.getBusVoltage_V(2);
+                    //SVAL(" U 5.0    new ", inaU[0][1]);
                 #if (INA3221I1_FILT > OFF)
-                    inaU[0][0] = ccsCVal.doVal(inaU[0][0]);
-                  #endif
-                    //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
-              // I 3.3V not used
-                #ifdef NOTUSED
-                    inaI[0][0] = ina3221.getCurrent_mA(1);
-                  #endif
-              // P 3.3V not used
-              // U 5V supply
-                inaU[0][1] = ina3221.getBusVoltage_V(2);
-                  //SVAL(" U 5.0    new ", inaU[0][1]);
-              #if (INA3221I1_FILT > OFF)
-                    inaU[0][1] = ccsCVal.doVal(inaU[0][1]);
-                  #endif
-              // I 5V supply
-                inaI[0][1] = -ina3221.getCurrent_mA(2);
-                  //SVAL(" I 5.0    new ", inaI[0][1]);
-              // P 5V supply
-                inaP[0][1] = (inaU[0][1] * inaI[0][1]);
-                  //SVAL(" P 5.0    new ", inaP[0][1]);
-                  sprintf(outBuf, "U50 %.1fV %.1fmA %.1fmW", inaU[0][1], inaI[0][1], inaP[0][1]);
-                  STXT(outBuf);
-                  dispText(outBuf,0,2);
-              // U main supply 12V/19V supply
-                inaU[0][2] = ina3221.getBusVoltage_V(3);
-                  //SVAL(" U supply new ", inaU[0][2]);
-                #if (INA3221U3_FILT > OFF)
-                    inaU[0][2] = ccsCVal.doVal(inaU[0][2]);
-                  #endif
-              // I main supply 12V/19V supply
-                inaI[0][2] = -ina3221.getCurrent_mA(3);
-                  //SVAL(" I supply new ", inaI[0][2]);
-                #if (INA3221I3_FILT > OFF)
-                    inaI[0][2] = ccsCVal.doVal(inaI[0][2]);
-                  #endif
-              // P main supply
-                inaP[0][2] = (inaU[0][2] * inaI[0][2]);
-                  //SVAL(" P supply new ", inaP[0][2]);
-                  sprintf(outBuf, "UIn %.1fV %.1fmA %.1fmW", inaU[0][2], inaI[0][2], inaP[0][2]);
-                  STXT(outBuf);
-                  dispText(outBuf,0,3);
-            #endif
-        #endif
+                      inaU[0][1] = ccsCVal.doVal(inaU[0][1]);
+                    #endif
+                // I 5V supply
+                  inaI[0][1] = -ina3221.getCurrent_mA(2);
+                    //SVAL(" I 5.0    new ", inaI[0][1]);
+                // P 5V supply
+                  inaP[0][1] = (inaU[0][1] * inaI[0][1]);
+                    //SVAL(" P 5.0    new ", inaP[0][1]);
+                    sprintf(outBuf, "U50 %.1fV %.1fmA %.1fmW", inaU[0][1], inaI[0][1], inaP[0][1]);
+                    STXT(outBuf);
+                    dispText(outBuf,0,2);
+                // U main supply 12V/19V supply
+                  inaU[0][2] = ina3221.getBusVoltage_V(3);
+                    //SVAL(" U supply new ", inaU[0][2]);
+                  #if (INA3221U3_FILT > OFF)
+                      inaU[0][2] = ccsCVal.doVal(inaU[0][2]);
+                    #endif
+                // I main supply 12V/19V supply
+                  inaI[0][2] = -ina3221.getCurrent_mA(3);
+                    //SVAL(" I supply new ", inaI[0][2]);
+                  #if (INA3221I3_FILT > OFF)
+                      inaI[0][2] = ccsCVal.doVal(inaI[0][2]);
+                    #endif
+                // P main supply
+                  inaP[0][2] = (inaU[0][2] * inaI[0][2]);
+                    //SVAL(" P supply new ", inaP[0][2]);
+                    sprintf(outBuf, "UIn %.1fV %.1fmA %.1fmW", inaU[0][2], inaI[0][2], inaP[0][2]);
+                    STXT(outBuf);
+                    dispText(outBuf,0,3);
+              #endif
+          #endif
       // sensoren
         #if (USE_BME280_I2C > OFF)
 
@@ -763,11 +1199,11 @@
                                       #if (USE_MQTT > OFF)
                                           if (errMQTT == MD_OK)
                                             {
-                                              errMQTT = (int8_t) mqtt.publish(topINA32211u[0].c_str(),
+                                              errMQTT = (int8_t) mqtt.publish(topina3221u[0].c_str(),
                                                                                (uint8_t*) valINA3221u[0][0].c_str(),
                                                                               valINA3221u[0][0].length());
-                                              soutMQTTerr(topINA32211u[0].c_str(), errMQTT);
-                                                  //SVAL(topINA32211u[0].c_str(), valINA3221u[0][0]);
+                                              soutMQTTerr(topina3221u[0].c_str(), errMQTT);
+                                                  //SVAL(topina3221u[0].c_str(), valINA3221u[0][0]);
                                             }
                                         #endif
                                       #if defined(USE_WEBSERVER)
@@ -783,11 +1219,11 @@
                                           #if (USE_MQTT > OFF)
                                               if (errMQTT == MD_OK)
                                                 {
-                                                  errMQTT = (int8_t) mqtt.publish(topINA32211i[0].c_str(),
+                                                  errMQTT = (int8_t) mqtt.publish(topina3221i[0].c_str(),
                                                                                   (uint8_t*) valINA3221i[0][0].c_str(),
                                                                                   valINA3221i[0][0].length());
-                                                  soutMQTTerr(topINA32211i[0].c_str(), errMQTT);
-                                                      SVAL(topINA32211i[0].c_str(), valINA3221i[0][0]);
+                                                  soutMQTTerr(topina3221i[0].c_str(), errMQTT);
+                                                      SVAL(topina3221i[0].c_str(), valINA3221i[0][0]);
                                                 }
                                             #endif
                                         }
@@ -812,11 +1248,11 @@
                                       #if (USE_MQTT > OFF)
                                           if (errMQTT == MD_OK)
                                             {
-                                              errMQTT = (int8_t) mqtt.publish(topINA32211u[1].c_str(),
+                                              errMQTT = (int8_t) mqtt.publish(topina3221u[1].c_str(),
                                                                               (uint8_t*) valINA3221u[0][1].c_str(),
                                                                               valINA3221u[0][1].length());
-                                              soutMQTTerr(topINA32211u[1].c_str(), errMQTT);
-                                                  //SVAL(topINA32211u[1].c_str(), valINA3221u[0][1]);
+                                              soutMQTTerr(topina3221u[1].c_str(), errMQTT);
+                                                  //SVAL(topina3221u[1].c_str(), valINA3221u[0][1]);
                                             }
                                         #endif
                                       #if defined(USE_WEBSERVER)
@@ -832,11 +1268,11 @@
                                       #if (USE_MQTT > OFF)
                                           if (errMQTT == MD_OK)
                                             {
-                                              errMQTT = (int8_t) mqtt.publish(topINA32211i[1].c_str(),
+                                              errMQTT = (int8_t) mqtt.publish(topina3221i[1].c_str(),
                                                                               (uint8_t*) valINA3221i[0][1].c_str(),
                                                                               valINA3221i[0][1].length());
-                                              soutMQTTerr(topINA32211i[1].c_str(), errMQTT);
-                                                  //SVAL(topINA32211i[1].c_str(), valINA3221i[0][1]);
+                                              soutMQTTerr(topina3221i[1].c_str(), errMQTT);
+                                                  //SVAL(topina3221i[1].c_str(), valINA3221i[0][1]);
                                             }
                                         #endif
                                       #if defined(USE_WEBSERVER)
@@ -852,11 +1288,11 @@
                                       #if (USE_MQTT > OFF)
                                           if (errMQTT == MD_OK)
                                             {
-                                              errMQTT = (int8_t) mqtt.publish(topINA32211p[1].c_str(),
+                                              errMQTT = (int8_t) mqtt.publish(topina3221p[1].c_str(),
                                                                               (uint8_t*) valINA3221p[0][1].c_str(),
                                                                               valINA3221p[0][1].length());
-                                              soutMQTTerr(topINA32211p[1].c_str(), errMQTT);
-                                                  //SVAL(topINA32211p[1].c_str(), valINA3221p[0][1]);
+                                              soutMQTTerr(topina3221p[1].c_str(), errMQTT);
+                                                  //SVAL(topina3221p[1].c_str(), valINA3221p[0][1]);
                                             }
                                         #endif
                                       #if defined(USE_WEBSERVER)
@@ -872,11 +1308,11 @@
                                       #if (USE_MQTT > OFF)
                                           if (errMQTT == MD_OK)
                                             {
-                                              errMQTT = (int8_t) mqtt.publish(topINA32211u[2].c_str(),
+                                              errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
                                                                               (uint8_t*) valINA3221u[0][2].c_str(),
                                                                               valINA3221u[0][2].length());
-                                              soutMQTTerr(topINA32211u[2].c_str(), errMQTT);
-                                                  //SVAL(topINA32211u[2].c_str(), valINA3221u[0][2]);
+                                              soutMQTTerr(topina3221u[2].c_str(), errMQTT);
+                                                  //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
                                             }
                                         #endif
                                       #if defined(USE_WEBSERVER)
@@ -893,11 +1329,11 @@
                                       #if (USE_MQTT > OFF)
                                           if (errMQTT == MD_OK)
                                             {
-                                              errMQTT = (int8_t) mqtt.publish(topINA32211i[2].c_str(),
+                                              errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
                                                                               (uint8_t*) valINA3221i[0][2].c_str(),
                                                                               valINA3221i[0][2].length());
-                                              soutMQTTerr(topINA32211i[2].c_str(), errMQTT);
-                                                  //SVAL(topINA32211i[2].c_str(), valINA3221i[0][2]);
+                                              soutMQTTerr(topina3221i[2].c_str(), errMQTT);
+                                                  //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
                                             }
                                         #endif
                                       #if defined(USE_WEBSERVER)
@@ -914,11 +1350,11 @@
                                       #if (USE_MQTT > OFF)
                                           if (errMQTT == MD_OK)
                                             {
-                                              errMQTT = (int8_t) mqtt.publish(topINA32211p[2].c_str(),
+                                              errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
                                                                               (uint8_t*) valINA3221p[0][2].c_str(),
                                                                               valINA3221p[0][2].length());
-                                              soutMQTTerr(topINA32211p[2].c_str(), errMQTT);
-                                                  //SVAL(topINA32211p[2].c_str(), valINA3221p[0][2]);
+                                              soutMQTTerr(topina3221p[2].c_str(), errMQTT);
+                                                  //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
                                             }
                                         #endif
                                     }
@@ -998,7 +1434,7 @@
                                                                             (uint8_t*) valPoti[0].c_str(),
                                                                             valPoti[0].length());
                                             soutMQTTerr(topPoti1.c_str(), errMQTT);
-                                                //SVAL(topINA32211u[1].c_str(), valINA3221u[0][1]);
+                                                //SVAL(topina3221u[1].c_str(), valINA3221u[0][1]);
                                           }
                                       #endif
                                     #if defined(USE_WEBSERVER)
@@ -2446,39 +2882,39 @@
                     #endif
                   #if (USE_INA3221_I2C > OFF) // unit 1
                       // channel 1
-                        topINA32211i[0] = topDevice + topINA32211i[0];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211i[0].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211i[0]", errMQTT);
+                        topina3221i[0] = topDevice + topina3221i[0];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221i[0].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221i[0]", errMQTT);
 
-                        topINA32211u[0] = topDevice + topINA32211u[0];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211u[0].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211u[0]", errMQTT);
+                        topina3221u[0] = topDevice + topina3221u[0];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221u[0].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221u[0]", errMQTT);
 
-                        topINA32211p[0] = topDevice + topINA32211p[0];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211p[0].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211p[0]", errMQTT);
+                        topina3221p[0] = topDevice + topina3221p[0];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221p[0].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221p[0]", errMQTT);
                       // channel 2
-                        topINA32211i[1] = topDevice + topINA32211i[1];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211i[1].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211i[1]", errMQTT);
+                        topina3221i[1] = topDevice + topina3221i[1];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221i[1].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221i[1]", errMQTT);
 
-                        topINA32211u[1] = topDevice + topINA32211u[1];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211u[1].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211u[1]", errMQTT);
+                        topina3221u[1] = topDevice + topina3221u[1];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221u[1].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221u[1]", errMQTT);
 
-                        topINA32211p[1] = topDevice + topINA32211p[1];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211p[1].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211p[1]", errMQTT);
+                        topina3221p[1] = topDevice + topina3221p[1];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221p[1].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221p[1]", errMQTT);
                       // channel 3
-                        topINA32211i[2] = topDevice + topINA32211i[2];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211i[2].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211i[2]", errMQTT);
-                        topINA32211u[2] = topDevice + topINA32211u[2];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211u[2].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211u[2]", errMQTT);
-                        topINA32211p[2] = topDevice + topINA32211p[2];
-                        errMQTT = (int8_t) mqtt.subscribe(topINA32211p[2].c_str());
-                            soutMQTTerr(" MQTT subscribe topINA32211p[2]", errMQTT);
+                        topina3221i[2] = topDevice + topina3221i[2];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221i[2].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221i[2]", errMQTT);
+                        topina3221u[2] = topDevice + topina3221u[2];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221u[2].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221u[2]", errMQTT);
+                        topina3221p[2] = topDevice + topina3221p[2];
+                        errMQTT = (int8_t) mqtt.subscribe(topina3221p[2].c_str());
+                            soutMQTTerr(" MQTT subscribe topina3221p[2]", errMQTT);
                       #if (USE_INA3221_I2C > 1)  // unit 2
                           // channel 1
                             topINA32212i[0] = topDevice + topINA32212i[0];

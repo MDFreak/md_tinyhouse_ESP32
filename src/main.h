@@ -43,10 +43,10 @@
           #include <TFT_eSPI.h>
         #endif
     // sensors
-      #ifdef USE_BME280_I2C
+      #if defined(USE_BME280_I2C)
           #include <md_BME280.h>
         #endif
-      #if (USE_INA3221_I2C > OFF)
+      #if defined(USE_INA3221_I2C)
           #include <SDL_Arduino_INA3221.h>
         #endif
   // --- memory
@@ -55,10 +55,10 @@
         //#include <SPIFFS.h>
         #include <md_spiffs.h>
       #endif
-    #if (USE_FRAM_I2C > OFF)
+    #if defined(USE_FRAM_I2C)
         #include <md_FRAM.h>
       #endif
-    #if (USE_SD_SPI > OFF)
+    #if defined(USE_SD_SPI)
         //#include "sdmmc_cmd.h"
         #include <FS.h>
         #include <sd.h>
@@ -139,15 +139,15 @@
               void getCNTIn();
             #endif
       // memory
-          #if (USE_FLASH_MEM > OFF)
+          #if defined(USE_FLASH_MEM)
               #include <FS.h>
               //#include <SPIFFS.h>
               #include <md_spiffs.h>
             #endif
-          #if (USE_FRAM_I2C > OFF)
+          #if defined(USE_FRAM_I2C)
               #include <md_FRAM.h>
             #endif
-          #if (USE_SD_SPI > OFF)
+          #if defined(USE_SD_SPI)
               //#include "sdmmc_cmd.h"
               #include <FS.h>
               #include <sd.h>
@@ -155,11 +155,11 @@
             #endif
       // --- sensors
         // --- BME280
-          #if (USE_BME280_I2C > OFF)
+          #if defined(USE_BME280_I2C)
               static void initBME280();
             #endif
         // --- ADS1115
-          #if (USE_ADC1115_I2C > OFF)
+          #if defined(USE_ADC1115_I2C)
               static void initADS1115();
               static void startADS1115();
             #endif
@@ -196,7 +196,7 @@
               void initVCC33();
             #endif
         // ACS712 current measurement
-          #if (USE_ACS712_ANA > OFF)
+          #if defined(USE_ACS712_ANA)
               void initACS712();
             #endif
     // ------ memory ---------------------------

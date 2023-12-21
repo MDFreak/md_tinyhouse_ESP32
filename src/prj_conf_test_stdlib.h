@@ -118,7 +118,7 @@
                         // MC_UO_OLED_091_AZ   GEO_128_32   OLED_DRV_1306
                         // MC_UO_OLED_096_AZ   GEO_128_64   OLED_DRV_1306
                         // MC_UO_OLED_130_AZ   GEO_128_64   OLED_DRV_1106
-              #define OLED_I2C_TYP MC_UO_OLED_130_AZ  // OLED1 on DEV_I2C1
+              #define OLED_I2C_TYP MC_UO_OLED_096_AZ  // OLED1 on DEV_I2C1
               //#define OLED_STATUS     ON
               #define OLED_I2C           DEV_I2C1
               #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
@@ -146,7 +146,7 @@
                   #define OLED_GEO       GEO_128_64
                   #define OLED_DRV       OLED_DRV_1106
                 #endif // OLED_I2C_TYP
-              #define OLED_FLIP_VERTICAL TRUE
+              //#define OLED_FLIP_VERTICAL TRUE
               #if (OLED_I2C == DEV_I2C1)
                   #ifndef I2C1
                       #define I2C1
@@ -159,7 +159,7 @@
                 #endif // OLED_I2C
             #endif // USE_OLED_I2C
           // --- I2C board connection
-          #if (USE_FRAM_I2C > OFF)
+          #if defined(USE_FRAM_I2C)
               #define FRAM_I2C_ADDR      I2C_FRAM_50
               #define FRAM_SIZE          0x8000
               #define FRAM_I2C           DEV_I2C1
@@ -169,11 +169,11 @@
                     #endif //I2C1
                 #endif // FRAM1_I2C
             #endif
-          #if (USE_CCS811_I2C > OFF )
+          #if defined(USE_CCS811_I2C)
               //    #define CCS811_I2C_ADDR     I2C_CSS811_
               //    #define CCS811_I2C          DEV_I2C1
             #endif
-          #if (USE_BME680_I2C > OFF )
+          #if defined(USE_BME680_I2C)
               #define BME680_I2C               DEV_I2C1
               #define BME680_ADDR              I2C_BME680_77
               #define BME680_RUNMODE           MD_NORM
@@ -239,7 +239,7 @@
                   #endif //I2C2
               #endif
             #endif
-          #if (USE_BME280_I2C > OFF)
+          #if defined(USE_BME280_I2C)
               #define BME280_I2C               DEV_I2C1
               #if (BME280_I2C == DEV_I2C1)
                   #ifndef I2C1
@@ -264,6 +264,63 @@
                   #define MQTT_BME280T         "bme280t1"
                   #define MQTT_BME280P         "bme280p1"
                   #define MQTT_BME280H         "bme280h1"
+                #endif
+              #ifndef USE_INPUT_CYCLE
+                  #define USE_INPUT_CYCLE
+                #endif
+              #ifndef USE_OUTPUT_CYCLE
+                  #define USE_OUTPUT_CYCLE
+                #endif
+            #endif
+          #if defined(USE_PZEM017_RS485)
+              #if (PZEM017_1 > OFF)
+                  #if (PZEM017_1 < 11)
+                      #define PZEM_1I  10
+                  #else
+                      #define PZEM_1I  20
+                    #endif
+                #endif
+              #if (PZEM017_2 > OFF)
+                  #if (PZEM017_2 < 11)
+                      #define PZEM_2I  10
+                  #else
+                      #define PZEM_2I  20
+                    #endif
+                #endif
+              #if (PZEM017_3 > OFF)
+                  #if (PZEM017_3 < 11)
+                      #define PZEM_3I  10
+                  #else
+                      #define PZEM_3I  20
+                    #endif
+                #endif
+              #if (PZEM017_4 > OFF)
+                  #if (PZEM017_4 < 11)
+                      #define PZEM_4I  10
+                  #else
+                      #define PZEM_4I  20
+                    #endif
+                #endif
+              #if (PZEM017_5 > OFF)
+                  #if (PZEM017_5 < 11)
+                      #define PZEM_5I  10
+                  #else
+                      #define PZEM_5I  20
+                    #endif
+                #endif
+              #if (PZEM017_6 > OFF)
+                  #if (PZEM017_6 < 11)
+                      #define PZEM_6I  10
+                  #else
+                      #define PZEM_6I  20
+                    #endif
+                #endif
+              #if (PZEM017_7 > OFF)
+                  #if (PZEM017_7 < 11)
+                      #define PZEM_7I  10
+                  #else
+                      #define PZEM_7I  20
+                    #endif
                 #endif
               #ifndef USE_INPUT_CYCLE
                   #define USE_INPUT_CYCLE
@@ -308,33 +365,51 @@
           #ifdef USE_INA3221_I2C
               #define INA3221_I2C               DEV_I2C1
               #define INA3221_ADDR              I2C_INA3221_41
-              #define INA3221U1_FILT            0  // voltage in1+
-              #define INA3221U1_DROP            0  // [0 - 26000 mV]
-              #define INA3221I1_FILT            0  // current in1
-              #define INA3221I1_DROP            0  // [-5000 - +5000 mA]
-              #define INA3221U2_FILT            0  // voltage in2+
-              #define INA3221U2_DROP            0  // [0 - 26000 mV]
-              #define INA3221I2_FILT            0  // current in2
-              #define INA3221I2_DROP            0  // [-5000 - +5000 mA]
-              #define INA3221I3_FILT            0  // current in3
-              #define INA3221I3_DROP            0  // [-5000 - +5000 mA]
-              #define INA3221U3_FILT            0  // voltage in3+
-              #define INA3221U3_DROP            0  // [0 - 26000 mV]
+              #define INA3221U1_ACT             0  // voltage in1+ activ
+              #if (INA3221U1_ACT > OFF)
+                  #define INA3221U1_FILT            0  // voltage in1+
+                  #define INA3221U1_DROP            0  // [0 - 26000 mV]
+                #endif // INA3221U1_ACT
+              #define INA3221I1_ACT             0  // current in1
+              #if (INA3221I1_ACT > OFF)
+                  #define INA3221I1_FILT            0  // current in1
+                  #define INA3221I1_DROP            0  // [-5000 - +5000 mA]
+                #endif // INA3221I1_ACT
+              #define INA3221U2_ACT             0  // voltage in2+ activ
+              #if (INA3221U2_ACT > OFF)
+                  #define INA3221U2_FILT            0  // voltage in2+
+                  #define INA3221U2_DROP            0  // [0 - 26000 mV]
+                #endif // INA3221U2_ACT
+              #define INA3221I2_ACT             0  // current in2
+              #if (INA3221I2_ACT > OFF)
+                  #define INA3221I2_FILT            0  // current in2
+                  #define INA3221I2_DROP            0  // [-5000 - +5000 mA]
+                #endif // INA3221I2_ACT
+              #define INA3221U3_ACT             1  // voltage in3+ activ
+              #if (INA3221U3_ACT > OFF)
+                  #define INA3221U3_FILT            0  // voltage in3+
+                  #define INA3221U3_DROP            0  // [0 - 26000 mV]
+                #endif // INA3221U3_ACT
+              #define INA3221I3_ACT             1  // current in3
+              #if (INA3221I3_ACT > OFF)
+                  #define INA3221I3_FILT            0  // current in3
+                  #define INA3221I3_DROP            0  // [-5000 - +5000 mA]
+                #endif // INA3221I3_ACT
               #if (INA3221_I2C == DEV_I2C1)
                   #ifndef I2C1
                       #define I2C1
                     #endif //I2C1
                 #endif
               #if (USE_MQTT > OFF)
-                  #define MQTT_INA32211U1         "ina32211u1"
-                  #define MQTT_INA32211I1         "ina32211i1"
-                  #define MQTT_INA32211P1         "ina32211p1"
-                  #define MQTT_INA32211U2         "ina32211u2"
-                  #define MQTT_INA32211I2         "ina32211i2"
-                  #define MQTT_INA32211P2         "ina32211p2"
-                  #define MQTT_INA32211U3         "ina32211u3"
-                  #define MQTT_INA32211I3         "ina32211i3"
-                  #define MQTT_INA32211P3         "ina32211p3"
+                  #define MQTT_ina3221U1         "ina3221u1"
+                  #define MQTT_ina3221I1         "ina3221i1"
+                  #define MQTT_ina3221P1         "ina3221p1"
+                  #define MQTT_ina3221U2         "ina3221u2"
+                  #define MQTT_ina3221I2         "ina3221i2"
+                  #define MQTT_ina3221P2         "ina3221p2"
+                  #define MQTT_ina3221U3         "ina3221u3"
+                  #define MQTT_ina3221I3         "ina3221i3"
+                  #define MQTT_ina3221P3         "ina3221p3"
                   #define MQTT_INA32212U1         "ina32212u1"
                   #define MQTT_INA32212I1         "ina32212i1"
                   #define MQTT_INA32212P1         "ina32212p1"
