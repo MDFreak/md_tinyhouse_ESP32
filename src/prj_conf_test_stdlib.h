@@ -273,8 +273,17 @@
                 #endif
             #endif
           #if defined(USE_PZEM017_RS485)
-              #define NUM_PZEMS   1
-              #define PZEM_SER    DEV_SER2
+              // types
+                #define PZEM_I_DC10   10
+                #define PZEM_I_DC50   50
+                #define PZEM_I_AC10  -10
+                #define PZEM_TYP_DC10 31
+                #define PZEM_TYP_DC50 32
+                #define PZEM_TYP_AC10 41
+              #define NUM_PZEMS       1
+              #define MAX_PZEMS       47   //
+              #define PZEM_SER        DEV_SER2
+              #define PZEM_TRIG_MS    1000u    // trigger time [ms]
               #if (PZEM_SER == DEV_SER1)
                   #ifndef COMM1
                       #define COMM1
@@ -285,61 +294,157 @@
                       #define COMM2
                     #endif
                 #endif
-              #if (PZEM017_1 > OFF)
-                  #if (PZEM017_1 < 11)
-                      #define PZEM_1I  10
-                  #else
-                      #define PZEM_1I  20
-                    #endif
-                  #ifndef PIN27
-                      #define PIN_PZEM1_RTS 27
-                      #define PIN27
-                    #else
-                      PIN27 adready used
-                    #endif // PIN27
-                #endif
-              #if (PZEM017_2 > OFF)
-                  #if (PZEM017_2 < 11)
-                      #define PZEM_2I  10
-                  #else
-                      #define PZEM_2I  20
-                    #endif
-                #endif
-              #if (PZEM017_3 > OFF)
-                  #if (PZEM017_3 < 11)
-                      #define PZEM_3I  10
-                  #else
-                      #define PZEM_3I  20
-                    #endif
-                #endif
-              #if (PZEM017_4 > OFF)
-                  #if (PZEM017_4 < 11)
-                      #define PZEM_4I  10
-                  #else
-                      #define PZEM_4I  20
-                    #endif
-                #endif
-              #if (PZEM017_5 > OFF)
-                  #if (PZEM017_5 < 11)
-                      #define PZEM_5I  10
-                  #else
-                      #define PZEM_5I  20
-                    #endif
-                #endif
-              #if (PZEM017_6 > OFF)
-                  #if (PZEM017_6 < 11)
-                      #define PZEM_6I  10
-                  #else
-                      #define PZEM_6I  20
-                    #endif
-                #endif
-              #if (PZEM017_7 > OFF)
-                  #if (PZEM017_7 < 11)
-                      #define PZEM_7I  10
-                  #else
-                      #define PZEM_7I  20
-                    #endif
-                #endif
+              #ifndef PIN27
+                  #define PIN_PZEM1_RTS 27
+                  #define PIN27
+              #else
+                  PIN27 adready used
+                #endif // PIN27
+              // devices
+                #if defined(PZEM_1_ADDR)
+                    #if (PZEM_1_ADDR < 16)
+                        #define PZEM_1_I  PZEM_I_DC50
+                        #define PZEM_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_1_ADDR < 32)
+                        #define PZEM_1_I    PZEM_I_DC10
+                        #define PZEM_1_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_1_ADDR < 40)
+                        #define PZEM_1_I  PZEM_I_AC10
+                        #define PZEM_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_2_ADDR)
+                    #if (PZEM_2_ADDR < 16)
+                        #define PZEM_2_I    PZEM_I_DC50
+                        #define PZEM_2_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_2_ADDR < 32)
+                        #define PZEM_2_I    PZEM_I_DC10
+                        #define PZEM_2_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_2_ADDR < 40)
+                        #define PZEM_2_I    PZEM_I_AC10
+                        #define PZEM_2_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_3_ADDR)
+                    #if (PZEM_3_ADDR < 16)
+                        #define PZEM_3_I    PZEM_I_DC50
+                        #define PZEM_3_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_3_ADDR < 32)
+                        #define PZEM_3_I    PZEM_I_DC10
+                        #define PZEM_3_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_3_ADDR < 40)
+                        #define PZEM_3_I    PZEM_I_AC10
+                        #define PZEM_3_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_4_ADDR)
+                    #if (PZEM_4_ADDR < 16)
+                        #define PZEM_4_I    PZEM_I_DC50
+                        #define PZEM_4_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_4_ADDR < 32)
+                        #define PZEM_4_I    PZEM_I_DC10
+                        #define PZEM_4_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_4_ADDR < 40)
+                        #define PZEM_4_I    PZEM_I_AC10
+                        #define PZEM_4_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_5_ADDR)
+                    #if (PZEM_5_ADDR < 16)
+                        #define PZEM_5_I    PZEM_I_DC50
+                        #define PZEM_5_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_5_ADDR < 32)
+                        #define PZEM_5_I    PZEM_I_DC10
+                        #define PZEM_5_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_5_ADDR < 40)
+                        #define PZEM_5_I    PZEM_I_AC10
+                        #define PZEM_5_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_6_ADDR)
+                    #if (PZEM_6_ADDR < 16)
+                        #define PZEM_6_I    PZEM_I_DC50
+                        #define PZEM_6_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_6_ADDR < 32)
+                        #define PZEM_6_I    PZEM_I_DC10
+                        #define PZEM_6_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_6_ADDR < 40)
+                        #define PZEM_6_I    PZEM_I_AC10
+                        #define PZEM_6_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_7_ADDR)
+                    #if (PZEM_7_ADDR < 16)
+                        #define PZEM_7_I    PZEM_I_DC50
+                        #define PZEM_7_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_7_ADDR < 32)
+                        #define PZEM_7_I    PZEM_I_DC10
+                        #define PZEM_7_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_7_ADDR < 40)
+                        #define PZEM_7_I    PZEM_I_AC10
+                        #define PZEM_7_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_8_ADDR)
+                    #if (PZEM_8_ADDR < 16)
+                        #define PZEM_8_I    PZEM_I_DC50
+                        #define PZEM_8_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_8_ADDR < 32)
+                        #define PZEM_8_I    PZEM_I_DC10
+                        #define PZEM_8_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_8_ADDR < 40)
+                        #define PZEM_8_I    PZEM_I_AC10
+                        #define PZEM_8_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_9_ADDR)
+                    #if (PZEM_9_ADDR < 16)
+                        #define PZEM_9_I    PZEM_I_DC50
+                        #define PZEM_9_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_9_ADDR < 32)
+                        #define PZEM_9_I    PZEM_I_DC10
+                        #define PZEM_9_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_9_ADDR < 40)
+                        #define PZEM_9_I    PZEM_I_AC10
+                        #define PZEM_9_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_10_ADDR)
+                    #if (PZEM_10_ADDR < 16)
+                        #define PZEM_10_I    PZEM_I_DC50
+                        #define PZEM_10_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_10_ADDR < 32)
+                        #define PZEM_10_I    PZEM_I_DC10
+                        #define PZEM_10_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_10_ADDR < 40)
+                        #define PZEM_10_I    PZEM_I_AC10
+                        #define PZEM_10_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_11_ADDR)
+                    #if (PZEM_11_ADDR < 16)
+                        #define PZEM_11_I    PZEM_I_DC50
+                        #define PZEM_11_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_11_ADDR < 32)
+                        #define PZEM_11_I    PZEM_I_DC10
+                        #define PZEM_11_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_11_ADDR < 40)
+                        #define PZEM_11_I    PZEM_I_AC10
+                        #define PZEM_11_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
+                #if defined(PZEM_12_ADDR)
+                    #if (PZEM_12_ADDR < 16)
+                        #define PZEM_12_I    PZEM_I_DC50
+                        #define PZEM_12_TYPE PZEM_TYP_DC50
+                    #elif (PZEM_12_ADDR < 32)
+                        #define PZEM_12_I    PZEM_I_DC10
+                        #define PZEM_12_TYPE PZEM_TYP_DC10
+                    #elif (PZEM_12_ADDR < 40)
+                        #define PZEM_12_I    PZEM_I_AC10
+                        #define PZEM_12_TYPE PZEM_TYP_AC10
+                      #endif
+                  #endif
               #ifndef USE_INPUT_CYCLE
                   #define USE_INPUT_CYCLE
                 #endif

@@ -319,11 +319,17 @@
             #else
               HardwareSerial& portser = Serial1;
             #endif
-          md_PZEM017 pzems[NUM_PZEMS] { portser };
-          static float  pzemU[NUM_PZEMS];
-          static float  pzemI[NUM_PZEMS];
-          static float  pzemP[NUM_PZEMS];
-          static float  pzemE[NUM_PZEMS];
+          msTimer          pzemT  = msTimer(PZEM_TRIG_MS);
+          md_PZEM017       pzems[NUM_PZEMS] { portser };
+          uint8_t          pzemAddr[NUM_PZEMS];
+          float            pzemU[NUM_PZEMS];
+          float            pzemI[NUM_PZEMS];
+          float            pzemP[NUM_PZEMS];
+          float            pzemE[NUM_PZEMS];
+          static String    valpzemU[NUM_PZEMS];
+          static String    valpzemI[NUM_PZEMS];
+          static String    valpzemP[NUM_PZEMS];
+          static int8_t    pubpzemE[NUM_PZEMS];
         #endif // USE_PZEM017_RS485
 // -------------------------------- --------------------------------
 // --- system setup -----------------------------------
@@ -411,17 +417,10 @@
           #endif
       // DC energy measurement with PZEM003/PZEM017
         #if defined(USE_PZEM017_RS485)
-            for(int i = 0; i < NUM_PZEMS; i++)
-              {
-                S2VAL(" setup conf PZEM", i, "...");
-                pzems[i].config(1,PIN_PZEM1_RTS);
-                //S2VAL(" setup conf PZEM ready", i, "...");
-              }
-            for(int i = 0; i < NUM_PZEMS; i++)
-              {
-                S2VAL(" setup conf PZEM", i, "...");
-                pzems[i].updateValues();
-              }
+            initPZEM017();
+            #if defined(PZEM_LIST_ADDR)
+                listPZEMaddr();
+              #endif
           #endif
       STXT(" ... setup finished");
     }
@@ -487,6 +486,16 @@
       // --- trigger measurement ---
         #if (USE_ADC1115_I2C > OFF)
             md_ADS1115_run();
+          #endif
+        #if defined(USE_PZEM017_RS485)
+            if (pzemT.TOut())
+              {
+                for(int i = 0; i < NUM_PZEMS; i++)
+                  {
+                    pzems[i].updateValues();
+                  }
+                pzemT.startT();
+              }
           #endif
       // --- direct input ---
         #if (USE_CNT_INP > OFF)
@@ -906,6 +915,14 @@
                           #endif
                         //SOUT(" c17a");
                       break;
+                    case 18:
+                        #if defined(USE_PZEM017_RS485)
+                            pzemU[0] = pzems[0].voltage();
+                            pzemI[0] = pzems[0].current();
+                            pzemP[0] = pzems[0].power();
+                            pzemE[0] = pzems[0].energy();
+                          #endif // USE_PZEM017_RS485
+                      break;
                     default:
                         inpIdx = 0;
                       break;
@@ -1017,14 +1034,14 @@
               #endif
           #endif
         #if (PROJECT == PRJ_TEST_LIB_PZEM017)
-            pzemU[0] = pzems[0].voltage();
-            pzemI[0] = pzems[0].current();
-            pzemP[0] = pzems[0].power();
-            pzemE[0] = pzems[0].energy();
-            S2VAL("U ", pzemU[0], "V");
-            S2VAL("I ", pzemI[0], "A");
-            S2VAL("P ", pzemP[0], "W");
-            S2VAL("E ", pzemE[0], "Wh");
+            //pzemU[0] = pzems[0].voltage();
+            //pzemI[0] = pzems[0].current();
+            //pzemP[0] = pzems[0].power();
+            //pzemE[0] = pzems[0].energy();
+            //S2VAL("U ", pzemU[0], "V");
+            //S2VAL("I ", pzemI[0], "A");
+            //S2VAL("P ", pzemP[0], "W");
+            //S2VAL("E ", pzemE[0], "Wh");
             //SVAL("Update ", pzems[0].updateValues());
           #endif
       // sensoren
@@ -1387,7 +1404,7 @@
                                             inaPold[0][2]     = inaP[0][2];
                                             //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
                                             dispText(valINA3221p[0][2], 9, 1);
-                                                S2VAL(" P supply new ", inaP[0][2], "mW");
+                                                S2VAL(" P supply new ", inaP[0][2], "W");
                                             #if (USE_MQTT > OFF)
                                                 if (errMQTT == MD_OK)
                                                   {
@@ -1853,7 +1870,68 @@
                           break;
                         case 21: // PZEM DC energy module
                           #if defined(USE_PZEM017_RS485)
-                            #endif
+                                    //if (pzemU[0] != pzemUold[0])
+                                      {
+                                        valpzemU[0] = pzemU[0];
+                                        //pubpzemU[0] = TRUE;
+                                            //sprintf(tmp_c32, "U3 %f V", pzemU[0]);
+                                            dispText("Us1 " + valpzemU[0], 0, 2);
+                                            S2VAL(" Us1 PZEM new ", pzemU[0], "V");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
+                                                                                (uint8_t*) valINA3221u[0][2].c_str(),
+                                                                                valINA3221u[0][2].length());
+                                                soutMQTTerr(topina3221u[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemUold[0]     = pzemU[0];
+                                      }
+                                    //if (pzemI[0] != pzemIold[0])
+                                      {
+                                        valpzemI[0] = pzemI[0];
+                                        //pubpzemI[0] = TRUE;
+                                            //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
+                                            dispText(valpzemI[0], 6, 2);
+                                            S2VAL(" Is1 PZEM new ", pzemI[0], "A");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][2].c_str(),
+                                                                                valINA3221i[0][2].length());
+                                                soutMQTTerr(topina3221i[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemIold[0]     = pzemI[0];
+                                      }
+                                    //if (pzemP[0] != pzemPold[0])
+                                      {
+                                        valpzemP[0] = pzemP[0];
+                                        //pubpzemP[0] = TRUE;
+                                            //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
+                                            dispText(valpzemP[0], 9, 2);
+                                            S2VAL(" Ps1 PZEM new ", pzemP[0], "W");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
+                                                                                (uint8_t*) valINA3221p[0][2].c_str(),
+                                                                                valINA3221p[0][2].length());
+                                                soutMQTTerr(topina3221p[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
+                                              }
+                                          #endif
+                                        //pzemPold[0][2]     = pzemP[0];
+                                      }
+                            #endif // USE_PZEM017_RS485
                           break;
                         default:
                           outpIdx = 0;
@@ -2548,7 +2626,7 @@
                 #endif // USE_WIFI
               return ret;
             }
-    // --- NTP server
+        // --- NTP server
           void initNTPTime()
             {
               #if (USE_NTP_SERVER > OFF)
@@ -3167,7 +3245,7 @@
             }
         #endif
     // --- BME280
-      #if (USE_BME280_I2C > OFF)
+      #if defined(USE_BME280_I2C)
           static void initBME280()
             {
               dispStatus("init BME280");
@@ -3193,7 +3271,7 @@
                 }
             }
         #endif
-      #if (USE_INA3221_I2C > OFF)
+      #if defined(USE_INA3221_I2C)
           void initINA3221()
             {
               dispStatus("init INA3221");
@@ -3227,6 +3305,79 @@
                   #endif
             }
         #endif
-
+      #if defined(USE_PZEM017_RS485)
+          void initPZEM017()
+            {
+              for(int i = 0; i < NUM_PZEMS; i++)
+                {
+                  S2VAL(" setup conf PZEM", i, "...");
+                  switch (i)
+                    {
+                      #if (NUM_PZEMS > 0)
+                          case 0: pzemAddr[i] = PZEM_1_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 1)
+                          case 1: pzemAddr[i] = PZEM_2_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 2)
+                          case 2: pzemAddr[i] = PZEM_3_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 3)
+                          case 3: pzemAddr[i] = PZEM_4_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 4)
+                          case 4: pzemAddr[i] = PZEM_5_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 5)
+                          case 5: pzemAddr[i] = PZEM_6_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 6)
+                          case 6: pzemAddr[i] = PZEM_7_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 7)
+                          case 7: pzemAddr[i] = PZEM_8_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 8)
+                          case 8: pzemAddr[i] = PZEM_9_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 9)
+                          case 9: pzemAddr[i] = PZEM_10_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 10)
+                          case 10: pzemAddr[i] = PZEM_11_ADDR; break;
+                        #endif
+                      #if (NUM_PZEMS > 11)
+                          case 11: pzemAddr[i] = PZEM_12_ADDR; break;
+                        #endif
+                      default:
+                        break;
+                    }
+                  pzems[i].config(pzemAddr[i],PIN_PZEM1_RTS);
+                  //S2VAL(" setup conf PZEM ready", i, "...");
+                }
+              #if defined(PZEM_CHANGE_IDX)
+                  {
+                    if (pzems[PZEM_CHANGE_IDX-1].setAddress(pzemAddr[PZEM_CHANGE_IDX-1], PZEM_DEF_ADDR))
+                      {
+                        S3VAL("changed slave address PZEM[", PZEM_CHANGE_IDX-1, "] to ", pzemAddr[PZEM_CHANGE_IDX-1]);
+                      }
+                    else
+                      {
+                        S3VAL("could not change adress PZEM[", PZEM_CHANGE_IDX-1, "] to ", pzemAddr[PZEM_CHANGE_IDX-1]);
+                      }
+                  }
+                #endif
+            }
+          void listPZEMaddr()
+            {
+              uint8_t _addrList[MAX_PZEMS + 1];
+              uint8_t _shuntList[MAX_PZEMS + 1];
+              pzems[0].search(MAX_PZEMS, _addrList, _shuntList);
+              for (uint8_t i=1; i <= _addrList[0] ; i++)
+                {
+                  S2VAL(" found PZEM addr, shunt, doIt", _addrList[i], _shuntList[i]);
+                }
+            }
+        #endif
 #endif // ESP32_TEST_MD_LIB
 

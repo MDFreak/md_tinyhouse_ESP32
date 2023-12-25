@@ -250,10 +250,14 @@
       #if (PROJECT == PRJ_TEST_LIB_TFT)
           void draw_Julia(float c_r, float c_i, float zoom);
         #endif
-      #if (USE_BME280_I2C > OFF)
+      #if defined(USE_BME280_I2C)
           void initBME280();
         #endif
-      #if (USE_INA3221_I2C > OFF)
+      #if defined(USE_INA3221_I2C)
           void initINA3221();
+        #endif
+      #if defined(USE_PZEM017_RS485)
+          void initPZEM017();
+          void listPZEMaddr();
         #endif
 #endif // _MAIN_H_
