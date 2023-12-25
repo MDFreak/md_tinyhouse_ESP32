@@ -284,13 +284,13 @@
               static String topBME280h = MQTT_BME280H;
             #endif
         #endif // USE_BME280_I2C
-      #ifdef USE_INA3221_I2C
+      #if defined(USE_INA3221_I2C)
           SDL_Arduino_INA3221 ina3221(INA3221_ADDR); // def 0.1 ohm
           #if (INA3221_I2C == DEV_I2C1)
               TwoWire* ina1i2c = &i2c1;
             #else
               TwoWire* ina1i2c = &i2c2;
-            #endif
+            #endif // INA3221_I2C
           //md_val<float>    inaIVal[USE_INA3221_I2C][3];
           //md_scale<float>  inaISkal[USE_INA3221_I2C][3];
           //md_val<float>    inaUVal[USE_INA3221_I2C][3];
@@ -312,8 +312,20 @@
               static String topina3221u[3] = { MQTT_ina3221U1, MQTT_ina3221U2, MQTT_ina3221U3 };
               static String topina3221p[3] = { MQTT_ina3221P1, MQTT_ina3221P2, MQTT_ina3221P3 };
             #endif
-        #endif
-// ----------------------------------------------------------------
+        #endif // USE_INA3221_I2C
+      #if defined(USE_PZEM017_RS485)
+          #if (PZEM_SER == DEV_SER2)
+              HardwareSerial& portser = Serial2;
+            #else
+              HardwareSerial& portser = Serial1;
+            #endif
+          md_PZEM017 pzems[NUM_PZEMS] { portser };
+          static float  pzemU[NUM_PZEMS];
+          static float  pzemI[NUM_PZEMS];
+          static float  pzemP[NUM_PZEMS];
+          static float  pzemE[NUM_PZEMS];
+        #endif // USE_PZEM017_RS485
+// -------------------------------- --------------------------------
 // --- system setup -----------------------------------
 // ----------------------------------------------------------------
   void setup()
@@ -399,7 +411,17 @@
           #endif
       // DC energy measurement with PZEM003/PZEM017
         #if defined(USE_PZEM017_RS485)
-            initBME280();
+            for(int i = 0; i < NUM_PZEMS; i++)
+              {
+                S2VAL(" setup conf PZEM", i, "...");
+                pzems[i].config(1,PIN_PZEM1_RTS);
+                //S2VAL(" setup conf PZEM ready", i, "...");
+              }
+            for(int i = 0; i < NUM_PZEMS; i++)
+              {
+                S2VAL(" setup conf PZEM", i, "...");
+                pzems[i].updateValues();
+              }
           #endif
       STXT(" ... setup finished");
     }
@@ -994,6 +1016,17 @@
                     dispText(outBuf,0,3);
               #endif
           #endif
+        #if (PROJECT == PRJ_TEST_LIB_PZEM017)
+            pzemU[0] = pzems[0].voltage();
+            pzemI[0] = pzems[0].current();
+            pzemP[0] = pzems[0].power();
+            pzemE[0] = pzems[0].energy();
+            S2VAL("U ", pzemU[0], "V");
+            S2VAL("I ", pzemI[0], "A");
+            S2VAL("P ", pzemP[0], "W");
+            S2VAL("E ", pzemE[0], "Wh");
+            //SVAL("Update ", pzems[0].updateValues());
+          #endif
       // sensoren
         #if (USE_BME280_I2C > OFF)
 
@@ -1189,176 +1222,187 @@
                             outpIdx++;
                           //break;
                         case 3:  // INA3221_I2C 3x U+I measures
-                            #if (USE_INA3221_I2C > OFF)
-                                // U 3.3V supply
-                                  if (inaU[0][0] != inaUold[0][0])
-                                    {
-                                      valINA3221u[0][0] = inaU[0][0];
-                                          //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
-                                          //SVAL(" U 3.3    new ", inaU[0][0]);
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221u[0].c_str(),
-                                                                               (uint8_t*) valINA3221u[0][0].c_str(),
-                                                                              valINA3221u[0][0].length());
-                                              soutMQTTerr(topina3221u[0].c_str(), errMQTT);
-                                                  //SVAL(topina3221u[0].c_str(), valINA3221u[0][0]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      inaUold[0][0]     = inaU[0][0];
-                                    }
-                                // I 3.3V not used
-                                  #ifdef NOTUSED
-                                      if (inaI[0][0] != inaIold[0][0])
-                                        {
-                                          valINA3221i[0][0] = inaI[0][0];
-                                              SVAL(" I 3.3 new ", inaI[0][0]);
-                                          #if (USE_MQTT > OFF)
-                                              if (errMQTT == MD_OK)
-                                                {
-                                                  errMQTT = (int8_t) mqtt.publish(topina3221i[0].c_str(),
-                                                                                  (uint8_t*) valINA3221i[0][0].c_str(),
-                                                                                  valINA3221i[0][0].length());
-                                                  soutMQTTerr(topina3221i[0].c_str(), errMQTT);
-                                                      SVAL(topina3221i[0].c_str(), valINA3221i[0][0]);
-                                                }
-                                            #endif
-                                        }
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      inaIold[0][0]     = inaI[0][0];
-                                    #endif
-                                // P 3.3V not used
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                // U 5V supply
-                                  if (inaU[0][1] != inaUold[0][1])
-                                    {
-                                      valINA3221u[0][1] = inaU[0][1];
-                                      //pubINA3221u[0][1] = TRUE;
-                                          //SVAL(" U 5.0    new ", inaU[0][1]);
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221u[1].c_str(),
-                                                                              (uint8_t*) valINA3221u[0][1].c_str(),
-                                                                              valINA3221u[0][1].length());
-                                              soutMQTTerr(topina3221u[1].c_str(), errMQTT);
-                                                  //SVAL(topina3221u[1].c_str(), valINA3221u[0][1]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      inaUold[0][1]     = inaU[0][1];
-                                    }
-                                // I 5V supply
-                                  if (inaI[0][1] != inaIold[0][1])
-                                    {
-                                      valINA3221i[0][1] = inaI[0][1];
-                                      //pubINA3221i[0][1] = TRUE;
-                                          //SVAL(" I 5.0    new ", inaI[0][1]);
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221i[1].c_str(),
-                                                                              (uint8_t*) valINA3221i[0][1].c_str(),
-                                                                              valINA3221i[0][1].length());
-                                              soutMQTTerr(topina3221i[1].c_str(), errMQTT);
-                                                  //SVAL(topina3221i[1].c_str(), valINA3221i[0][1]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      inaIold[0][1]     = inaI[0][1];
-                                    }
-                                // P 5V supply
-                                  if (inaP[0][1] != inaPold[0][1])
-                                    {
-                                      valINA3221p[0][1] = inaP[0][1];
-                                      //pubINA3221p[0][1] = TRUE;
-                                          //SVAL(" P 5.0    new ", inaP[0][1]);
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221p[1].c_str(),
-                                                                              (uint8_t*) valINA3221p[0][1].c_str(),
-                                                                              valINA3221p[0][1].length());
-                                              soutMQTTerr(topina3221p[1].c_str(), errMQTT);
-                                                  //SVAL(topina3221p[1].c_str(), valINA3221p[0][1]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                    }
-                                  inaPold[0][1]     = inaP[0][1];
-                                // U main supply 12V/19V supply
-                                  if (inaU[0][2] != inaUold[0][2])
-                                    {
-                                      valINA3221u[0][2] = inaU[0][2];
-                                      //pubINA3221u[0][2] = TRUE;
-                                          //SVAL(" U supply new ", inaU[0][2]);
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
-                                                                              (uint8_t*) valINA3221u[0][2].c_str(),
-                                                                              valINA3221u[0][2].length());
-                                              soutMQTTerr(topina3221u[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      inaUold[0][2]     = inaU[0][2];
-                                    }
-                                // I main supply 12V/19V supply
-                                  if (inaI[0][2] != inaIold[0][2])
-                                    {
-                                      valINA3221i[0][2] = inaI[0][2];
-                                      //pubINA3221i[0][2] = TRUE;
-                                      inaIold[0][2]     = inaI[0][2];
-                                          //SVAL(" I supply new ", inaI[0][2]);
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
-                                                                              (uint8_t*) valINA3221i[0][2].c_str(),
-                                                                              valINA3221i[0][2].length());
-                                              soutMQTTerr(topina3221i[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      inaIold[0][2]     = inaI[0][2];
-                                    }
-                                // P main supply
-                                  if (inaP[0][2] != inaPold[0][2])
-                                    {
-                                      valINA3221p[0][2] = inaP[0][2];
-                                      //pubINA3221p[0][2] = TRUE;
-                                      inaPold[0][2]     = inaP[0][2];
-                                          //SVAL(" P supply new ", inaP[0][2]);
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
-                                                                              (uint8_t*) valINA3221p[0][2].c_str(),
-                                                                              valINA3221p[0][2].length());
-                                              soutMQTTerr(topina3221p[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
-                                            }
-                                        #endif
-                                    }
-                              #endif
+                            #if defined(USE_INA3221_I2C)
+                                #if (INA3221U1_ACT > OFF)
+                                    if (inaU[0][0] != inaUold[0][0])
+                                      {
+                                        valINA3221u[0][0] = inaU[0][0];
+                                            //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
+                                            //SVAL(" U 3.3    new ", inaU[0][0]);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[0].c_str(),
+                                                                                 (uint8_t*) valINA3221u[0][0].c_str(),
+                                                                                valINA3221u[0][0].length());
+                                                soutMQTTerr(topina3221u[0].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[0].c_str(), valINA3221u[0][0]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        inaUold[0][0]     = inaU[0][0];
+                                      }
+                                  #endif // INA3221U1_ACT
+                                #if (INA3221I1_ACT > OFF)
+                                    if (inaI[0][0] != inaIold[0][0])
+                                      {
+                                        valINA3221i[0][0] = inaI[0][0];
+                                            SVAL(" I 3.3 new ", inaI[0][0]);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[0].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][0].c_str(),
+                                                                                valINA3221i[0][0].length());
+                                                soutMQTTerr(topina3221i[0].c_str(), errMQTT);
+                                                    SVAL(topina3221i[0].c_str(), valINA3221i[0][0]);
+                                              }
+                                          #endif
+                                      }
+                                    #if defined(USE_WEBSERVER)
+                                      #endif
+                                    inaIold[0][0]     = inaI[0][0];
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                  #endif // INA3221I1_ACT
+                                #if (INA3221U2_ACT > OFF)
+                                    if (inaU[0][1] != inaUold[0][1])
+                                      {
+                                        valINA3221u[0][1] = inaU[0][1];
+                                        //pubINA3221u[0][1] = TRUE;
+                                            //SVAL(" U 5.0    new ", inaU[0][1]);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[1].c_str(),
+                                                                                (uint8_t*) valINA3221u[0][1].c_str(),
+                                                                                valINA3221u[0][1].length());
+                                                soutMQTTerr(topina3221u[1].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[1].c_str(), valINA3221u[0][1]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        inaUold[0][1]     = inaU[0][1];
+                                      }
+                                  #endif // INA3221U2_ACT
+                                #if (INA3221I2_ACT > OFF)
+                                    if (inaI[0][1] != inaIold[0][1])
+                                      {
+                                        valINA3221i[0][1] = inaI[0][1];
+                                        //pubINA3221i[0][1] = TRUE;
+                                            //SVAL(" I 5.0    new ", inaI[0][1]);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[1].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][1].c_str(),
+                                                                                valINA3221i[0][1].length());
+                                                soutMQTTerr(topina3221i[1].c_str(), errMQTT);
+                                                    //SVAL(topina3221i[1].c_str(), valINA3221i[0][1]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        inaIold[0][1]     = inaI[0][1];
+                                      }
+                                    #if (INA3221U2_ACT > OFF)
+                                        if (inaP[0][1] != inaPold[0][1])
+                                          {
+                                            valINA3221p[0][1] = inaP[0][1];
+                                              //pubINA3221p[0][1] = TRUE;
+                                                //SVAL(" P 5.0    new ", inaP[0][1]);
+                                            #if (USE_MQTT > OFF)
+                                                if (errMQTT == MD_OK)
+                                                  {
+                                                    errMQTT = (int8_t) mqtt.publish(topina3221p[1].c_str(),
+                                                                                    (uint8_t*) valINA3221p[0][1].c_str(),
+                                                                                    valINA3221p[0][1].length());
+                                                    soutMQTTerr(topina3221p[1].c_str(), errMQTT);
+                                                        //SVAL(topina3221p[1].c_str(), valINA3221p[0][1]);
+                                                  }
+                                              #endif
+                                            #if defined(USE_WEBSERVER)
+                                              #endif
+                                          }
+                                        inaPold[0][1]     = inaP[0][1];
+                                      #endif // INA3221U2_ACT
+                                  #endif // INA3221I2_ACT
+                                #if (INA3221U3_ACT > OFF)
+                                    //if (inaU[0][2] != inaUold[0][2])
+                                      {
+                                        valINA3221u[0][2] = inaU[0][2];
+                                        //pubINA3221u[0][2] = TRUE;
+                                            //sprintf(tmp_c32, "U3 %f V", inaU[0,2]);
+                                            dispText("U3 " + valINA3221u[0][2], 0, 1);
+                                            S2VAL(" U supply new ", inaU[0][2], "V");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
+                                                                                (uint8_t*) valINA3221u[0][2].c_str(),
+                                                                                valINA3221u[0][2].length());
+                                                soutMQTTerr(topina3221u[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        inaUold[0][2]     = inaU[0][2];
+                                      }
+                                  #endif // INA3221U3_ACT
+                                #if (INA3221I3_ACT > OFF)
+                                    //if (inaI[0][2] != inaIold[0][2])
+                                      {
+                                        valINA3221i[0][2] = inaI[0][2];
+                                        //pubINA3221i[0][2] = TRUE;
+                                            //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
+                                            dispText(valINA3221i[0][2], 6, 1);
+                                            S2VAL(" I supply new ", inaI[0][2], "mA");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][2].c_str(),
+                                                                                valINA3221i[0][2].length());
+                                                soutMQTTerr(topina3221i[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        inaIold[0][2]     = inaI[0][2];
+                                      }
+                                    #if (INA3221U3_ACT > OFF)
+                                        //if (inaP[0][2] != inaPold[0][2])
+                                          {
+                                            valINA3221p[0][2] = inaP[0][2];
+                                            //pubINA3221p[0][2] = TRUE;
+                                            inaPold[0][2]     = inaP[0][2];
+                                            //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
+                                            dispText(valINA3221p[0][2], 9, 1);
+                                                S2VAL(" P supply new ", inaP[0][2], "mW");
+                                            #if (USE_MQTT > OFF)
+                                                if (errMQTT == MD_OK)
+                                                  {
+                                                    errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
+                                                                                    (uint8_t*) valINA3221p[0][2].c_str(),
+                                                                                    valINA3221p[0][2].length());
+                                                    soutMQTTerr(topina3221p[2].c_str(), errMQTT);
+                                                        //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
+                                                  }
+                                              #endif
+                                            inaPold[0][2]     = inaP[0][2];
+                                          }
+                                      #endif // INA3221U3_ACT
+                                  #endif // INA3221I3_ACT
+                              #endif // USE_INA3221_I2C
                           //outpIdx++;
                           break;
                         case 4:  // DS18B20_1W temperature
@@ -1805,6 +1849,10 @@
 
                                   newClient = false;
                                 }
+                            #endif
+                          break;
+                        case 21: // PZEM DC energy module
+                          #if defined(USE_PZEM017_RS485)
                             #endif
                           break;
                         default:

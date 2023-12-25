@@ -273,12 +273,30 @@
                 #endif
             #endif
           #if defined(USE_PZEM017_RS485)
+              #define NUM_PZEMS   1
+              #define PZEM_SER    DEV_SER2
+              #if (PZEM_SER == DEV_SER1)
+                  #ifndef COMM1
+                      #define COMM1
+                    #endif
+                #endif
+              #if (PZEM_SER == DEV_SER2)
+                  #ifndef COMM2
+                      #define COMM2
+                    #endif
+                #endif
               #if (PZEM017_1 > OFF)
                   #if (PZEM017_1 < 11)
                       #define PZEM_1I  10
                   #else
                       #define PZEM_1I  20
                     #endif
+                  #ifndef PIN27
+                      #define PIN_PZEM1_RTS 27
+                      #define PIN27
+                    #else
+                      PIN27 adready used
+                    #endif // PIN27
                 #endif
               #if (PZEM017_2 > OFF)
                   #if (PZEM017_2 < 11)
@@ -460,6 +478,34 @@
                       PIN22 adready used
                     #endif
                 #endif // I2C2
+              #ifdef COMM1
+                  #ifndef PIN17
+                      #define PIN_COMM1_TX 17
+                      #define PIN17
+                    #else
+                      PIN17 adready used
+                    #endif // PIN17
+                  #ifndef PIN16
+                      #define PIN_COMM1_RX 16
+                      #define PIN16
+                    #else
+                      PIN16 adready used
+                    #endif // PIN16
+                #endif
+              #ifdef COMM2
+                  #ifndef PIN17
+                      #define PIN_COMM2_TX 17
+                      #define PIN17
+                    #else
+                      PIN17 adready used
+                    #endif // PIN17
+                  #ifndef PIN16
+                      #define PIN_COMM2_RX 16
+                      #define PIN16
+                    #else
+                      PIN16 adready used
+                    #endif // PIN16
+                #endif
             #endif //PRJ_BOARD
           #else
               #if defined(I2C1)

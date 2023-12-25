@@ -15,8 +15,8 @@
             "args": [],
             "stopAtEntry": false,
             "externalConsole": true,
-            "cwd": "c:/Users/Martin/Documents/PlatformIO/Projects/md_stdlib/md_PZEM-017/src",
-            "program": "c:/Users/Martin/Documents/PlatformIO/Projects/md_stdlib/md_PZEM-017/src/build/Debug/outDebug",
+            "cwd": "c:/Users/Martin/Documents/PlatformIO/Projects/ESP32_test_md_stdlib/src",
+            "program": "c:/Users/Martin/Documents/PlatformIO/Projects/ESP32_test_md_stdlib/src/build/Debug/outDebug",
             "MIMode": "gdb",
             "miDebuggerPath": "C:/Users/Martin/.platformio/packages/toolchain-xtensa-esp32@8.4.0+2021r2-patch5/bin/xtensa-esp32-elf-gdb.exe",
             "setupCommands": [

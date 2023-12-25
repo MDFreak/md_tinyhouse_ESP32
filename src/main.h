@@ -49,6 +49,9 @@
       #if defined(USE_INA3221_I2C)
           #include <SDL_Arduino_INA3221.h>
         #endif
+      #if defined(USE_PZEM017_RS485)
+          #include <md_PZEM017.h>
+        #endif
   // --- memory
     #if (USE_FLASH_MEM > OFF)
         #include <FS.h>
