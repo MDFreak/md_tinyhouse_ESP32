@@ -581,6 +581,7 @@
                 "USE_PZEM017_RS485=1",
                 "PZEM_LIST_ADDR=1",
                 "PZEM_1_ADDR=16",
+                "PZEM_2_ADDR=8",
                 "HAVE_CONFIG_H",
                 "MBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\"",
                 "UNITY_INCLUDE_CONFIG_H",

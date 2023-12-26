@@ -280,10 +280,10 @@
                 #define PZEM_TYP_DC10 31
                 #define PZEM_TYP_DC50 32
                 #define PZEM_TYP_AC10 41
-              #define NUM_PZEMS       1
+              #define NUM_PZEMS       2
               #define MAX_PZEMS       47   //
               #define PZEM_SER        DEV_SER2
-              #define PZEM_TRIG_MS    1000u    // trigger time [ms]
+              #define PZEM_TRIG_MS    200u    // trigger time [ms]
               #if (PZEM_SER == DEV_SER1)
                   #ifndef COMM1
                       #define COMM1
