@@ -11,3 +11,4 @@ html
 md_ESP32-Test2/*
 ./_NIO_WLAN/*
 ./_NIO_Webserver/*
+.vscode/c_cpp_properties.json
