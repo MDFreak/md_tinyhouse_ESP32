@@ -24,7 +24,7 @@
     static String   outStr      = "";
     static char     tmp_c32[33] = "";
     static char     cmsg[MSG_MAXLEN+1] = "";
-    static char     ctmp30[33];
+    //static char     tmp_c32[33];
     static String   tmpStr;
   // --- system devices
     // i2C devices
@@ -343,10 +343,11 @@
       // start system
         Serial.begin(SER_BAUDRATE);
         usleep(3000); // power-up safety delay
-        STXT();
+        STLN();
+        STXT(); S2VAL(" *** TEST_MD_STDLIB_VERSION ", TEST_MD_STDLIB_VERSION, "***"); STXT();
         STXT(" setup start ...");
       // disable watchdog
-        STXT(" ... disable WD ...");
+        STXT("   ... disable WD");
         disableCore0WDT();
          //disableCore1WDT();
         disableLoopWDT();
@@ -363,6 +364,7 @@
           #endif
       // start WIFI
         #if defined(USE_WIFI)
+            STXT(); S2VAL(" *** MD_WIFI_VERSION ", MD_WIFI_VERSION, "***"); STXT();
             uint8_t rep = WIFI_ANZ_LOGIN;
             while(rep > 0)
               {
@@ -421,6 +423,7 @@
           #endif
       // DC energy measurement with PZEM003/PZEM017
         #if defined(USE_PZEM017_RS485)
+            STXT(); S2VAL(" *** MD_PZEM017_VERSION ", MD_PZEM017_VERSION, "***"); STXT();
             #if defined(PZEM_LIST_ADDR)
                 listPZEMaddr();
               #endif
@@ -914,16 +917,15 @@
                             //if (pzemT.TOut())
                               {
                                 //pzems.updateValues(pzemIdx);
-                                pzems.updateValues(&pzemData[pzemIdx]);
+                                if (pzems.updateValues(&pzemData[pzemIdx]) < 1)
+                                  {
+                                    pzemData[pzemIdx].voltage = 0;
+                                    pzemData[pzemIdx].current = 0;
+                                    pzemData[pzemIdx].power = 0;
+                                  }
                                 pzemIdx++;
-                                if (pzemIdx >= NUM_PZEMS)
-                                  {
-                                    pzemIdx = 0;
-                                  }
-                                else
-                                  {
-                                    inpIdx--;
-                                  }
+                                if (pzemIdx >= NUM_PZEMS) { pzemIdx = 0; }
+                                else                      { inpIdx--;    }
                                 //pzemT.startT();
                               }
                           #endif // USE_PZEM017_RS485
@@ -1874,136 +1876,258 @@
                             #endif
                           break;
                         case 21: // PZEM DC energy module
-                          #if defined(USE_PZEM017_RS485)
-                                  //if (pzemU[0] != pzemUold[0])
-                                    {
-                                      valpzemU[0] = pzemData[0].voltage;
-                                      //pubpzemU[0] = TRUE;
-                                          //sprintf(tmp_c32, "U3 %f V", pzemU[0]);
-                                          dispText("Us1 " + valpzemU[0], 0, 2);
-                                          S2VAL(" Us1 PZEM new ", pzemData[0].voltage, "V");
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
-                                                                              (uint8_t*) valINA3221u[0][2].c_str(),
-                                                                              valINA3221u[0][2].length());
-                                              soutMQTTerr(topina3221u[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      //pzemUold[0]     = pzemU[0];
-                                    }
-                                  //if (pzemI[0] != pzemIold[0])
-                                    {
-                                      valpzemI[0] = pzemData[0].current;
-                                      //pubpzemI[0] = TRUE;
-                                          //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
-                                          dispText(valpzemI[0], 6, 2);
-                                          S2VAL(" Is1 PZEM new ", pzemData[0].current, "A");
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
-                                                                              (uint8_t*) valINA3221i[0][2].c_str(),
-                                                                              valINA3221i[0][2].length());
-                                              soutMQTTerr(topina3221i[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      //pzemIold[0]     = pzemI[0];
-                                    }
-                                  //if (pzemP[0] != pzemPold[0])
-                                    {
-                                      valpzemP[0] = pzemData[0].power;
-                                      //pubpzemP[0] = TRUE;
-                                          //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
-                                          dispText(valpzemP[0], 9, 2);
-                                          S2VAL(" Ps1 PZEM new ", pzemData[0].power, "W");
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
-                                                                              (uint8_t*) valINA3221p[0][2].c_str(),
-                                                                              valINA3221p[0][2].length());
-                                              soutMQTTerr(topina3221p[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
-                                            }
-                                        #endif
-                                      //pzemPold[0][2]     = pzemP[0];
-                                    }
-                              #if (NUM_PZEMS > 1)
-                                  //if (pzemU[1] != pzemUold[1])
-                                    {
-                                      valpzemU[1] = pzemData[1].voltage;
-                                      //pubpzemU[0] = TRUE;
-                                          //sprintf(tmp_c32, "U3 %f V", pzemU[0]);
-                                          dispText("Us2 " + valpzemU[1], 0, 3);
-                                          S2VAL(" Us2 PZEM new ", pzemData[1].voltage, "V");
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
-                                                                              (uint8_t*) valINA3221u[0][2].c_str(),
-                                                                              valINA3221u[0][2].length());
-                                              soutMQTTerr(topina3221u[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      //pzemUold[0]     = pzemU[0];
-                                    }
-                                  //if (pzemI[1] != pzemIold[1])
-                                    {
-                                      valpzemI[1] = pzemData[1].current;
-                                      //pubpzemI[0] = TRUE;
-                                          //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
-                                          dispText(valpzemI[1], 6, 3);
-                                          S2VAL(" Is2 PZEM new ", pzemData[1].current, "A");
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
-                                                                              (uint8_t*) valINA3221i[0][2].c_str(),
-                                                                              valINA3221i[0][2].length());
-                                              soutMQTTerr(topina3221i[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
-                                            }
-                                        #endif
-                                      #if defined(USE_WEBSERVER)
-                                        #endif
-                                      //pzemIold[0]     = pzemI[0];
-                                    }
-                                  //if (pzemP[1] != pzemPold[1])
-                                    {
-                                      valpzemP[1] = pzemData[1].power;
-                                      //pubpzemP[0] = TRUE;
-                                          //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
-                                          dispText(valpzemP[1], 9, 3);
-                                          S2VAL(" Ps2 PZEM new ", pzemData[1].power, "W");
-                                      #if (USE_MQTT > OFF)
-                                          if (errMQTT == MD_OK)
-                                            {
-                                              errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
-                                                                              (uint8_t*) valINA3221p[0][2].c_str(),
-                                                                              valINA3221p[0][2].length());
-                                              soutMQTTerr(topina3221p[2].c_str(), errMQTT);
-                                                  //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
-                                            }
-                                        #endif
-                                      //pzemPold[1]     = pzemP[1];
-                                    }
-                                #endif
-                          #endif // USE_PZEM017_RS485
-                              break;
-                            default:
-                              outpIdx = 0;
-                              break;
+                            #if defined(USE_PZEM017_RS485)
+                                #if (NUM_PZEMS > 0)
+                                    //if (pzemU[0] != pzemUold[0])
+                                      {
+                                        STXT();
+                                        sprintf(tmp_c32, "%.1f", pzemData[0].voltage);
+                                        valpzemU[0] = tmp_c32;
+                                        //pubpzemU[0] = TRUE;
+                                        dispText(valpzemU[0], 0, 1);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
+                                                                                (uint8_t*) valINA3221u[0][2].c_str(),
+                                                                                valINA3221u[0][2].length());
+                                                soutMQTTerr(topina3221u[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemUold[0]     = pzemU[0];
+                                      }
+                                    //if (pzemI[0] != pzemIold[0])
+                                      {
+                                        valpzemI[0] = (uint32_t) (pzemData[0].current * 1000);
+                                        //pubpzemI[0] = TRUE;
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][2].c_str(),
+                                                                                valINA3221i[0][2].length());
+                                                soutMQTTerr(topina3221i[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemIold[0]     = pzemI[0];
+                                      }
+                                    //if (pzemP[0] != pzemPold[0])
+                                      {
+                                        sprintf(tmp_c32, "%.1f", pzemData[0].power);
+                                        valpzemP[0] = tmp_c32;
+                                        //pubpzemP[0] = TRUE;
+                                            tmpStr = valpzemU[0] + " V " + valpzemI[0] + " mA " + valpzemP[0] + " W";
+                                            dispText(valpzemP[0], 5, 1);
+                                            SVAL(" PZEM1 ", tmpStr);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
+                                                                                (uint8_t*) valINA3221p[0][2].c_str(),
+                                                                                valINA3221p[0][2].length());
+                                                soutMQTTerr(topina3221p[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
+                                              }
+                                          #endif
+                                        //pzemPold[0][2]     = pzemP[0];
+                                      }
+                                  #endif // NUM_PZEMS > 0
+                                #if (NUM_PZEMS > 1)
+                                    //if (pzemU[1] != pzemUold[1])
+                                      {
+                                        sprintf(tmp_c32, "%.1f", pzemData[1].voltage);
+                                        valpzemU[1] = tmp_c32; //valpzemU[1] = pzemData[1].voltage;
+                                        //pubpzemU[0] = TRUE;
+                                        dispText(valpzemU[1], 0, 2);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
+                                                                                (uint8_t*) valINA3221u[0][2].c_str(),
+                                                                                valINA3221u[0][2].length());
+                                                soutMQTTerr(topina3221u[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemUold[0]     = pzemU[0];
+                                      }
+                                    //if (pzemI[1] != pzemIold[1])
+                                      {
+                                        valpzemI[1] = (uint16_t) (pzemData[1].current * 1000);
+                                        //pubpzemI[0] = TRUE;
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][2].c_str(),
+                                                                                valINA3221i[0][2].length());
+                                                soutMQTTerr(topina3221i[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemIold[0]     = pzemI[0];
+                                      }
+                                    //if (pzemP[1] != pzemPold[1])
+                                      {
+                                        valpzemP[1] = pzemData[1].power;
+                                        //pubpzemP[0] = TRUE;
+                                        tmpStr = valpzemU[1] + " V " + valpzemI[1] + " mA " + valpzemP[1] + " W";
+                                        dispText(valpzemP[1], 5, 2);
+                                        SVAL(" PZEM2 ", tmpStr);
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
+                                                                                (uint8_t*) valINA3221p[0][2].c_str(),
+                                                                                valINA3221p[0][2].length());
+                                                soutMQTTerr(topina3221p[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
+                                              }
+                                          #endif
+                                        //pzemPold[1]     = pzemP[1];
+                                      }
+                                  #endif // NUM_PZEMS > 1
+                                #if (NUM_PZEMS > 2)
+                                    //if (pzemU[1] != pzemUold[1])
+                                      {
+                                        valpzemU[2] = pzemData[2].voltage;
+                                        //pubpzemU[0] = TRUE;
+                                            //sprintf(tmp_c32, "U3 %f V", pzemU[0]);
+                                            dispText("Us3 " + valpzemU[2], 0, 3);
+                                            S2VAL(" Us3 PZEM new ", pzemData[2].voltage, "V");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
+                                                                                (uint8_t*) valINA3221u[0][2].c_str(),
+                                                                                valINA3221u[0][2].length());
+                                                soutMQTTerr(topina3221u[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemUold[0]     = pzemU[0];
+                                      }
+                                    //if (pzemI[1] != pzemIold[1])
+                                      {
+                                        valpzemI[2] = pzemData[2].current;
+                                        //pubpzemI[0] = TRUE;
+                                            //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
+                                            dispText(valpzemI[2], 6, 3);
+                                            S2VAL(" Is3 PZEM new ", pzemData[2].current, "A");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][2].c_str(),
+                                                                                valINA3221i[0][2].length());
+                                                soutMQTTerr(topina3221i[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemIold[0]     = pzemI[0];
+                                      }
+                                    //if (pzemP[1] != pzemPold[1])
+                                      {
+                                        valpzemP[2] = pzemData[2].power;
+                                        //pubpzemP[0] = TRUE;
+                                            //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
+                                            dispText(valpzemP[2], 9, 3);
+                                            S2VAL(" Ps3 PZEM new ", pzemData[2].power, "W");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
+                                                                                (uint8_t*) valINA3221p[0][2].c_str(),
+                                                                                valINA3221p[0][2].length());
+                                                soutMQTTerr(topina3221p[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
+                                              }
+                                          #endif
+                                        //pzemPold[1]     = pzemP[1];
+                                      }
+                                  #endif // NUM_PZEMS > 2
+                                #if (NUM_PZEMS > 3)
+                                    //if (pzemU[1] != pzemUold[1])
+                                      {
+                                        valpzemU[3] = pzemData[1].voltage;
+                                        //pubpzemU[0] = TRUE;
+                                            //sprintf(tmp_c32, "U3 %f V", pzemU[0]);
+                                            dispText("Us4 " + valpzemU[3], 0, 3);
+                                            S2VAL(" Us4 PZEM new ", pzemData[3].voltage, "V");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221u[2].c_str(),
+                                                                                (uint8_t*) valINA3221u[0][2].c_str(),
+                                                                                valINA3221u[0][2].length());
+                                                soutMQTTerr(topina3221u[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221u[2].c_str(), valINA3221u[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemUold[0]     = pzemU[0];
+                                      }
+                                    //if (pzemI[1] != pzemIold[1])
+                                      {
+                                        valpzemI[3] = pzemData[3].current;
+                                        //pubpzemI[0] = TRUE;
+                                            //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
+                                            dispText(valpzemI[3], 6, 3);
+                                            S2VAL(" Is4 PZEM new ", pzemData[3].current, "A");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221i[2].c_str(),
+                                                                                (uint8_t*) valINA3221i[0][2].c_str(),
+                                                                                valINA3221i[0][2].length());
+                                                soutMQTTerr(topina3221i[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221i[2].c_str(), valINA3221i[0][2]);
+                                              }
+                                          #endif
+                                        #if defined(USE_WEBSERVER)
+                                          #endif
+                                        //pzemIold[0]     = pzemI[0];
+                                      }
+                                    //if (pzemP[1] != pzemPold[1])
+                                      {
+                                        valpzemP[3] = pzemData[3].power;
+                                        //pubpzemP[0] = TRUE;
+                                            //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
+                                            dispText(valpzemP[3], 9, 3);
+                                            S2VAL(" Ps4 PZEM new ", pzemData[3].power, "W");
+                                        #if (USE_MQTT > OFF)
+                                            if (errMQTT == MD_OK)
+                                              {
+                                                errMQTT = (int8_t) mqtt.publish(topina3221p[2].c_str(),
+                                                                                (uint8_t*) valINA3221p[0][2].c_str(),
+                                                                                valINA3221p[0][2].length());
+                                                soutMQTTerr(topina3221p[2].c_str(), errMQTT);
+                                                    //SVAL(topina3221p[2].c_str(), valINA3221p[0][2]);
+                                              }
+                                          #endif // USE_MQTT
+                                        //pzemPold[1]     = pzemP[1];
+                                      }
+                                  #endif //NUM_PZEMS > 3
+                              #endif // USE_PZEM017_RS485
+                          break;
+                        default:
+                            outpIdx = 0;
+                          break;
                       }
                     #ifdef USE_STATUS
                         dispStatus("");
@@ -2074,7 +2198,7 @@
                         {
                           statN.startT();
                           #if (USE_NTP_SERVER > OFF)
-                              sprintf(statOut,"%02d.%02d. %02d:%02d:%02d ", day(), month(), hour(), minute(), second());
+                              sprintf(statOut,"%02d.%02d - %02d:%02d", day(), month(), hour(), minute());
                               msg = statOut;
                               msg.concat(" ");
                               msg.concat((unsigned long) usPerCycle);
@@ -2555,6 +2679,7 @@
                   //SVAL(" startWIFI   Start WiFi ", startup);
               #if defined(USE_WIFI)
                   dispStatus("  start WIFI");
+                  STXT("  startWiFi ...");
                       //heapFree(" before generating ipList ");
                   if (startup)
                     {
@@ -2671,14 +2796,14 @@
                   if (ret == MD_OK)
                     {
                       #if (USE_MD_ATSMARTHOME > OFF)
-                          ctmp30[0]=0;
-                          iret               = wifi.getSSID(ctmp30);
-                            //S2VAL(" SSID ", iret, ctmp30);
-                          atdbSetup.SSID     = ctmp30;
-                          ctmp30[0]=0;
-                          iret               = wifi.getPW(ctmp30);
-                            //S2VAL(" PW ", iret, ctmp30);
-                          atdbSetup.password = ctmp30;
+                          tmp_c32[0]=0;
+                          iret               = wifi.getSSID(tmp_c32);
+                            //S2VAL(" SSID ", iret, tmp_c32);
+                          atdbSetup.SSID     = tmp_c32;
+                          tmp_c32[0]=0;
+                          iret               = wifi.getPW(tmp_c32);
+                            //S2VAL(" PW ", iret, tmp_c32);
+                          atdbSetup.password = tmp_c32;
                           atdbSetup.useWlan  = true;
                             //database.setupWiFi(&atdbSetup);
                         #endif
@@ -3399,6 +3524,7 @@
                       #if (NUM_PZEMS > 2)
                           case 2:
                               pzemData[i].devaddr = PZEM_3_ADDR;
+                              _type               = PZEM_1_TYPE;
                             break;
                         #endif
                       #if (NUM_PZEMS > 3)
@@ -3431,37 +3557,41 @@
                       default:
                         break;
                     }
-                  //pzems.config(pzemData[i].devaddr, i);
+                  #if defined(PZEM_NEW_ADDR)
+                      {
+                        if (pzemData[i].devaddr == PZEM_NEW_ADDR)
+                          {
+                            if (pzems.setAddress((uint16_t) PZEM_OLD_ADDR, (uint16_t) PZEM_NEW_ADDR))
+                              {
+                                S3VAL("changed slave address", PZEM_OLD_ADDR, " -> ", PZEM_NEW_ADDR);
+                              }
+                            else
+                              {
+                                S3VAL("could not change adress ", PZEM_OLD_ADDR, " -> ", PZEM_NEW_ADDR);
+                              }
+                          }
+                      }
+                    #endif
                   pzems.config(&pzemData[i], pzemData[i].devaddr );
+                  S3VAL("     check _type", _type, " .devType", pzemData[i].devtype);
                   if (pzemData[i].devtype != _type)
                     {
                       pzems.setShuntType(_type, &pzemData[i]);
+                      pzems.config(&pzemData[i], pzemData[i].devaddr );
                     }
-                  pzems.config(&pzemData[i], pzemData[i].devaddr );
                   i++;
                   //S2VAL(" setup conf PZEM ready", i, "...");
                   //pzemT.startT();
                 } // while i
-              #if defined(PZEM_CHANGE_IDX)
-                  {
-                    if (pzems[PZEM_CHANGE_IDX-1].setAddress(pzemAddr[PZEM_CHANGE_IDX-1], PZEM_DEF_ADDR))
-                      {
-                        S3VAL("changed slave address PZEM[", PZEM_CHANGE_IDX-1, "] to ", pzemAddr[PZEM_CHANGE_IDX-1]);
-                      }
-                    else
-                      {
-                        S3VAL("could not change adress PZEM[", PZEM_CHANGE_IDX-1, "] to ", pzemAddr[PZEM_CHANGE_IDX-1]);
-                      }
-                  }
-                #endif
             }
           void listPZEMaddr()
             {
+              STXT(" search PZEMs ...");
               uint8_t _cnt  = pzems.search(PZEM_DEF_ADDR, PZEM_DEF_ADDR, true); // new device
                       _cnt += pzems.search(MIN_PZEM017,   MAX_PZEM017, true); //
                       _cnt += pzems.search(MIN_PZEM003,   MAX_PZEM003, true);
                       _cnt += pzems.search(MIN_PZEM004,   MIN_PZEM004, true);
-              S2VAL("  found", _cnt, "PZEMs");
+              S2VAL(" search found", _cnt, "PZEMs");
             }
         #endif
 #endif // ESP32_TEST_MD_LIB

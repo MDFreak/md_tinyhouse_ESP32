@@ -1,6 +1,10 @@
 #ifndef _MAIN_H_
   #define _MAIN_H_
 
+  // system globals
+    #ifndef TEST_MD_STDLIB_VERSION
+        #define TEST_MD_STDLIB_VERSION "V0.1.0"
+      #endif
   // standard system includes
     #include <Arduino.h>
     #include <unity.h>

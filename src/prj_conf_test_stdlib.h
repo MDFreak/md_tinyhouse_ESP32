@@ -118,7 +118,7 @@
                         // MC_UO_OLED_091_AZ   GEO_128_32   OLED_DRV_1306
                         // MC_UO_OLED_096_AZ   GEO_128_64   OLED_DRV_1306
                         // MC_UO_OLED_130_AZ   GEO_128_64   OLED_DRV_1106
-              #define OLED_I2C_TYP MC_UO_OLED_096_AZ  // OLED1 on DEV_I2C1
+              #define OLED_I2C_TYP MC_UO_OLED_066_AZ  // OLED1 on DEV_I2C1
               //#define OLED_STATUS     ON
               #define OLED_I2C           DEV_I2C1
               #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
@@ -145,7 +145,7 @@
                   #define OLED_GEO       GEO_128_64
                   #define OLED_DRV       OLED_DRV_1106
                 #endif // OLED_I2C_TYP
-              //#define OLED_FLIP_VERTICAL TRUE
+              #define OLED_FLIP_VERTICAL TRUE
               #if (OLED_I2C == DEV_I2C1)
                   #ifndef I2C1
                       #define I2C1
@@ -353,102 +353,6 @@
                     #elif (PZEM_4_ADDR < 40)
                         #define PZEM_4_I    PZEM_I_AC10
                         #define PZEM_4_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_5_ADDR)
-                    #if (PZEM_5_ADDR < 16)
-                        #define PZEM_5_I    PZEM_I_DC50
-                        #define PZEM_5_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_5_ADDR < 32)
-                        #define PZEM_5_I    PZEM_I_DC10
-                        #define PZEM_5_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_5_ADDR < 40)
-                        #define PZEM_5_I    PZEM_I_AC10
-                        #define PZEM_5_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_6_ADDR)
-                    #if (PZEM_6_ADDR < 16)
-                        #define PZEM_6_I    PZEM_I_DC50
-                        #define PZEM_6_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_6_ADDR < 32)
-                        #define PZEM_6_I    PZEM_I_DC10
-                        #define PZEM_6_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_6_ADDR < 40)
-                        #define PZEM_6_I    PZEM_I_AC10
-                        #define PZEM_6_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_7_ADDR)
-                    #if (PZEM_7_ADDR < 16)
-                        #define PZEM_7_I    PZEM_I_DC50
-                        #define PZEM_7_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_7_ADDR < 32)
-                        #define PZEM_7_I    PZEM_I_DC10
-                        #define PZEM_7_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_7_ADDR < 40)
-                        #define PZEM_7_I    PZEM_I_AC10
-                        #define PZEM_7_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_8_ADDR)
-                    #if (PZEM_8_ADDR < 16)
-                        #define PZEM_8_I    PZEM_I_DC50
-                        #define PZEM_8_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_8_ADDR < 32)
-                        #define PZEM_8_I    PZEM_I_DC10
-                        #define PZEM_8_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_8_ADDR < 40)
-                        #define PZEM_8_I    PZEM_I_AC10
-                        #define PZEM_8_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_9_ADDR)
-                    #if (PZEM_9_ADDR < 16)
-                        #define PZEM_9_I    PZEM_I_DC50
-                        #define PZEM_9_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_9_ADDR < 32)
-                        #define PZEM_9_I    PZEM_I_DC10
-                        #define PZEM_9_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_9_ADDR < 40)
-                        #define PZEM_9_I    PZEM_I_AC10
-                        #define PZEM_9_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_10_ADDR)
-                    #if (PZEM_10_ADDR < 16)
-                        #define PZEM_10_I    PZEM_I_DC50
-                        #define PZEM_10_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_10_ADDR < 32)
-                        #define PZEM_10_I    PZEM_I_DC10
-                        #define PZEM_10_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_10_ADDR < 40)
-                        #define PZEM_10_I    PZEM_I_AC10
-                        #define PZEM_10_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_11_ADDR)
-                    #if (PZEM_11_ADDR < 16)
-                        #define PZEM_11_I    PZEM_I_DC50
-                        #define PZEM_11_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_11_ADDR < 32)
-                        #define PZEM_11_I    PZEM_I_DC10
-                        #define PZEM_11_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_11_ADDR < 40)
-                        #define PZEM_11_I    PZEM_I_AC10
-                        #define PZEM_11_TYPE PZEM_SHUNT_10A
-                      #endif
-                  #endif
-                #if defined(PZEM_12_ADDR)
-                    #if (PZEM_12_ADDR < 16)
-                        #define PZEM_12_I    PZEM_I_DC50
-                        #define PZEM_12_TYPE PZEM_SHUNT_50A
-                    #elif (PZEM_12_ADDR < 32)
-                        #define PZEM_12_I    PZEM_I_DC10
-                        #define PZEM_12_TYPE PZEM_SHUNT_10A
-                    #elif (PZEM_12_ADDR < 40)
-                        #define PZEM_12_I    PZEM_I_AC10
-                        #define PZEM_12_TYPE PZEM_SHUNT_10A
                       #endif
                   #endif
               #ifndef USE_INPUT_CYCLE
