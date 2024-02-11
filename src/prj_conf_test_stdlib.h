@@ -300,9 +300,9 @@
                       #define COMM2
                     #endif
                 #endif
-              #ifndef PIN27
-                  #define PIN_PZEM1_RTS 27
-                  #define PIN27
+              #ifndef PIN33
+                  #define PIN_PZEM1_RTS 33
+                  #define PIN33
               #else
                   PIN27 adready used
                 #endif // PIN27

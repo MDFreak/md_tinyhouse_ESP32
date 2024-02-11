@@ -17,6 +17,7 @@
     #include <md_filter.h>
     #include <md_projects.h>
   // check entries from platformio.ini
+
     #if (PROJECT > 0)
          #define HALLO 1
       #endif
@@ -38,7 +39,7 @@
               #include <SH1106Wire.h>
             #endif // OLED_DRV
         #endif // USE_OLED_I2C
-    //
+    // SPI
       #ifdef USE_SPI
           #include <SPI.h>
         #endif
