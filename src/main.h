@@ -22,10 +22,6 @@
 #ifndef _MAIN_H_
   #define _MAIN_H_
 
-  // system globals
-    #ifndef TEST_MD_STDLIB_VERSION
-        #define TEST_MD_STDLIB_VERSION "V0.1.0"
-      #endif
   // standard system includes
     #include <Arduino.h>
     #include <unity.h>
@@ -47,7 +43,9 @@
         #include <Wire.h>
       #endif // USE_I2C
   // standard project includes
-    #include <prj_conf_test_stdlib.h>
+    #if (PROJECT == PRJ_TINY_BASE_DEVKIT)
+        #include <prj_tiny_base_devkit.h>
+      #endif
     //#include <md_time.h>
   // project devices md_library
     // timer

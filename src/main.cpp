@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <main.h>
 
-#if (WORKSPACE == ESP32_TEST_MD_STDLIB)
+#if (PROJECT == PRJ_TINY_BASE_DEVKIT)
   // ----------------------------------------------------------------
   // --- tests for temporary usage
   // ----------------------------------------------------------------
@@ -335,34 +335,48 @@
           static String     valpzemP[NUM_PZEMS];
           static int8_t     pubpzemE[NUM_PZEMS];
         #endif // USE_PZEM017_RS485
+      #if (USE_ADC1115_I2C > OFF)
+          static md_ADS1115 ads[USE_ADC1115_I2C];
+          #if (ADS_I2C == I2C1)
+              TwoWire* pads0i2c = &i2c1;
+            #else
+              TwoWire* pads0i2c = &i2c2;
+            #endif
+        #endif
 // -------------------------------- --------------------------------
 // --- system setup -----------------------------------
 // ----------------------------------------------------------------
   void setup()
     {
-      // start system
-        Serial.begin(SER_BAUDRATE);
-        usleep(3000); // power-up safety delay
-        STLN();
-        STXT(); S2VAL(" *** TEST_MD_STDLIB_VERSION ", TEST_MD_STDLIB_VERSION, "***"); STXT();
-        STXT(" setup start ...");
-      // disable watchdog
-        STXT("   ... disable WD");
-        disableCore0WDT();
-         //disableCore1WDT();
-        disableLoopWDT();
-      // start I2C
-        #if defined(USE_I2C)
-                Wire.setPins(PIN_I2C1_SDA, PIN_I2C1_SCL);
-            #ifdef SCAN_I2C
-                scanI2C(&Wire, PIN_I2C1_SDA, PIN_I2C1_SCL);
-              #endif
-          #endif
-      // start display
-        #ifdef USE_DISP
-            startDisp();
-          #endif
-      // start WIFI
+      // --- system
+        // start system
+          Serial.begin(SER_BAUDRATE);
+          usleep(3000); // power-up safety delay
+          STLN();
+          #if (PROJECT == PRJ_TINY_BASE_DEVKIT)
+              //STXT(); S2VAL(" *** TEST_MD_STDLIB_VERSION ", TEST_MD_STDLIB_VERSION, "***"); STXT();
+              STXT(); S2VAL(" *** TINY_BASE_VERSION ", TINY_BASE_DEVKIT_VERSION, "***"); STXT();
+            #endif
+          STXT(" setup start ...");
+        // disable watchdog
+          STXT("   ... disable WD");
+          disableCore0WDT();
+           //disableCore1WDT();
+          disableLoopWDT();
+      // --- communication
+        // start I2C
+          #if defined(USE_I2C)
+              Wire.setPins(PIN_I2C1_SDA, PIN_I2C1_SCL);
+              #ifdef SCAN_I2C
+                  scanI2C(&Wire, PIN_I2C1_SDA, PIN_I2C1_SCL);
+                #endif
+            #endif
+        // start display
+          #ifdef USE_DISP
+              startDisp();
+            #endif
+      // --- network
+        // start WIFI
         #if defined(USE_WIFI)
             STXT(); S2VAL(" *** MD_WIFI_VERSION ", MD_WIFI_VERSION, "***"); STXT();
             uint8_t rep = WIFI_ANZ_LOGIN;
@@ -390,46 +404,81 @@
                 //usleep(50000);
               }
           #endif // USE_WIFI
-      // start Webserer
-        #if defined(USE_WEBSERVER)
-            {
-              servT.startT();
-              #if (TEST_SOCKET_SERVER > OFF)
-                  //socket.onEvent(onEvent);
-                  //serv.addHandler(&socket);
+        // start Webserer
+          #if defined(USE_WEBSERVER)
+              {
+                servT.startT();
+                #if (TEST_SOCKET_SERVER > OFF)
+                    //socket.onEvent(onEvent);
+                    //serv.addHandler(&socket);
 
-                  //serv.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-                  //  {
-                  //    request->send_P(200, "text/html", index_html, NULL);
-                  //  });
+                    //serv.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+                    //  {
+                    //    request->send_P(200, "text/html", index_html, NULL);
+                    //  });
 
-                  // serv.begin();
-              #else
-                  startWebServer();
-                #endif
-            }
-          #endif
-      // start MQTT
-        #if (USE_MQTT > OFF)
-            startMQTT();
-          #endif
-      // BME280 temperature, pessure, humidity
-        #if defined(USE_BME280_I2C)
-            initBME280();
-          #endif
-      // temp. current sensor INA3221
-        #if (USE_INA3221_I2C > OFF)
-            initINA3221();
-          #endif
-      // DC energy measurement with PZEM003/PZEM017
-        #if defined(USE_PZEM017_RS485)
-            STXT(); S2VAL(" *** MD_PZEM017_VERSION ", MD_PZEM017_VERSION, "***"); STXT();
-            #if defined(PZEM_LIST_ADDR)
-                listPZEMaddr();
+                    // serv.begin();
+                #else
+                    startWebServer();
+                  #endif
+              }
+            #endif
+        // start MQTT
+          #if (USE_MQTT > OFF)
+              startMQTT();
+            #endif
+      // --- sensors
+        // BME280 temperature, pessure, humidity
+          #if defined(USE_BME280_I2C)
+              initBME280();
+            #endif
+        // INA3221 voltage/current/power sensor 3 chan
+          #if (USE_INA3221_I2C > OFF)
+                initINA3221();
               #endif
-            initPZEM017();
-          #endif
-      STXT(" ... setup finished");
+        // DC energy measurement with PZEM003/PZEM017
+          #if defined(USE_PZEM017_RS485)
+              STXT(); S2VAL(" *** MD_PZEM017_VERSION ", MD_PZEM017_VERSION, "***"); STXT();
+              #if defined(PZEM_LIST_ADDR)
+                  listPZEMaddr();
+                #endif
+              initPZEM017();
+            #endif
+        // ADS1115 analog input 4 chan
+          #if (USE_ADC1115_I2C > OFF)
+              initADS1115();
+              startADS1115();
+            #endif
+      // --- memory
+        // FLASH memory
+          #if (USE_FLASH_MEM > OFF)
+              #if (TEST_FLASH_MEM > 0)
+                  testFlash();
+                #endif
+            #endif
+        // FRAM
+          #if (USE_FRAM_I2C > OFF)
+            // Read the first byte
+            SHEXVAL("FRAM addr ",FRAM1_I2C_ADDR);
+            dispStatus("init FRAM");
+            bool ret = !fram.begin(FRAM1_I2C_SDA, FRAM1_I2C_SCL, FRAM1_I2C_ADDR);
+            if (ret != MD_ERR)
+              {
+                SOUT(" ok ProdID= ");
+                uint16_t prodID, manuID;
+                fram.getDeviceID(&manuID, &prodID);
+                SVAL(" product ", prodID); SVAL(" producer ", manuID);
+                SVAL(" FRAM selftest ", fram.selftest());
+              }
+            #endif
+        // --- finish setup
+          #if (USE_LED_BLINK_OUT > 0)
+              sysLED = OFF;
+              digitalWrite(PIN_BOARD_LED, sysLED);
+            #endif
+          dispStatus("... end setup");
+          heapFree(" end setup ");
+          STXT(" ... end setup");
     }
 // ----------------------------------------------------------------
 // --- system loop  ---------------
@@ -912,7 +961,7 @@
                           #endif
                         //SOUT(" c17a");
                       break;
-                    case 18:
+                    case 18: // PZEM0XX_RS485
                         #if defined(USE_PZEM017_RS485)
                             //if (pzemT.TOut())
                               {
@@ -1066,9 +1115,12 @@
                       {
                         case 1:  // BME280_I2C / BME680
                             #if defined(USE_BME280_I2C)
-                                if (bme280T != bme280Told)
+                                //if (bme280T != bme280Told)
                                   {
                                         //SVAL(" 280readT  new ", bme280T);
+                                    //dispText("U1 " + valINA3221u[0][0], 0, 1);
+                                    dispText((String) bme280T + "°", 0, 5);
+                                    S2VAL(" Temp ", bme280T, "°C");
                                     #if (USE_MQTT > OFF)
                                         if (errMQTT == MD_OK)
                                           {
@@ -1080,33 +1132,16 @@
                                       #endif
                                     #if defined(USE_WEBSERVER)
                                         tmpStr = "SVA0";
-                                        tmpval16 = (int16_t) (bme280T+ 0.5);
-                                        tmpStr.concat(tmpval16);
+                                        tmp_i32 = (int16_t) (bme280T+ 0.5);
+                                        tmpStr.concat(tmp_i32);
                                         pmdServ->updateAll(tmpStr);
                                       #endif
                                     bme280Told = bme280T;
                                   }
-                                if (bme280P != bme280Pold)
+                                //if (bme280H != bme280Hold)
                                   {
-                                    #if (USE_MQTT > OFF)
-                                        if (errMQTT == MD_OK)
-                                          {
-                                            valBME280p = bme280P;
-                                            errMQTT = (int8_t) mqtt.publish(topBME280p.c_str(), (uint8_t*) valBME280p.c_str(), valBME280p.length());
-                                            soutMQTTerr(topBME280p.c_str(), errMQTT);
-                                                //SVAL(topBME280p, valBME280p);
-                                          }
-                                      #endif
-                                    #if defined(USE_WEBSERVER)
-                                        tmpStr = "SVA1";
-                                        tmpval16 = (uint16_t) bme280P;
-                                        tmpStr.concat(tmpval16);
-                                        pmdServ->updateAll(tmpStr);
-                                      #endif
-                                    bme280Pold = bme280P;
-                                  }
-                                if (bme280H != bme280Hold)
-                                  {
+                                    dispText((String) bme280H + "%", 5, 5);
+                                    S2VAL(" Feuchte ", bme280H, "%");
                                     #if (USE_MQTT > OFF)
                                         if (errMQTT == MD_OK)
                                           {
@@ -1118,11 +1153,32 @@
                                       #endif
                                     #if defined(USE_WEBSERVER)
                                         tmpStr = "SVA2";
-                                        tmpval16 = (int16_t) bme280H;
-                                        tmpStr.concat(tmpval16);
+                                        tmp_i32 = (int16_t) bme280H;
+                                        tmpStr.concat(tmp_i32);
                                         pmdServ->updateAll(tmpStr);
                                       #endif
                                     bme280Hold = bme280H;
+                                  }
+                                //if (bme280P != bme280Pold)
+                                  {
+                                    dispText((String) bme280H + "hP", 10, 5);
+                                    S2VAL(" Druck ", bme280P, "mbar");
+                                    #if (USE_MQTT > OFF)
+                                        if (errMQTT == MD_OK)
+                                          {
+                                            valBME280p = bme280P;
+                                            errMQTT = (int8_t) mqtt.publish(topBME280p.c_str(), (uint8_t*) valBME280p.c_str(), valBME280p.length());
+                                            soutMQTTerr(topBME280p.c_str(), errMQTT);
+                                                //SVAL(topBME280p, valBME280p);
+                                          }
+                                      #endif
+                                    #if defined(USE_WEBSERVER)
+                                        tmpStr = "SVA1";
+                                        tmp_i32 = (uint16_t) bme280P;
+                                        tmpStr.concat(tmp_i32);
+                                        pmdServ->updateAll(tmpStr);
+                                      #endif
+                                    bme280Pold = bme280P;
                                   }
                               #endif
                             #if (USE_BME680_I2C > OFF)
@@ -1248,11 +1304,13 @@
                         case 3:  // INA3221_I2C 3x U+I measures
                             #if defined(USE_INA3221_I2C)
                                 #if (INA3221U1_ACT > OFF)
-                                    if (inaU[0][0] != inaUold[0][0])
+                                    // if (inaU[0][0] != inaUold[0][0])
                                       {
                                         valINA3221u[0][0] = inaU[0][0];
                                             //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
                                             //SVAL(" U 3.3    new ", inaU[0][0]);
+                                        dispText("U1 " + valINA3221u[0][0], 0, 1);
+                                        S2VAL(" U supply ", inaU[0][0], "V");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1269,10 +1327,11 @@
                                       }
                                   #endif // INA3221U1_ACT
                                 #if (INA3221I1_ACT > OFF)
-                                    if (inaI[0][0] != inaIold[0][0])
+                                    // if (inaI[0][0] != inaIold[0][0])
                                       {
                                         valINA3221i[0][0] = inaI[0][0];
-                                            SVAL(" I 3.3 new ", inaI[0][0]);
+                                        dispText(valINA3221i[0][0] + "mA", 6, 1);
+                                        S2VAL(" I supply ", inaI[0][0], "mA");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1287,6 +1346,30 @@
                                     #if defined(USE_WEBSERVER)
                                       #endif
                                     inaIold[0][0]     = inaI[0][0];
+                                    #if (INA3221U2_ACT > OFF)
+                                        inaP[0][0] = inaU[0][0] * inaI[0][0] / 1000;
+                                        // if (inaP[0][0] != inaPold[0][0])
+                                          {
+                                            valINA3221p[0][0] = inaP[0][0];
+                                              //pubINA3221p[0][1] = TRUE;
+                                                //SVAL(" P 5.0    new ", inaP[0][1]);
+                                            dispText(valINA3221p[0][0]+ "W", 12, 1);
+                                            S2VAL(" P supply ", inaP[0][0], "W");
+                                            #if (USE_MQTT > OFF)
+                                                if (errMQTT == MD_OK)
+                                                  {
+                                                    errMQTT = (int8_t) mqtt.publish(topina3221p[1].c_str(),
+                                                                                    (uint8_t*) valINA3221p[0][1].c_str(),
+                                                                                    valINA3221p[0][1].length());
+                                                    soutMQTTerr(topina3221p[1].c_str(), errMQTT);
+                                                        //SVAL(topina3221p[1].c_str(), valINA3221p[0][1]);
+                                                  }
+                                              #endif
+                                            #if defined(USE_WEBSERVER)
+                                              #endif
+                                          }
+                                        inaPold[0][0]     = inaP[0][0];
+                                      #endif // INA3221U2_ACT
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1296,11 +1379,13 @@
                                           #endif
                                   #endif // INA3221I1_ACT
                                 #if (INA3221U2_ACT > OFF)
-                                    if (inaU[0][1] != inaUold[0][1])
+                                    //if (inaU[0][1] != inaUold[0][1])
                                       {
                                         valINA3221u[0][1] = inaU[0][1];
                                         //pubINA3221u[0][1] = TRUE;
                                             //SVAL(" U 5.0    new ", inaU[0][1]);
+                                        dispText("U2 " + valINA3221u[0][1], 0, 2);
+                                        S2VAL(" U 5V ", inaU[0][1], "V");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1317,11 +1402,13 @@
                                       }
                                   #endif // INA3221U2_ACT
                                 #if (INA3221I2_ACT > OFF)
-                                    if (inaI[0][1] != inaIold[0][1])
+                                    //if (inaI[0][1] != inaIold[0][1])
                                       {
                                         valINA3221i[0][1] = inaI[0][1];
                                         //pubINA3221i[0][1] = TRUE;
                                             //SVAL(" I 5.0    new ", inaI[0][1]);
+                                        dispText(valINA3221i[0][1] + "mA", 6, 2);
+                                        S2VAL(" I 5V ", inaI[0][1], "mA");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1335,28 +1422,31 @@
                                         #if defined(USE_WEBSERVER)
                                           #endif
                                         inaIold[0][1]     = inaI[0][1];
+                                        #if (INA3221U2_ACT > OFF)
+                                            inaP[0][1] = inaU[0][1] * inaI[0][1] / 1000;
+                                            // if (inaP[0][1] != inaPold[0][1])
+                                              {
+                                                valINA3221p[0][1] = inaP[0][1];
+                                                  //pubINA3221p[0][1] = TRUE;
+                                                    //SVAL(" P 5.0    new ", inaP[0][1]);
+                                                dispText(valINA3221p[0][1] + "W", 12, 2);
+                                                S2VAL(" P 5V ", inaU[0][1], "W");
+                                                #if (USE_MQTT > OFF)
+                                                    if (errMQTT == MD_OK)
+                                                      {
+                                                        errMQTT = (int8_t) mqtt.publish(topina3221p[1].c_str(),
+                                                                                        (uint8_t*) valINA3221p[0][1].c_str(),
+                                                                                        valINA3221p[0][1].length());
+                                                        soutMQTTerr(topina3221p[1].c_str(), errMQTT);
+                                                            //SVAL(topina3221p[1].c_str(), valINA3221p[0][1]);
+                                                      }
+                                                  #endif
+                                                #if defined(USE_WEBSERVER)
+                                                  #endif
+                                              }
+                                            inaPold[0][1]     = inaP[0][1];
+                                          #endif // INA3221U2_ACT
                                       }
-                                    #if (INA3221U2_ACT > OFF)
-                                        if (inaP[0][1] != inaPold[0][1])
-                                          {
-                                            valINA3221p[0][1] = inaP[0][1];
-                                              //pubINA3221p[0][1] = TRUE;
-                                                //SVAL(" P 5.0    new ", inaP[0][1]);
-                                            #if (USE_MQTT > OFF)
-                                                if (errMQTT == MD_OK)
-                                                  {
-                                                    errMQTT = (int8_t) mqtt.publish(topina3221p[1].c_str(),
-                                                                                    (uint8_t*) valINA3221p[0][1].c_str(),
-                                                                                    valINA3221p[0][1].length());
-                                                    soutMQTTerr(topina3221p[1].c_str(), errMQTT);
-                                                        //SVAL(topina3221p[1].c_str(), valINA3221p[0][1]);
-                                                  }
-                                              #endif
-                                            #if defined(USE_WEBSERVER)
-                                              #endif
-                                          }
-                                        inaPold[0][1]     = inaP[0][1];
-                                      #endif // INA3221U2_ACT
                                   #endif // INA3221I2_ACT
                                 #if (INA3221U3_ACT > OFF)
                                     //if (inaU[0][2] != inaUold[0][2])
@@ -1364,8 +1454,8 @@
                                         valINA3221u[0][2] = inaU[0][2];
                                         //pubINA3221u[0][2] = TRUE;
                                             //sprintf(tmp_c32, "U3 %f V", inaU[0,2]);
-                                            dispText("U3 " + valINA3221u[0][2], 0, 1);
-                                            S2VAL(" U supply new ", inaU[0][2], "V");
+                                        dispText("U3 " + valINA3221u[0][2], 0, 3);
+                                        S2VAL(" U 3.3V ", inaU[0][2], "V");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1387,8 +1477,8 @@
                                         valINA3221i[0][2] = inaI[0][2];
                                         //pubINA3221i[0][2] = TRUE;
                                             //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
-                                            dispText(valINA3221i[0][2], 6, 1);
-                                            S2VAL(" I supply new ", inaI[0][2], "mA");
+                                        dispText(valINA3221i[0][2] + "mA", 6, 3);
+                                        S2VAL(" I 3.3V ", inaI[0][2], "mA");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1404,14 +1494,15 @@
                                         inaIold[0][2]     = inaI[0][2];
                                       }
                                     #if (INA3221U3_ACT > OFF)
+                                        inaP[0][2] = inaU[0][2] * inaI[0][2] / 1000;
                                         //if (inaP[0][2] != inaPold[0][2])
                                           {
                                             valINA3221p[0][2] = inaP[0][2];
                                             //pubINA3221p[0][2] = TRUE;
                                             inaPold[0][2]     = inaP[0][2];
                                             //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
-                                            dispText(valINA3221p[0][2], 9, 1);
-                                                S2VAL(" P supply new ", inaP[0][2], "W");
+                                            dispText(valINA3221p[0][2] + "W", 12, 3);
+                                            S2VAL(" P 3.3V ", inaP[0][2], "W");
                                             #if (USE_MQTT > OFF)
                                                 if (errMQTT == MD_OK)
                                                   {
@@ -2668,6 +2759,162 @@
             #endif
         #endif // USE_DISP
   // --- sensors -------------------------
+    // --- ADS1115
+      #if (USE_ADC1115_I2C > OFF)
+          static void initADS1115()
+            {
+              // init unit 1
+                STXT(" init ADS1115_1");
+                ads[0].init(0, ADS1_RUNMODE);       // init unit 1
+                // init channels
+                  /* unit 1 - channel 1 is always configured and always measured
+                     in case ADS11_MUX is not defined (this is allowed)
+                     - channel 1 unit 0
+                       - is initialized to
+                         - fastest mode and
+                         - smallest attenuation
+                       - is always activ measured
+                   */
+                  #if (ADS11_MUX == ADS1X15_MUX_SINGLE)
+                      STXT(" init ADS1115_1 chan 1");
+                      ads[0].initChan(0, ADS11_RATE, ADS11_GAIN, ADS1X15_REG_CONFIG_MUX_SINGLE_0);
+                    #else
+                      STXT(" auto init ADS1115_1 chan 1");
+                      ads[0].initChan(0, RATE_ADS1115_860SPS, GAIN_TWOTHIRDS, ADS1X15_REG_CONFIG_MUX_SINGLE_0);
+                    #endif
+                  #if (ADS12_MUX == ADS1X15_MUX_SINGLE)
+                      STXT(" init ADS1115_1 chan 2");
+                      ads[0].initChan(1, ADS12_RATE, ADS12_GAIN, ADS1X15_REG_CONFIG_MUX_SINGLE_1);
+                    #endif
+                  #if (ADS13_MUX == ADS1X15_MUX_SINGLE)
+                      STXT(" init ADS1115_1 chan 3");
+                      ads[0].initChan(2, ADS13_RATE, ADS13_GAIN, ADS1X15_REG_CONFIG_MUX_SINGLE_2);
+                    #endif
+                  #if (ADS14_MUX == ADS1X15_MUX_SINGLE)
+                      STXT(" init ADS1115_1 chan 4");
+                      ads[0].initChan(3, ADS13_RATE, ADS13_GAIN, ADS1X15_REG_CONFIG_MUX_SINGLE_3);
+                    #endif
+                // init unit 2
+                #if (USE_ADC1115_I2C > 1) // 1
+                    STXT(" init ADS1115_2");
+                    ads[1].init(1);       // init unit 2
+                    // init channels
+                      #ifdef ADS21_MUX
+                          STXT(" init ADS1115_2 chan 1");
+                          ads[1].initChan(0, ADS21_RATE, ADS21_GAIN, ADS21_MUX);
+                      #else
+                          STXT(" auto init ADS1115_2 chan 1");
+                          ads[1].initChan(0, RATE_ADS1115_860SPS, GAIN_TWOTHIRDS, ADS1X15_REG_CONFIG_MUX_SINGLE_0);
+                        #endif
+                      #ifdef ADS22_MUX
+                          STXT(" init ADS1115_2 chan 2");
+                          ads[1].initChan(1, ADS22_RATE, ADS22_GAIN, ADS12_MUX);
+                        #endif
+                      #ifdef ADS23_MUX
+                          STXT(" init ADS1115_2 chan 3");
+                          ads[1].initChan(2, ADS23_RATE, ADS23_GAIN, ADS13_MUX);
+                        #endif
+                      #ifdef ADS24_MUX
+                          STXT(" init ADS1115_2 chan 4");
+                          ads[1].initChan(3, ADS24_RATE, ADS24_GAIN, ADS14_MUX);
+                        #endif
+                    // init unit 3
+                    #if (USE_ADC1115_I2C > 2) // 2
+                        STXT(" init ADS1115_3");
+                        ads[2].init(2);       // init unit 3
+                        // init channels
+                          #ifdef ADS31_MUX
+                              STXT(" init ADS1115_3 chan 1");
+                              ads[2].initChan(0, ADS31_RATE, ADS31_GAIN, ADS31_MUX);
+                            #else
+                              STXT(" auto init ADS1115_3 chan 1");
+                              ads[2].initChan(0, RATE_ADS1115_860SPS, GAIN_TWOTHIRDS, ADS1X15_REG_CONFIG_MUX_SINGLE_0);
+                            #endif
+                          #ifdef ADS32_MUX
+                              STXT(" init ADS1115_3 chan 2");
+                              ads[2].initChan(1, ADS32_RATE, ADS32_GAIN, ADS32_MUX);
+                            #endif
+                          #ifdef ADS33_MUX
+                              STXT(" init ADS1115_3 chan 3");
+                              ads[2].initChan(2, ADS33_RATE, ADS33_GAIN, ADS33_MUX);
+                            #endif
+                          #ifdef ADS34_MUX
+                              STXT(" init ADS1115_3 chan 4");
+                              ads[2].initChan(3, ADS34_RATE, ADS34_GAIN, ADS34_MUX);
+                            #endif
+                        // init unit 4
+                        #if (USE_ADC1115_I2C > 3) // 3
+                             ads[3].init(3);       // init unit 3
+                            STXT(" init ADS1115_4 chan 1");
+                            // init channels
+                              #ifdef ADS41_MUX
+                                  STXT(" init ADS1115_4 chan 1");
+                                  ads[3].initChan(0, ADS41_RATE, ADS41_GAIN, ADS41_MUX);
+                                #else
+                                  STXT(" auto init ADS1115_4 chan 1");
+                                  ads[3].initChan(0, RATE_ADS1115_860SPS, GAIN_TWOTHIRDS, ADS1X15_REG_CONFIG_MUX_SINGLE_0);
+                                #endif
+                              #ifdef ADS42_MUX
+                                  STXT(" init ADS1115_4 chan 2");
+                                  ads[3].initChan(1, ADS42_RATE, ADS42_GAIN, ADS42_MUX);
+                                #endif
+                              #ifdef ADS43_MUX
+                                  STXT(" init ADS1115_4 chan 3");
+                                  ads[3].initChan(2, ADS43_RATE, ADS43_GAIN, ADS43_MUX);
+                                #endif
+                              #ifdef ADS44_MUX
+                                  STXT(" init ADS1115_4 chan 4");
+                                  ads[3].initChan(3, ADS44_RATE, ADS44_GAIN, ADS44_MUX);
+                                #endif
+                          #endif
+                      #endif
+                  #endif
+            }
+          static void startADS1115()
+            {
+              uint8_t _addr = ADS1_ADDR;
+              SVAL(" start ADS1115_1 ... prj ADS1", ADS1_RUNMODE);
+              if (ads[0].begin(ADS1_ADDR, pads0i2c))
+                { STXT(" ADS1115_1 started "); }
+                else
+                {
+                  if(ADS1_RUNMODE == MD_NORM)
+                    { STXT(" could not start ADS1115_1 "); }
+                    else
+                    { STXT(" simulation start ADS1115_1 "); }
+                }
+              #if (USE_ADC1115_I2C > 1) // 1
+                  _addr = ADS1_ADDR;
+                  #ifdef ADS2_ADDR
+                      _addr = ADS2_ADDR;
+                    #endif
+                  if (ads[1].begin(_addr, pads0i2c))
+                    { STXT(" ADS1115_2 started "); }
+                    else
+                    { STXT(" could not start ADS1115_2 "); }
+                  #if (USE_ADC1115_I2C > 2) // 2
+                      _addr = ADS1_ADDR;
+                      #ifdef ADS3_ADDR
+                          _addr = ADS3_ADDR;
+                        #endif
+                      if (ads[2].begin(_addr, pads0i2c))
+                        { STXT(" ADS1115_3 started "); }
+                        else
+                        { STXT(" could not start ADS1115_3 "); }
+                      #if (USE_ADC1115_I2C > 3) // 3
+                          _addr = ADS1_ADDR;
+                          #ifdef ADS4_ADDR
+                              _addr = ADS4_ADDR;
+                            #endif
+                          if (ads[3].begin(_addr, pads0i2c))
+                            { STXT(" ADS1115_4 started "); }
+                            else
+                            { STXT(" could not start ADS1115_4 "); }
+                        #endif
+                    #endif
+                #endif
+            }
+        #endif
   // --- network -------------------------
     // --- WIFI
       #if defined(USE_WIFI) || defined(USE_WEBSERVER)
@@ -3594,5 +3841,5 @@
               S2VAL(" search found", _cnt, "PZEMs");
             }
         #endif
-#endif // ESP32_TEST_MD_LIB
+#endif // PROJECT == PRJ_TINY_BASE_DEVKIT
 
