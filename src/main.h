@@ -34,7 +34,6 @@
     #include <md_filter.h>
     #include <md_projects.h>
   // check entries from platformio.ini
-
     #if (PROJECT > 0)
          #define HALLO 1
       #endif

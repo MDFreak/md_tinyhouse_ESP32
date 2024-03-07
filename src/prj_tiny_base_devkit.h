@@ -116,38 +116,38 @@
             #if (USE_OLED_I2C > OFF)
                 #define OLED_I2C_ADDR  I2C_OLED_3C
                 #define OLED_I2C       DEV_I2C1
+                #define OLED_I2C_SCL   PIN_I2C1_SCL
+                #define OLED_I2C_SDA   PIN_I2C1_SDA
                 // select OLED - device & GEO   GEO_RAWMODE?
                           // MC_UO_OLED_066_AZ   GEO_64_48    OLED_DRV_1306
                           // MC_UO_OLED_091_AZ   GEO_128_32   OLED_DRV_1306
                           // MC_UO_OLED_096_AZ   GEO_128_64   OLED_DRV_1306
                           // MC_UO_OLED_130_AZ   GEO_128_64   OLED_DRV_1106
                 #define OLED_I2C_TYP MC_UO_OLED_096_AZ  // OLED1 on DEV_I2C1
-                //#define OLED_STATUS     ON
-                #define OLED_I2C           DEV_I2C1
-                #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
-                    #define DISP_MAXCOLS   OLED_066_MAXCOLS
-                    #define DISP_MAXROWS   OLED_066_MAXROWS
-                    #define OLED_GEO       GEO_64_48
-                    #define OLED_DRV       OLED_DRV_1306
-                  #endif
-                #if (OLED_I2C_TYP == MC_UO_OLED_091_AZ)
-                    #define DISP_MAXCOLS   OLED_091_MAXCOLS
-                    #define DISP_MAXROWS   OLED_091_MAXROWS
-                    #define OLED_GEO       GEO_128_32
-                    #define OLED_DRV       OLED_DRV_1306
-                  #endif
-                #if (OLED_I2C_TYP == MC_UO_OLED_096_AZ)
-                    #define DISP_MAXCOLS   OLED_096_MAXCOLS
-                    #define DISP_MAXROWS   OLED_096_MAXROWS
-                    #define OLED_GEO       GEO_128_64
-                    #define OLED_DRV       OLED_DRV_1306
-                  #endif
-                #if (OLED_I2C_TYP == MC_UO_OLED_130_AZ)
-                    #define DISP_MAXCOLS   OLED_130_MAXCOLS
-                    #define DISP_MAXROWS   OLED_130_MAXROWS
-                    #define OLED_GEO       GEO_128_64
-                    #define OLED_DRV       OLED_DRV_1106
-                  #endif // OLED_I2C_TYP
+                  #if (OLED_I2C_TYP == MC_UO_OLED_066_AZ)
+                      #define DISP_MAXCOLS   OLED_066_MAXCOLS
+                      #define DISP_MAXROWS   OLED_066_MAXROWS
+                      #define OLED_GEO       GEO_64_48
+                      #define OLED_DRV       OLED_DRV_1306
+                    #endif
+                  #if (OLED_I2C_TYP == MC_UO_OLED_091_AZ)
+                      #define DISP_MAXCOLS   OLED_091_MAXCOLS
+                      #define DISP_MAXROWS   OLED_091_MAXROWS
+                      #define OLED_GEO       GEO_128_32
+                      #define OLED_DRV       OLED_DRV_1306
+                    #endif
+                  #if (OLED_I2C_TYP == MC_UO_OLED_096_AZ)
+                      #define DISP_MAXCOLS   OLED_096_MAXCOLS
+                      #define DISP_MAXROWS   OLED_096_MAXROWS
+                      #define OLED_GEO       GEO_128_64
+                      #define OLED_DRV       OLED_DRV_1306
+                    #endif
+                  #if (OLED_I2C_TYP == MC_UO_OLED_130_AZ)
+                      #define DISP_MAXCOLS   OLED_130_MAXCOLS
+                      #define DISP_MAXROWS   OLED_130_MAXROWS
+                      #define OLED_GEO       GEO_128_64
+                      #define OLED_DRV       OLED_DRV_1106
+                    #endif // OLED_I2C_TYP
                 // #define OLED_FLIP_VERTICAL TRUE
                 #if (OLED_I2C == DEV_I2C1)
                     #ifndef I2C1
@@ -161,10 +161,22 @@
                   #endif // OLED_I2C
               #endif // USE_OLED_I2C
             // --- I2C board connection
-            #if defined(USE_FRAM_I2C)
+            #if (USE_FRAM_I2C > OFF)
                 #define FRAM_I2C_ADDR      I2C_FRAM_50
-                #define FRAM_SIZE          0x8000u
                 #define FRAM_I2C           DEV_I2C1
+                #define FRAM1_I2C_SCL      PIN_I2C1_SCL
+                #define FRAM1_I2C_SDA      PIN_I2C1_SDA
+                #define FRAM_SIZE          0x8000u
+                #if (FRAM_I2C == DEV_I2C1)
+                    #ifndef I2C1
+                        #define I2C1
+                      #endif //I2C1
+                  #endif // OLED_I2C
+                #if (FRAM_I2C == DEV_I2C2)
+                    #ifndef I2C2
+                        #define I2C2
+                      #endif //I2C2
+                  #endif // OLED_I2C
               #endif
             #if defined(USE_CCS811_I2C)
                 //    #define CCS811_I2C_ADDR     I2C_CSS811_
@@ -237,7 +249,7 @@
                 #endif
               #endif
             #if defined(USE_BME280_I2C)
-                #define BME280_I2C               DEV_I2C1
+                #define BME280_I2C         DEV_I2C1
                 #if (BME280_I2C == DEV_I2C1)
                     #ifndef I2C1
                         #define I2C1
@@ -672,266 +684,266 @@
           #endif // USE_SPI
       // --- serial interface
       // --- analog connection
-            #if (USE_MQ135_GAS_ANA > OFF)
-                #define MQ135_GAS_ADC             ON
-                #define MQ135_GAS_1115            OFF
-                #define MQ135_FILT                15       // floating  measure filtering
-                #define MQ135_EM_WIN              100      // window for traffic light
-                #define MQ135_SCAL_MIN            0
-                #define MQ135_SCAL_MAX            100
-                  //#define MQ135_ThresFilt       25       // threshold measure filtering
-                  //#define MQ135_EM_MID          2350    // green < (MID-(WIN/2) < yellow < (MID+(WIN/2) < red
-                #ifndef USE_INPUT_CYCLE
-                    #define USE_INPUT_CYCLE
-                  #endif
+        #if (USE_MQ135_GAS_ANA > OFF)
+            #define MQ135_GAS_ADC             ON
+            #define MQ135_GAS_1115            OFF
+            #define MQ135_FILT                15       // floating  measure filtering
+            #define MQ135_EM_WIN              100      // window for traffic light
+            #define MQ135_SCAL_MIN            0
+            #define MQ135_SCAL_MAX            100
+              //#define MQ135_ThresFilt       25       // threshold measure filtering
+              //#define MQ135_EM_MID          2350    // green < (MID-(WIN/2) < yellow < (MID+(WIN/2) < red
+            #ifndef USE_INPUT_CYCLE
+                #define USE_INPUT_CYCLE
               #endif
-            #if (USE_MQ3_ALK_ANA > OFF)
-                #define MQ3_FILT                  5       // floating  measure filtering
-                #define MQ3_DROP                  1
-                #define MQ3_EM_WIN                100      // window for traffic light
-                #define MQ3_SCAL                  OFF
-                #define MQ3_ALK_ADC               OFF
-                #define MQ3_ALK_1115              ON
-                #if (MQ3_ALK_1115 > OFF)
-                    #define MQ3_1115_UNIDX          0
-                    #define MQ3_1115_CHIDX         3
-                    #define MQ3_1115_ATT          GAIN_TWOTHIRDS
-                    #define MQ3_OFFRAW            0
-                    #define MQ3_GAIN              0
-                    #define MQ3_OFFREAL           0
+          #endif
+        #if (USE_MQ3_ALK_ANA > OFF)
+            #define MQ3_FILT                  5       // floating  measure filtering
+            #define MQ3_DROP                  1
+            #define MQ3_EM_WIN                100      // window for traffic light
+            #define MQ3_SCAL                  OFF
+            #define MQ3_ALK_ADC               OFF
+            #define MQ3_ALK_1115              ON
+            #if (MQ3_ALK_1115 > OFF)
+                #define MQ3_1115_UNIDX          0
+                #define MQ3_1115_CHIDX         3
+                #define MQ3_1115_ATT          GAIN_TWOTHIRDS
+                #define MQ3_OFFRAW            0
+                #define MQ3_GAIN              0
+                #define MQ3_OFFREAL           0
+              #endif
+            #if (USE_MQTT > OFF)
+                #define MQTT_MQ3              "alc"
+              #endif
+            #ifndef USE_INPUT_CYCLE
+                #define USE_INPUT_CYCLE
+              #endif
+          #endif
+        #if (USE_PHOTO_SENS_ANA > OFF)
+            #define PHOTO1_FILT               0
+            #define PHOTO1_DROP               1
+            #define PHOTO1_ADC                ON
+            #if (PHOTO1_ADC > OFF)
+                #define PHOTO1_ADC_ATT        ADC_ATTEN_DB_11
+                #define PHOTO1_SCAL_OFFRAW    0
+                #define PHOTO1_SCAL_GAIN      0.02442
+                #define PHOTO1_SCAL_OFFREAL   0
+              #endif
+            #define PHOTO1_1115               OFF
+              #if (PHOTO1_1115 > OFF)
+                  #define PHOTO1_1115_UNIDX     0
+                  #define PHOTO1_1115_CHIDX    0
+                  #define PHOTO1_1115_ATT     GAIN_ONE
+                  #define PHOTO1_SCAL_OFFRAW  0
+                  #define PHOTO1_SCAL_GAIN    1
+                  #define PHOTO1_SCAL_OFFREAL 0
+                #endif
+            #if (USE_MQTT > OFF)
+                #define MQTT_PHOTO1           "photo1"
+              #endif
+            #if (USE_PHOTO_SENS_ANA > 1)
+                #define PHOTO2_FILT           7
+                #define PHOTO2_DROP           0
+                #define PHOTO2_SCAL           OFF
+                #define PHOTO2_SCAL_MIN       0
+                #define PHOTO2_SCAL_MAX       100
+                #define PHOTO2_ADC            ON
+                #if (PHOTO2_ADC > OFF)
+                    #define PHOTO2_ADC_ATT  ADC_ATTEN_DB_11
+                  #endif
+                #define PHOTO2_1115           OFF
+                #if (PHOTO2_1115 > OFF)
+                    #define PHOTO2_1115_ATT  GAIN_ONE
+                    #define PHOTO2_1115_UNIDX  0
+                    #define PHOTO2_1115_CHIDX 0
                   #endif
                 #if (USE_MQTT > OFF)
-                    #define MQTT_MQ3              "alc"
-                  #endif
-                #ifndef USE_INPUT_CYCLE
-                    #define USE_INPUT_CYCLE
+                    #define MQTT_PHOTO2           "licht2"
                   #endif
               #endif
-            #if (USE_PHOTO_SENS_ANA > OFF)
-                #define PHOTO1_FILT               0
-                #define PHOTO1_DROP               1
-                #define PHOTO1_ADC                ON
-                #if (PHOTO1_ADC > OFF)
-                    #define PHOTO1_ADC_ATT        ADC_ATTEN_DB_11
-                    #define PHOTO1_SCAL_OFFRAW    0
-                    #define PHOTO1_SCAL_GAIN      0.02442
-                    #define PHOTO1_SCAL_OFFREAL   0
+            #ifndef USE_INPUT_CYCLE
+                #define USE_INPUT_CYCLE
+              #endif
+          #endif
+        #if (USE_VCC_ANA > OFF)
+            //      #define VCC_FILT                0
+            //      #define VCC_DROP                1
+            //      #if (USE_VCC50_ANA > OFF)
+            //          #define VCC50_ADC           OFF
+            //          #define VCC50_1115          ON
+            //          #if (VCC50_ADC > OFF)
+            //              #define VCC50_ADC_ATT       ADC_ATTEN_DB_11
+            //              #define VCC50_SCAL          OFF
+            //              #define VCC50_SCAL_OFFRAW   0
+            //              #define VCC50_SCAL_GAIN     1
+            //              #define VCC50_SCAL_OFFREAL  0
+            //            #endif
+            //          #if (VCC50_1115 > OFF)
+            //              #define VCC_1115_UNIDX     0
+            //              #define VCC50_1115_CHIDX   2    //
+            //              #define ADS13_GAIN        GAIN_TWOTHIRDS
+            //              #define ADS13_RATE        RATE_ADS1115_128SPS
+            //              #define ADS13_MUX         ADS1X15_MUX_SINGLE
+            //              #define VCC50_SCAL        ON
+            //              #define VCC50_OFFRAW      0
+            //              #define VCC50_GAIN        2
+            //              #define VCC50_OFFREAL     0
+            //            #endif
+            //          #if (USE_MQTT > OFF)
+            //              #define MQTT_VCC50        "vcc50"
+            //            #endif
+            //        #endif
+            //      #if (USE_VCC33_ANA > OFF)
+            //          #define VCC33_ADC         OFF
+            //          #define VCC33_1115        ON
+            //          #if (VCC33_1115 > OFF)
+            //              #define VCC33_1115_UNIDX   0
+            //              #define VCC33_1115_CHIDX   3    //
+            //              #define ADS11_GAIN        GAIN_TWOTHIRDS
+            //              #define ADS11_RATE        RATE_ADS1115_128SPS
+            //              #define ADS11_MUX         ADS1X15_MUX_SINGLE
+            //              #define VCC33_SCAL        OFF
+            //              #define VCC33_OFFRAW      0
+            //              #define VCC33_GAIN        1
+            //              #define VCC33_OFFREAL     0
+            //            #endif
+            //          #if (USE_MQTT > OFF)
+            //              #define MQTT_VCC33          "vcc33"
+            //            #endif
+            //        #endif
+            //      #ifndef USE_INPUT_CYCLE
+            //          #define USE_INPUT_CYCLE
+            //        #endif
+          #endif
+        #if (USE_POTI_ANA > OFF)
+            //      #define POTI1_FILT              9
+            //      #define POTI1_DROP              1
+            //      #define POTI1_ADC               OFF
+            //      #if (POTI1_ADC > OFF)
+            //          #define POTI1_ADC_ATT     ADC_ATTEN_DB_11
+            //          #define VCC_SCAL_OFFRAW   0
+            //          #define VCC_SCAL_GAIN     1
+            //          #define VCC_SCAL_OFFREAL  0
+            //        #endif
+            //      #define POTI1_1115              ON
+            //      #if (POTI1_1115 > OFF)
+            //          #define POTI1_1115_UNIDX    0
+            //          #define POTI1_1115_CHIDX    0
+            //          #define ADS14_GAIN          GAIN_TWOTHIRDS
+            //          #define ADS14_RATE          RATE_ADS1115_128SPS
+            //          #define ADS14_MUX           ADS1X15_MUX_SINGLE
+            //          #define POTI1_OFFRAW        0
+            //          #define POTI1_GAIN          1
+            //          #define POTI1_OFFREAL       0
+            //        #endif
+            //      #if (USE_MQTT > OFF)
+            //          #define MQTT_POTI1          "poti1"
+            //        #endif
+            //      #if (USE_POTI_ANA > 1)
+            //          #define POTI2_FILT          7
+            //          #define POTI2_DROP          0
+            //          #define POTI2_SCAL          OFF
+            //          #define POTI2_SCAL_MIN      0
+            //          #define POTI2_SCAL_MAX      100
+            //          #define POTI2_ADC           ON
+            //          #if (POTI2_ADC > OFF)
+            //              #define POTI2_ADC_ATT   ADC_ATTEN_DB_11
+            //            #endif
+            //          #define POTI2_1115            OFF
+            //          #if (POTI2_1115 > OFF)
+            //              #define POTI2_1115_UNIDX  0
+            //              #define POTI2_1115_CHIDX 0
+            //              #define POTI2_1115_ATT  GAIN_TWOTHIRDS
+            //            #endif
+            //          #if (USE_MQTT > OFF)
+            //              #define MQTT_POTI2          "poti2"
+            //            #endif
+            //        #endif
+            //      #ifndef USE_INPUT_CYCLE
+            //          #define USE_INPUT_CYCLE
+            //        #endif
+          #endif
+        #if (USE_ACS712_ANA > OFF)
+            /*  ACS712 hall effect current sensor +/- 5A/20A/30 A
+                output: VCC/2 (2,5V) + measured value
+                sensitivity: type  5A -> 186mV/A ->  1570 - 3430 mV
+                sensitivity: type 20A -> 100mV/A ->   500 - 4500 mV
+                sensitivity: type 30A ->  66mV/A ->   520 - 4480 mV
+              */
+            #define I712_FILT               0
+            #define I712_DROP               0
+            #define I712_1_IMAX             5000 // mA
+            #define I712_1_ADC              OFF // not recommended, low resolution
+            #if (I712_1_ADC > OFF)
+                #define I712_1_ADC_ATT   ADC_ATTEN_DB_11
+              #endif
+            #define I712_1_1115             ON
+            #if (I712_1_1115 > OFF)
+                #define I712_1_1115_UNIDX    0
+                #define I712_1_1115_CHIDX    1
+                #if   (I712_1_IMAX ==  5000)
+                    #define ADS12_GAIN            GAIN_TWOTHIRDS
+                    #define ADS12_RATE            RATE_ADS1115_128SPS
+                    #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                    #define I712_1_SCAL_OFFRAW    0
+                    #define I712_1_SCAL_GAIN      185
+                    #define I712_1_SCAL_OFFREAL   0
                   #endif
-                #define PHOTO1_1115               OFF
-                  #if (PHOTO1_1115 > OFF)
-                      #define PHOTO1_1115_UNIDX     0
-                      #define PHOTO1_1115_CHIDX    0
-                      #define PHOTO1_1115_ATT     GAIN_ONE
-                      #define PHOTO1_SCAL_OFFRAW  0
-                      #define PHOTO1_SCAL_GAIN    1
-                      #define PHOTO1_SCAL_OFFREAL 0
-                    #endif
+                #if (I712_1_IMAX == 20000)
+                    #define ADS12_GAIN            GAIN_ONE
+                    #define ADS12_RATE            RATE_ADS1115_128SPS
+                    #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                    #define I712_1_SCAL_OFFRAW    0
+                    #define I712_1_SCAL_GAIN      1
+                    #define I712_1_SCAL_OFFRAW    0
+                  #endif
+                #if (I712_1_IMAX == 30000)
+                    #define ADS12_GAIN            GAIN_ONE
+                    #define ADS12_RATE            RATE_ADS1115_128SPS
+                    #define ADS12_MUX             ADS1X15_MUX_SINGLE
+                    #define I712_1_SCAL_OFFRAW    0
+                    #define I712_1_SCAL_GAIN      1
+                    #define I712_1_SCAL_OFFRAW    0
+                  #endif
                 #if (USE_MQTT > OFF)
-                    #define MQTT_PHOTO1           "photo1"
-                  #endif
-                #if (USE_PHOTO_SENS_ANA > 1)
-                    #define PHOTO2_FILT           7
-                    #define PHOTO2_DROP           0
-                    #define PHOTO2_SCAL           OFF
-                    #define PHOTO2_SCAL_MIN       0
-                    #define PHOTO2_SCAL_MAX       100
-                    #define PHOTO2_ADC            ON
-                    #if (PHOTO2_ADC > OFF)
-                        #define PHOTO2_ADC_ATT  ADC_ATTEN_DB_11
-                      #endif
-                    #define PHOTO2_1115           OFF
-                    #if (PHOTO2_1115 > OFF)
-                        #define PHOTO2_1115_ATT  GAIN_ONE
-                        #define PHOTO2_1115_UNIDX  0
-                        #define PHOTO2_1115_CHIDX 0
-                      #endif
-                    #if (USE_MQTT > OFF)
-                        #define MQTT_PHOTO2           "licht2"
-                      #endif
-                  #endif
-                #ifndef USE_INPUT_CYCLE
-                    #define USE_INPUT_CYCLE
+                    #define MQTT_I712_1         "acs7121"
                   #endif
               #endif
-            #if (USE_VCC_ANA > OFF)
-                //      #define VCC_FILT                0
-                //      #define VCC_DROP                1
-                //      #if (USE_VCC50_ANA > OFF)
-                //          #define VCC50_ADC           OFF
-                //          #define VCC50_1115          ON
-                //          #if (VCC50_ADC > OFF)
-                //              #define VCC50_ADC_ATT       ADC_ATTEN_DB_11
-                //              #define VCC50_SCAL          OFF
-                //              #define VCC50_SCAL_OFFRAW   0
-                //              #define VCC50_SCAL_GAIN     1
-                //              #define VCC50_SCAL_OFFREAL  0
-                //            #endif
-                //          #if (VCC50_1115 > OFF)
-                //              #define VCC_1115_UNIDX     0
-                //              #define VCC50_1115_CHIDX   2    //
-                //              #define ADS13_GAIN        GAIN_TWOTHIRDS
-                //              #define ADS13_RATE        RATE_ADS1115_128SPS
-                //              #define ADS13_MUX         ADS1X15_MUX_SINGLE
-                //              #define VCC50_SCAL        ON
-                //              #define VCC50_OFFRAW      0
-                //              #define VCC50_GAIN        2
-                //              #define VCC50_OFFREAL     0
-                //            #endif
-                //          #if (USE_MQTT > OFF)
-                //              #define MQTT_VCC50        "vcc50"
-                //            #endif
-                //        #endif
-                //      #if (USE_VCC33_ANA > OFF)
-                //          #define VCC33_ADC         OFF
-                //          #define VCC33_1115        ON
-                //          #if (VCC33_1115 > OFF)
-                //              #define VCC33_1115_UNIDX   0
-                //              #define VCC33_1115_CHIDX   3    //
-                //              #define ADS11_GAIN        GAIN_TWOTHIRDS
-                //              #define ADS11_RATE        RATE_ADS1115_128SPS
-                //              #define ADS11_MUX         ADS1X15_MUX_SINGLE
-                //              #define VCC33_SCAL        OFF
-                //              #define VCC33_OFFRAW      0
-                //              #define VCC33_GAIN        1
-                //              #define VCC33_OFFREAL     0
-                //            #endif
-                //          #if (USE_MQTT > OFF)
-                //              #define MQTT_VCC33          "vcc33"
-                //            #endif
-                //        #endif
-                //      #ifndef USE_INPUT_CYCLE
-                //          #define USE_INPUT_CYCLE
-                //        #endif
-              #endif
-            #if (USE_POTI_ANA > OFF)
-                //      #define POTI1_FILT              9
-                //      #define POTI1_DROP              1
-                //      #define POTI1_ADC               OFF
-                //      #if (POTI1_ADC > OFF)
-                //          #define POTI1_ADC_ATT     ADC_ATTEN_DB_11
-                //          #define VCC_SCAL_OFFRAW   0
-                //          #define VCC_SCAL_GAIN     1
-                //          #define VCC_SCAL_OFFREAL  0
-                //        #endif
-                //      #define POTI1_1115              ON
-                //      #if (POTI1_1115 > OFF)
-                //          #define POTI1_1115_UNIDX    0
-                //          #define POTI1_1115_CHIDX    0
-                //          #define ADS14_GAIN          GAIN_TWOTHIRDS
-                //          #define ADS14_RATE          RATE_ADS1115_128SPS
-                //          #define ADS14_MUX           ADS1X15_MUX_SINGLE
-                //          #define POTI1_OFFRAW        0
-                //          #define POTI1_GAIN          1
-                //          #define POTI1_OFFREAL       0
-                //        #endif
-                //      #if (USE_MQTT > OFF)
-                //          #define MQTT_POTI1          "poti1"
-                //        #endif
-                //      #if (USE_POTI_ANA > 1)
-                //          #define POTI2_FILT          7
-                //          #define POTI2_DROP          0
-                //          #define POTI2_SCAL          OFF
-                //          #define POTI2_SCAL_MIN      0
-                //          #define POTI2_SCAL_MAX      100
-                //          #define POTI2_ADC           ON
-                //          #if (POTI2_ADC > OFF)
-                //              #define POTI2_ADC_ATT   ADC_ATTEN_DB_11
-                //            #endif
-                //          #define POTI2_1115            OFF
-                //          #if (POTI2_1115 > OFF)
-                //              #define POTI2_1115_UNIDX  0
-                //              #define POTI2_1115_CHIDX 0
-                //              #define POTI2_1115_ATT  GAIN_TWOTHIRDS
-                //            #endif
-                //          #if (USE_MQTT > OFF)
-                //              #define MQTT_POTI2          "poti2"
-                //            #endif
-                //        #endif
-                //      #ifndef USE_INPUT_CYCLE
-                //          #define USE_INPUT_CYCLE
-                //        #endif
-              #endif
-            #if (USE_ACS712_ANA > OFF)
-                /*  ACS712 hall effect current sensor +/- 5A/20A/30 A
-                    output: VCC/2 (2,5V) + measured value
-                    sensitivity: type  5A -> 186mV/A ->  1570 - 3430 mV
-                    sensitivity: type 20A -> 100mV/A ->   500 - 4500 mV
-                    sensitivity: type 30A ->  66mV/A ->   520 - 4480 mV
-                  */
-                #define I712_FILT               0
-                #define I712_DROP               0
-                #define I712_1_IMAX             5000 // mA
-                #define I712_1_ADC              OFF // not recommended, low resolution
-                #if (I712_1_ADC > OFF)
-                    #define I712_1_ADC_ATT   ADC_ATTEN_DB_11
+            #if (USE_ACS712_ANA > 1)
+                #define I712_2_IMAX             5000 // mA
+                #define I712_2_ADC              OFF // not recommended, low resolution
+                #define I712_2_1115             ON
+                #if (I712_2_ADC > OFF)
+                    #define I712_2_ADC_ATT   ADC_ATTEN_DB_11
                   #endif
-                #define I712_1_1115             ON
-                #if (I712_1_1115 > OFF)
-                    #define I712_1_1115_UNIDX    0
-                    #define I712_1_1115_CHIDX    1
-                    #if   (I712_1_IMAX ==  5000)
-                        #define ADS12_GAIN            GAIN_TWOTHIRDS
-                        #define ADS12_RATE            RATE_ADS1115_128SPS
-                        #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                        #define I712_1_SCAL_OFFRAW    0
-                        #define I712_1_SCAL_GAIN      185
-                        #define I712_1_SCAL_OFFREAL   0
+                #if (I712_2_1115 > OFF)
+                    #define I712_2_1115_UNIDX     0
+                    #define I712_2_1115_CHIDX    2
+                    #if  (I712_2_IMAX ==  5000)
+                        #define I712_2_1115_ATT       GAIN_ONE
+                        #define I712_2_SCAL_OFFRAW    0
+                        #define I712_2_SCAL_GAIN      1
+                        #define I712_2_SCAL_OFFREAL   0
                       #endif
-                    #if (I712_1_IMAX == 20000)
-                        #define ADS12_GAIN            GAIN_ONE
-                        #define ADS12_RATE            RATE_ADS1115_128SPS
-                        #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                        #define I712_1_SCAL_OFFRAW    0
-                        #define I712_1_SCAL_GAIN      1
-                        #define I712_1_SCAL_OFFRAW    0
+                    #if (I712_2_IMAX == 20000)
+                        #define I712_2_1115_ATT      GAIN_TWOTHIRDS
+                        #define I712_2_SCAL_OFFRAW    0
+                        #define I712_2_SCAL_GAIN      1
+                        #define I712_2_SCAL_OFFRAW    0
                       #endif
-                    #if (I712_1_IMAX == 30000)
-                        #define ADS12_GAIN            GAIN_ONE
-                        #define ADS12_RATE            RATE_ADS1115_128SPS
-                        #define ADS12_MUX             ADS1X15_MUX_SINGLE
-                        #define I712_1_SCAL_OFFRAW    0
-                        #define I712_1_SCAL_GAIN      1
-                        #define I712_1_SCAL_OFFRAW    0
+                    #if (I712_2_IMAX == 30000)
+                        #define I712_2_1115_ATT      GAIN_TWOTHIRDS
+                        #define I712_2_SCAL_OFFRAW    0
+                        #define I712_2_SCAL_GAIN      1
+                        #define I712_2_SCAL_OFFRAW    0
                       #endif
                     #if (USE_MQTT > OFF)
                         #define MQTT_I712_1         "acs7121"
-                      #endif
-                  #endif
-                #if (USE_ACS712_ANA > 1)
-                    #define I712_2_IMAX             5000 // mA
-                    #define I712_2_ADC              OFF // not recommended, low resolution
-                    #define I712_2_1115             ON
-                    #if (I712_2_ADC > OFF)
-                        #define I712_2_ADC_ATT   ADC_ATTEN_DB_11
-                      #endif
-                    #if (I712_2_1115 > OFF)
-                        #define I712_2_1115_UNIDX     0
-                        #define I712_2_1115_CHIDX    2
-                        #if  (I712_2_IMAX ==  5000)
-                            #define I712_2_1115_ATT       GAIN_ONE
-                            #define I712_2_SCAL_OFFRAW    0
-                            #define I712_2_SCAL_GAIN      1
-                            #define I712_2_SCAL_OFFREAL   0
-                          #endif
-                        #if (I712_2_IMAX == 20000)
-                            #define I712_2_1115_ATT      GAIN_TWOTHIRDS
-                            #define I712_2_SCAL_OFFRAW    0
-                            #define I712_2_SCAL_GAIN      1
-                            #define I712_2_SCAL_OFFRAW    0
-                          #endif
-                        #if (I712_2_IMAX == 30000)
-                            #define I712_2_1115_ATT      GAIN_TWOTHIRDS
-                            #define I712_2_SCAL_OFFRAW    0
-                            #define I712_2_SCAL_GAIN      1
-                            #define I712_2_SCAL_OFFRAW    0
-                          #endif
-                        #if (USE_MQTT > OFF)
-                            #define MQTT_I712_1         "acs7121"
-                            #define MQTT_I712_2         "acs7122"
-                          #endif
+                        #define MQTT_I712_2         "acs7122"
                       #endif
                   #endif
               #endif
+          #endif
       // --- network
         // --- WIFI
           #define UTC_SEASONTIME UTC_SUMMERTIME
@@ -1248,6 +1260,16 @@
                       //        #endif
                       //    #endif
       // --- memories
+        #if (USE_FRAM_I2C > OFF)
+            #define FRAM1_I2C_ADDR      I2C_FRAM_50
+            #define FRAM1_SIZE          0x8000
+            #define FRAM1_I2C           I2C1
+            #if (USE_FRAM_I2C > 1 )
+                #define FRAM2_I2C_ADDR  I2C_FRAM_50
+                #define FRAM1_SIZE      0x8000
+                #define FRAM2_I2C       I2C2
+              #endif
+          #endif
                     //// ---
                     //  #define FORMAT_SPIFFS_IF_FAILED true
                   // --- sensors

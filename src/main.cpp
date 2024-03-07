@@ -55,14 +55,6 @@
   // --- project devices
     // oled
       #ifdef USE_OLED_I2C
-          #if (OLED_I2C == DEV_I2C1)                //#define OLED_I2C_SCL       PIN_I2C1_SCL
-              #define OLED_I2C_SCL       PIN_I2C1_SCL
-              #define OLED_I2C_SDA       PIN_I2C1_SDA
-            #endif
-          #if (OLED_I2C == DEV_I2C2)                //#define OLED_I2C_SCL       PIN_I2C1_SCL
-              #define OLED_I2C_SCL       PIN_I2C2_SCL
-              #define OLED_I2C_SDA       PIN_I2C2_SDA
-            #endif
           #if (OLED_DRV == OLED_DRV_1306)
               //#define OLED_I2C_SDA       PIN_I2C1_SDA
               SSD1306Wire oled(OLED_I2C_ADDR, OLED_I2C_SDA, OLED_I2C_SCL, (OLEDDISPLAY_GEOMETRY) OLED_GEO);
@@ -265,12 +257,12 @@
             //md_val<float> bme280TVal;
             //md_val<float> bme280PVal;
             //md_val<float> bme280HVal;
-          float         bme280T       = 0;
-          float         bme280P       = 0;
-          float         bme280H       = 0;
-          float         bme280Told    = MD_F_MAX;
-          float         bme280Pold    = MD_F_MAX;
-          float         bme280Hold    = MD_F_MAX;
+          int16_t       bme280T       = 0;
+          int16_t       bme280P       = 0;
+          int16_t       bme280H       = 0;
+          int16_t       bme280Told    = 0xffffu;
+          int16_t       bme280Pold    = 0xffffu;
+          int16_t       bme280Hold    = 0xffffu;
           static String valBME280T    = "";
           static String valBME280P    = "";
           static String valBME280H    = "";
@@ -295,17 +287,17 @@
           //md_scale<float>  inaISkal[USE_INA3221_I2C][3];
           //md_val<float>    inaUVal[USE_INA3221_I2C][3];
           //md_scale<float>  inaUSkal[USE_INA3221_I2C][3];
-          static float     inaI   [USE_INA3221_I2C][3];
-          static float     inaU   [USE_INA3221_I2C][3];
-          static float     inaP   [USE_INA3221_I2C][3];
-          static float     inaIold[USE_INA3221_I2C][3];
-          static float     inaUold[USE_INA3221_I2C][3];
-          static float     inaPold[USE_INA3221_I2C][3];
-          static String    valINA3221i[USE_INA3221_I2C][3];
+          static float     inaU       [USE_INA3221_I2C][3];
+          static int16_t   inaI       [USE_INA3221_I2C][3];
+          static int16_t   inaP       [USE_INA3221_I2C][3];
+          static float     inaUold    [USE_INA3221_I2C][3];
+          static int16_t   inaIold    [USE_INA3221_I2C][3];
+          static int16_t   inaPold    [USE_INA3221_I2C][3];
           static String    valINA3221u[USE_INA3221_I2C][3];
+          static String    valINA3221i[USE_INA3221_I2C][3];
           static String    valINA3221p[USE_INA3221_I2C][3];
-          static int8_t    pubINA3221i[USE_INA3221_I2C][3];
           static int8_t    pubINA3221u[USE_INA3221_I2C][3];
+          static int8_t    pubINA3221i[USE_INA3221_I2C][3];
           static int8_t    pubINA3221p[USE_INA3221_I2C][3];
           #if (USE_MQTT > OFF)
               static String topina3221i[3] = { MQTT_ina3221I1, MQTT_ina3221I2, MQTT_ina3221I3 };
@@ -685,16 +677,17 @@
                         //SOUT("c1 ");
                         #if (USE_BME280_I2C > OFF)
                             // BME280 temperature
-                              bme280T = round(bme280_1.readTemperature() * 10) / 10;
+                              bme280T = round(bme280_1.readTemperature());
                               #if (BME280T_FILT > 0)
                                   bme280T = bme280TVal.doVal(bme280T);
                                 #endif
                             // BME280 humidity
-                              bme280H = round(bme280_1.readHumidity() * 10) / 10;
+                              bme280H = round(bme280_1.readHumidity());
                               #if (BME280H_FILT > 0)
                                   bme280H = bme280HVal[0].doVal( bme280H);
                                 #endif
                             // BME280 envirement air pressure
+                              //bme280P = round((bme280_1.readPressure() / 100) + 0.5);
                               bme280P = round((bme280_1.readPressure() / 100) + 0.5);
                               #if (BME280P_FILT > 0)
                                   bme280P = bme280PVal[0].doVal(bme280P);
@@ -750,43 +743,42 @@
                         //SOUT(" c3");
                         #if (USE_INA3221_I2C > OFF)
                             #if (INA3221U1_ACT > OFF)
-                                inaU[0][0] = ina3221.getBusVoltage_V(1);
-                                #if (INA3221I1_FILT > OFF)
+                                inaU[0][0] = round(ina3221.getBusVoltage_V(1) *10) / 10;
+                                #if (INA3221U1_FILT > OFF)
                                     inaU[0][0] = ccsCVal.doVal(inaU[0][0]);
                                   #endif
-                                //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
                               #endif // INA3221U1_ACT
                             #if (INA3221I1_ACT > OFF)
-                                inaI[0][0] = ina3221.getCurrent_mA(1);
+                                inaI[0][0] = round(ina3221.getCurrent_mA(1));
                                 #if (INA3221U1_ACT > OFF)
-                                    inaP[0][0] = (inaU[0][0] * inaI[0][0]) / 1000;
+                                    inaP[0][0] = (inaU[0][0] * inaI[0][0]);
                                   #endif
                               #endif // INA3221I1_ACT
                             #if (INA3221U2_ACT > OFF)
-                                inaU[0][1] = ina3221.getBusVoltage_V(2);
+                                inaU[0][1] = round(ina3221.getBusVoltage_V(2) *10) / 10;
                                 #if (INA3221U2_FILT > OFF)
                                     inaU[0][1] = ccsCVal.doVal(inaU[0][1]);
                                   #endif
                               #endif // INA3221U2_ACT
                             #if (INA3221I2_ACT > OFF)
-                                inaI[0][1] = -ina3221.getCurrent_mA(2);
+                                inaI[0][1] = round(ina3221.getCurrent_mA(2));
                                 #if (INA3221U2_ACT > OFF)
-                                    inaP[0][1] = (inaU[0][1] * inaI[0][1]) / 1000;
+                                    inaP[0][1] = (inaU[0][1] * inaI[0][1]);
                                   #endif // INA3221U2_ACT
                               #endif // INA3221I2_ACT
                             #if (INA3221U3_ACT > OFF)
-                                inaU[0][2] = ina3221.getBusVoltage_V(3);
+                                inaU[0][2] = round(ina3221.getBusVoltage_V(3) *10) / 10;
                                 #if (INA3221U3_FILT > OFF)
                                     inaU[0][2] = ccsCVal.doVal(inaU[0][2]);
                                   #endif
                               #endif // INA3221U3_ACT
                             #if (INA3221I3_ACT > OFF)
-                                inaI[0][2] = -ina3221.getCurrent_mA(3);
+                                inaI[0][2] = round(ina3221.getCurrent_mA(3));
                                 #if (INA3221I3_FILT > OFF)
                                     inaI[0][2] = ccsCVal.doVal(inaI[0][2]);
                                   #endif
                                 #if (INA3221U3_ACT > OFF)
-                                    inaP[0][2] = (inaU[0][2] * inaI[0][2]) / 1000;
+                                    inaP[0][2] = (inaU[0][2] * inaI[0][2]);
                                   #endif // INA3221U3_ACT
                               #endif // INA3221I3_ACT
                           #endif
@@ -986,120 +978,6 @@
                     //heapFree("-meascyc");
               }
           #endif
-      // library tests
-        #if (PROJECT == PRJ_TEST_LIB_OLED)
-            if (firstrun == true) { STXT(" run TEST_LIB_OLED "); }
-            oled.clear(); drawLines();
-            oled.clear(); drawRect();
-            oled.clear(); fillRect();
-            oled.clear(); drawCircle();
-                //oled.clear(); printBuffer();
-            oled.clear(); drawFontFaceDemo();
-                //oled.clear(); drawTextFlowDemo();
-                //oled.clear(); drawTextAlignmentDemo();
-                //oled.clear(); drawRectDemo();
-                //oled.clear(); drawCircleDemo();
-            oled.clear(); drawProgressBarDemo();
-            oled.clear(); writeTextDemo();
-          #endif
-        #if (PROJECT == PRJ_TEST_LIB_BME280)
-            if (firstrun == true)
-              {
-                STXT(" run TEST_LIB_BME280 ");
-                oled.clearUser();
-              }
-            dispStatus("PRJ_TEST_LIB_BME280 läuft", TRUE);
-            bme280T = round( bme280_1.readTemperature() * 10 ) / 10;
-            sprintf(tmp_c32, "BME280 T %.1f %%", bme280T);
-            dispText(tmp_c32, 0, 1);
-            bme280H = round( bme280_1.readHumidity() * 10 ) / 10;
-            sprintf(tmp_c32, "BME280 H %.0f %%", bme280H);
-            dispText(tmp_c32, 0, 2);
-            bme280P = round( bme280_1.readPressure() / 100 );
-            sprintf(tmp_c32, "BME280 P %.0f %%", bme280P);
-            dispText(tmp_c32, 0, 3);
-            Serial.printf(" BME280  T = %.1f°C  P = %.0fmbar  H = %.0f%% \n", bme280T, bme280P, bme280H);
-            bme280_1.takeForcedMeasurement();
-          #endif
-        #if (PROJECT == PRJ_TEST_LIB_TFT)
-            if (firstrun == true)
-              {
-                STXT(" run TEST_LIB_TFT ");
-                //oled.clearUser();
-              }
-            draw_Julia(-0.8,+0.156,zoom);
-            tft.fillRect(0, 0, 150, 20, TFT_BLACK);
-            //tft.setcursor(0,15);
-            tft.setTextColor(TFT_WHITE);
-            tft.print(" Zoom = ");
-            tft.println(zoom);
-            delay(2000);
-            zoom *= 1.5;
-            if (zoom > 100) zoom = 0.5;
-          #endif
-        #if (PROJECT == PRJ_TEST_LIB_INA3221)
-            #if (USE_INA3221_I2C > OFF)
-                // U 3.3V supply
-                  inaU[0][0] = ina3221.getBusVoltage_V(1);
-                    //SVAL(" U 3.3    new ", inaU[0][0]);
-                    sprintf(outBuf, "U33 %.1fV", inaU[0][0]);
-                    STXT(outBuf);
-                    dispText(outBuf,0,1);
-                  #if (INA3221I1_FILT > OFF)
-                      inaU[0][0] = ccsCVal.doVal(inaU[0][0]);
-                    #endif
-                      //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
-                // I 3.3V not used
-                  #ifdef NOTUSED
-                      inaI[0][0] = ina3221.getCurrent_mA(1);
-                    #endif
-                // P 3.3V not used
-                // U 5V supply
-                  inaU[0][1] = ina3221.getBusVoltage_V(2);
-                    //SVAL(" U 5.0    new ", inaU[0][1]);
-                #if (INA3221I1_FILT > OFF)
-                      inaU[0][1] = ccsCVal.doVal(inaU[0][1]);
-                    #endif
-                // I 5V supply
-                  inaI[0][1] = -ina3221.getCurrent_mA(2);
-                    //SVAL(" I 5.0    new ", inaI[0][1]);
-                // P 5V supply
-                  inaP[0][1] = (inaU[0][1] * inaI[0][1]);
-                    //SVAL(" P 5.0    new ", inaP[0][1]);
-                    sprintf(outBuf, "U50 %.1fV %.1fmA %.1fmW", inaU[0][1], inaI[0][1], inaP[0][1]);
-                    STXT(outBuf);
-                    dispText(outBuf,0,2);
-                // U main supply 12V/19V supply
-                  inaU[0][2] = ina3221.getBusVoltage_V(3);
-                    //SVAL(" U supply new ", inaU[0][2]);
-                  #if (INA3221U3_FILT > OFF)
-                      inaU[0][2] = ccsCVal.doVal(inaU[0][2]);
-                    #endif
-                // I main supply 12V/19V supply
-                  inaI[0][2] = -ina3221.getCurrent_mA(3);
-                    //SVAL(" I supply new ", inaI[0][2]);
-                  #if (INA3221I3_FILT > OFF)
-                      inaI[0][2] = ccsCVal.doVal(inaI[0][2]);
-                    #endif
-                // P main supply
-                  inaP[0][2] = (inaU[0][2] * inaI[0][2]);
-                    //SVAL(" P supply new ", inaP[0][2]);
-                    sprintf(outBuf, "UIn %.1fV %.1fmA %.1fmW", inaU[0][2], inaI[0][2], inaP[0][2]);
-                    STXT(outBuf);
-                    dispText(outBuf,0,3);
-              #endif
-          #endif
-        #if (PROJECT == PRJ_TEST_LIB_PZEM017)
-            //pzemU = pzems.voltage();
-            //pzemI = pzems.current();
-            //pzemP = pzems.power();
-            //pzemE = pzems.energy();
-            //S2VAL("U ", pzemU[0], "V");
-            //S2VAL("I ", pzemI[0], "A");
-            //S2VAL("P ", pzemP[0], "W");
-            //S2VAL("E ", pzemE[0], "Wh");
-            //SVAL("Update ", pzems.updateValues());
-          #endif
       // sensoren
         #if (USE_BME280_I2C > OFF)
 
@@ -1115,12 +993,18 @@
                       {
                         case 1:  // BME280_I2C / BME680
                             #if defined(USE_BME280_I2C)
-                                //if (bme280T != bme280Told)
+                                if (bme280T != bme280Told)
                                   {
                                         //SVAL(" 280readT  new ", bme280T);
                                     //dispText("U1 " + valINA3221u[0][0], 0, 1);
+                                    //tmp_i32 = (int16_t) (bme280T+ 0.5);
                                     dispText((String) bme280T + "°", 0, 5);
                                     S2VAL(" Temp ", bme280T, "°C");
+                                    #if defined(USE_WEBSERVER)
+                                        tmpStr = "SVA0";
+                                        tmpStr.concat(bme280T);
+                                        pmdServ->updateAll(tmpStr);
+                                      #endif
                                     #if (USE_MQTT > OFF)
                                         if (errMQTT == MD_OK)
                                           {
@@ -1130,15 +1014,9 @@
                                                 //SVAL(topBME280t, valBME280t);
                                           }
                                       #endif
-                                    #if defined(USE_WEBSERVER)
-                                        tmpStr = "SVA0";
-                                        tmp_i32 = (int16_t) (bme280T+ 0.5);
-                                        tmpStr.concat(tmp_i32);
-                                        pmdServ->updateAll(tmpStr);
-                                      #endif
                                     bme280Told = bme280T;
                                   }
-                                //if (bme280H != bme280Hold)
+                                if (bme280H != bme280Hold)
                                   {
                                     dispText((String) bme280H + "%", 5, 5);
                                     S2VAL(" Feuchte ", bme280H, "%");
@@ -1153,16 +1031,16 @@
                                       #endif
                                     #if defined(USE_WEBSERVER)
                                         tmpStr = "SVA2";
-                                        tmp_i32 = (int16_t) bme280H;
-                                        tmpStr.concat(tmp_i32);
+                                        //tmp_i32 = (int16_t) bme280H;
+                                        tmpStr.concat(bme280H);
                                         pmdServ->updateAll(tmpStr);
                                       #endif
                                     bme280Hold = bme280H;
                                   }
-                                //if (bme280P != bme280Pold)
+                                if (bme280P != bme280Pold)
                                   {
-                                    dispText((String) bme280H + "hP", 10, 5);
-                                    S2VAL(" Druck ", bme280P, "mbar");
+                                    dispText((String) bme280P + "hP", 9, 5);
+                                    S2VAL(" Druck ", bme280P, "hP");
                                     #if (USE_MQTT > OFF)
                                         if (errMQTT == MD_OK)
                                           {
@@ -1174,8 +1052,8 @@
                                       #endif
                                     #if defined(USE_WEBSERVER)
                                         tmpStr = "SVA1";
-                                        tmp_i32 = (uint16_t) bme280P;
-                                        tmpStr.concat(tmp_i32);
+                                        //tmp_i32 = (uint16_t) bme280P;
+                                        tmpStr.concat(bme280P);
                                         pmdServ->updateAll(tmpStr);
                                       #endif
                                     bme280Pold = bme280P;
@@ -1304,13 +1182,14 @@
                         case 3:  // INA3221_I2C 3x U+I measures
                             #if defined(USE_INA3221_I2C)
                                 #if (INA3221U1_ACT > OFF)
-                                    // if (inaU[0][0] != inaUold[0][0])
+                                    if (inaU[0][0] != inaUold[0][0])
                                       {
-                                        valINA3221u[0][0] = inaU[0][0];
+                                        sprintf(tmp_c32, "%.1f", inaU[0][0]);
+                                        valINA3221u[0][0] = tmp_c32;
                                             //S2VAL(" incycle 3221 ina[0][0] inaUold[0][0] ", inaUold[0][0], inaU[0][0]);
                                             //SVAL(" U 3.3    new ", inaU[0][0]);
                                         dispText("U1 " + valINA3221u[0][0], 0, 1);
-                                        S2VAL(" U supply ", inaU[0][0], "V");
+                                        S2VAL(" U supply ", valINA3221u[0][0], "V");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1327,11 +1206,11 @@
                                       }
                                   #endif // INA3221U1_ACT
                                 #if (INA3221I1_ACT > OFF)
-                                    // if (inaI[0][0] != inaIold[0][0])
+                                    if (inaI[0][0] != inaIold[0][0])
                                       {
                                         valINA3221i[0][0] = inaI[0][0];
-                                        dispText(valINA3221i[0][0] + "mA", 6, 1);
-                                        S2VAL(" I supply ", inaI[0][0], "mA");
+                                        dispText(valINA3221i[0][0] + "mA", 5, 1);
+                                        S2VAL(" I supply ", valINA3221i[0][0], "mA");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1347,14 +1226,14 @@
                                       #endif
                                     inaIold[0][0]     = inaI[0][0];
                                     #if (INA3221U2_ACT > OFF)
-                                        inaP[0][0] = inaU[0][0] * inaI[0][0] / 1000;
-                                        // if (inaP[0][0] != inaPold[0][0])
+                                        inaP[0][0] = inaU[0][0] * inaI[0][0];
+                                        if (inaP[0][0] != inaPold[0][0])
                                           {
                                             valINA3221p[0][0] = inaP[0][0];
                                               //pubINA3221p[0][1] = TRUE;
                                                 //SVAL(" P 5.0    new ", inaP[0][1]);
-                                            dispText(valINA3221p[0][0]+ "W", 12, 1);
-                                            S2VAL(" P supply ", inaP[0][0], "W");
+                                            dispText(valINA3221p[0][0]+ "mW", 9, 1);
+                                            S2VAL(" P supply ", valINA3221p[0][0], "mW");
                                             #if (USE_MQTT > OFF)
                                                 if (errMQTT == MD_OK)
                                                   {
@@ -1379,13 +1258,14 @@
                                           #endif
                                   #endif // INA3221I1_ACT
                                 #if (INA3221U2_ACT > OFF)
-                                    //if (inaU[0][1] != inaUold[0][1])
+                                    if (inaU[0][1] != inaUold[0][1])
                                       {
-                                        valINA3221u[0][1] = inaU[0][1];
+                                        sprintf(tmp_c32, "%.1f", inaU[0][1]);
+                                        valINA3221u[0][1] = tmp_c32;
                                         //pubINA3221u[0][1] = TRUE;
                                             //SVAL(" U 5.0    new ", inaU[0][1]);
                                         dispText("U2 " + valINA3221u[0][1], 0, 2);
-                                        S2VAL(" U 5V ", inaU[0][1], "V");
+                                        S2VAL(" U 5V ", valINA3221u[0][1], "V");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1402,13 +1282,13 @@
                                       }
                                   #endif // INA3221U2_ACT
                                 #if (INA3221I2_ACT > OFF)
-                                    //if (inaI[0][1] != inaIold[0][1])
+                                    if (inaI[0][1] != inaIold[0][1])
                                       {
                                         valINA3221i[0][1] = inaI[0][1];
                                         //pubINA3221i[0][1] = TRUE;
                                             //SVAL(" I 5.0    new ", inaI[0][1]);
-                                        dispText(valINA3221i[0][1] + "mA", 6, 2);
-                                        S2VAL(" I 5V ", inaI[0][1], "mA");
+                                        dispText(valINA3221i[0][1] + "mA", 5, 2);
+                                        S2VAL(" I 5V ", valINA3221i[0][1], "mA");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1423,14 +1303,14 @@
                                           #endif
                                         inaIold[0][1]     = inaI[0][1];
                                         #if (INA3221U2_ACT > OFF)
-                                            inaP[0][1] = inaU[0][1] * inaI[0][1] / 1000;
-                                            // if (inaP[0][1] != inaPold[0][1])
+                                            inaP[0][1] = inaU[0][1] * inaI[0][1];
+                                            if (inaP[0][1] != inaPold[0][1])
                                               {
                                                 valINA3221p[0][1] = inaP[0][1];
                                                   //pubINA3221p[0][1] = TRUE;
                                                     //SVAL(" P 5.0    new ", inaP[0][1]);
-                                                dispText(valINA3221p[0][1] + "W", 12, 2);
-                                                S2VAL(" P 5V ", inaU[0][1], "W");
+                                                dispText(valINA3221p[0][1] + "mW", 9, 2);
+                                                S2VAL(" P 5V ", valINA3221p[0][1], "mW");
                                                 #if (USE_MQTT > OFF)
                                                     if (errMQTT == MD_OK)
                                                       {
@@ -1449,13 +1329,14 @@
                                       }
                                   #endif // INA3221I2_ACT
                                 #if (INA3221U3_ACT > OFF)
-                                    //if (inaU[0][2] != inaUold[0][2])
+                                    if (inaU[0][2] != inaUold[0][2])
                                       {
-                                        valINA3221u[0][2] = inaU[0][2];
+                                        sprintf(tmp_c32, "%.1f", inaU[0][2]);
+                                        valINA3221u[0][2] = tmp_c32;
                                         //pubINA3221u[0][2] = TRUE;
                                             //sprintf(tmp_c32, "U3 %f V", inaU[0,2]);
                                         dispText("U3 " + valINA3221u[0][2], 0, 3);
-                                        S2VAL(" U 3.3V ", inaU[0][2], "V");
+                                        S2VAL(" U 3.3V ", valINA3221u[0][2], "V");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1472,13 +1353,13 @@
                                       }
                                   #endif // INA3221U3_ACT
                                 #if (INA3221I3_ACT > OFF)
-                                    //if (inaI[0][2] != inaIold[0][2])
+                                    if (inaI[0][2] != inaIold[0][2])
                                       {
                                         valINA3221i[0][2] = inaI[0][2];
                                         //pubINA3221i[0][2] = TRUE;
                                             //sprintf(tmp_c32, " %fmA ", inaI[0,2]);
-                                        dispText(valINA3221i[0][2] + "mA", 6, 3);
-                                        S2VAL(" I 3.3V ", inaI[0][2], "mA");
+                                        dispText(valINA3221i[0][2] + "mA", 5, 3);
+                                        S2VAL(" I 3.3V ", valINA3221i[0][2], "mA");
                                         #if (USE_MQTT > OFF)
                                             if (errMQTT == MD_OK)
                                               {
@@ -1494,15 +1375,15 @@
                                         inaIold[0][2]     = inaI[0][2];
                                       }
                                     #if (INA3221U3_ACT > OFF)
-                                        inaP[0][2] = inaU[0][2] * inaI[0][2] / 1000;
-                                        //if (inaP[0][2] != inaPold[0][2])
+                                        inaP[0][2] = inaU[0][2] * inaI[0][2];
+                                        if (inaP[0][2] != inaPold[0][2])
                                           {
                                             valINA3221p[0][2] = inaP[0][2];
                                             //pubINA3221p[0][2] = TRUE;
                                             inaPold[0][2]     = inaP[0][2];
                                             //sprintf(tmp_c32, " %.2fmW ", inaP[0,2]);
-                                            dispText(valINA3221p[0][2] + "W", 12, 3);
-                                            S2VAL(" P 3.3V ", inaP[0][2], "W");
+                                            dispText(valINA3221p[0][2] + "mW", 9, 3);
+                                            S2VAL(" P 3.3V ", valINA3221p[0][2], "mW");
                                             #if (USE_MQTT > OFF)
                                                 if (errMQTT == MD_OK)
                                                   {
